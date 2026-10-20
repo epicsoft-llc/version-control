@@ -4,6 +4,12 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## 2026-10-20
+
+### Security
+- The dashboard is built with Angular 22.2.3, which fixes a denial of service in the router's server-side rendering —
+  the dashboard renders in the browser only and was not affected
+
 ## [0.2.1] - 2026-10-20
 
 ### Security
