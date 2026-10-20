@@ -110,6 +110,9 @@ TST:core:
       junit: core/build/test-results/test/TEST-*.xml
     expire_in: 1h
   needs: [ "BLD:core" ]
+  #### Tests and checks run on develop; main and the tags only build and publish what develop verified.
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
   retry: 1
 
 #### The task fails on available updates; allow_failure turns that into a
@@ -125,9 +128,11 @@ DEP:core:
     <<: *gradle-cache
     policy: pull
   needs: [ "BLD:core" ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
   allow_failure: true
 
-#### Runs only when the VC_DEPCHECK_* variables exist, so nothing about that
+#### Runs on develop and only when the VC_DEPCHECK_* variables exist, so nothing about that
 #### database is described here and no contributor is blocked by it.
 SEC:core:
   stage: security
@@ -152,7 +157,7 @@ SEC:core:
     expire_in: 1 week
   needs: [ "BLD:core" ]
   rules:
-    - if: '$VC_DEPCHECK_URL && $VC_DEPCHECK_USERNAME && $VC_DEPCHECK_PASSWORD'
+    - if: '$CI_COMMIT_BRANCH == "develop" && $VC_DEPCHECK_URL && $VC_DEPCHECK_USERNAME && $VC_DEPCHECK_PASSWORD'
   tags: [ "$VC_DEPCHECK_RUNNER_TAG" ]
   allow_failure: true
 
@@ -211,6 +216,8 @@ TST:dashboard:
     <<: *node-cache
     policy: pull
   needs: [ "BLD:dashboard" ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
   retry: 1
 
 ###############################################################################
