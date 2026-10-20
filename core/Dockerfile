@@ -3,6 +3,9 @@
 ARG IMAGE_VERSION=25-jre-alpine
 FROM eclipse-temurin:$IMAGE_VERSION
 
+# The base image lags behind Alpine's security fixes; the upgrade brings them into the release.
+RUN apk --no-cache upgrade
+
 ARG APP_VERSION="development"
 ARG BUILD_DATE="development"
 
