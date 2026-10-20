@@ -7,9 +7,9 @@ springBoot = "4.1.1"
 #### https://plugins.gradle.org/plugin/io.spring.dependency-management
 springDependencyManagement = "1.1.7"
 #### https://gitlab.com/epicsoft-networks/gradle-plugin-depcheck
-epicsoftDepsUpdate = "0.2.5"
-#### https://gitlab.com/epicsoft-networks/gradle-plugin-tolgee
-epicsoftTolgee = "1.0.2"
+epicsoftDepCheck = "0.5.0"
+#### https://github.com/epicsoft-llc/gradle-plugin-tolgee
+epicsoftTolgee = "1.1.1"
 #### https://mvnrepository.com/artifact/org.projectlombok/lombok
 lombok = "1.18.48"
 #### https://mvnrepository.com/artifact/org.mapstruct/mapstruct
@@ -37,6 +37,6 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.re
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
-epicsoft-deps-update = { id = "one.epicsoft.deps-update", version.ref = "epicsoftDepsUpdate" }
+epicsoft-depcheck = { id = "one.epicsoft.depcheck", version.ref = "epicsoftDepCheck" }
 epicsoft-tolgee = { id = "one.epicsoft.tolgee", version.ref = "epicsoftTolgee" }
 dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependencyCheck" }
