@@ -165,8 +165,8 @@ SEC:core:
 #### dashboard (frontend)
 ###############################################################################
 #### Without the VC_NPM_* variables npm uses the public registry.
-#### Shared by both dashboard jobs, so the registry setup cannot drift apart
-#### between the one that builds and the one that tests.
+#### Shared by all dashboard jobs, so the registry setup cannot drift apart
+#### between them.
 .npm-setup: &npm-setup
   - |
     #### Credential keys are derived from the registry URL itself, so the two
@@ -219,6 +219,35 @@ TST:dashboard:
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
   retry: 1
+
+#### Like DEP:core: npm-check-updates fails on available updates, allow_failure makes that a warning.
+DEP:dashboard:
+  stage: dependency
+  image: ${NODE_IMAGE}
+  before_script: *npm-setup
+  script:
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+    - npm run dep:update
+  cache:
+    <<: *node-cache
+    policy: pull
+  needs: [ "BLD:dashboard" ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  allow_failure: true
+
+#### Against the public registry: a mirror configured through VC_NPM_* need not answer npm audit.
+#### Reads the lockfile alone, so it needs no install and no build.
+SEC:dashboard:
+  stage: security
+  image: ${NODE_IMAGE}
+  before_script: *npm-setup
+  script:
+    - npm audit --omit=dev --registry=https://registry.npmjs.org
+  needs: []
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  allow_failure: true
 
 ###############################################################################
 #### Images — a branch build goes to the GitLab registry only. A release tag
