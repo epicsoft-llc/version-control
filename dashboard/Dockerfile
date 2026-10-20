@@ -11,6 +11,9 @@ RUN npm run build
 # ---- serve ------------------------------------------------------------------
 FROM nginx:alpine
 
+# The base image lags behind Alpine's security fixes; the upgrade brings them into the release.
+RUN apk --no-cache upgrade
+
 ARG APP_VERSION="development"
 ARG BUILD_DATE="development"
 

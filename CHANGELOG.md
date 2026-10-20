@@ -4,6 +4,12 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.2.1] - 2026-10-20
+
+### Security
+- Both images upgrade the Alpine packages of their base image when they are built, so a release carries the fixes
+  published until then — 0.2.0 still shipped OpenSSL 3.5.8, expat 2.8.5 and an older zlib
+
 ## [0.2.0] - 2026-10-16
 
 ### Added
