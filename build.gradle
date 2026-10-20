@@ -1,13 +1,13 @@
 // ###########################################################
 // #### Update Gradle Wrapper:
-// #### ./gradlew wrapper --gradle-version 9.8.1 --retries 3
+// #### ./gradlew wrapper --gradle-version 9.8.2 --retries 3
 // #### Update ".vfox.toml" as well
 // ###########################################################
 
 plugins {
   id "idea"
   id "jacoco"
-  alias(libs.plugins.epicsoft.deps.update)
+  alias(libs.plugins.epicsoft.depcheck)
   alias(libs.plugins.dependency.check) apply false
 }
 
@@ -24,6 +24,10 @@ depsUpdate {
   //// allow_failure, so it surfaces as a warning without stopping the pipeline.
   failOnUpdates = true
   includePreRelease = false
+  mavenRepositories = [
+    "https://gitlab.com/api/v4/projects/82634030/packages/maven",
+    "https://gitlab.com/api/v4/projects/85970987/packages/maven",
+  ]
 }
 
 subprojects {
