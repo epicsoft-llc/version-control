@@ -4,7 +4,10 @@ import com.jayway.jsonpath.JsonPath;
 import one.epicsoft.vc.AbstractIntegrationTest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * including the ones added later.
  */
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 class OpenApiIntegrationTest extends AbstractIntegrationTest {
 
   private static final String PATH = "/api/v1/openapi.json";
@@ -45,6 +49,16 @@ class OpenApiIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.openapi").value(Matchers.startsWith("3.1")))
                 .andExpect(jsonPath("$.info.title").value("Version Control API"))
                 .andExpect(jsonPath("$.info.license.name").value("MIT"));
+  }
+
+  @Test
+  void looksUpNoneOfItsTextsAsAMessageKey(final CapturedOutput output) throws Exception {
+    // springdoc hands every text to the MessageSource unless told not to, and ours logs each unknown key as an
+    // error — a few hundred lines per request. A language no other test asks for makes this request build the
+    // description itself instead of reading it from the cache.
+    this.mockMvc.perform(get(PATH).header("Accept-Language", "fr-CH")).andExpect(status().isOk());
+
+    assertFalse(output.getAll().contains("No message for key"), "a text of the description was looked up as a message key");
   }
 
   @Test
