@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +29,15 @@ import static java.util.Objects.nonNull;
                 consumes = MediaType.APPLICATION_JSON_VALUE,
                 produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Update decisions", description = "What was decided about an available update — one decision per component.")
 public class UpdateDecisionController {
 
   public static final String PATH_PREFIX = "api/v1/update-decisions";
 
   private final UpdateDecisionFacade updateDecisionFacade;
 
-  /** No decision yet is an empty list, not an error: that is where every component starts. */
+  @Operation(summary = "The decision of a component or of every component of a project",
+             description = "One of `componentId` and `projectId` is required. No decision yet is an empty list: that is where every component starts.")
   @GetMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<List<UpdateDecisionDto>> find(@RequestParam(required = false) final UUID projectId,
                                                       @RequestParam(required = false) final UUID componentId) {
@@ -47,6 +51,12 @@ public class UpdateDecisionController {
     throw AppValidationException.parameterRequired("projectId or componentId");
   }
 
+  @Operation(summary = "Decide about the available update of a component",
+             description = """
+                 Replaces the decision of the component and records the version it is about — the newest one the last \
+                 check found. A newer version reopens it. `PLANNED` and `SKIPPED` take the update off the task list, \
+                 `POSTPONED` until `snoozeUntil`, which has to lie in the future. `BLOCKED` cannot be set; it comes from \
+                 the dependency check.""")
   @PostMapping
   public ResponseEntity<UpdateDecisionDto> decide(@RequestBody @Valid final UpdateDecisionRequest request) {
     log.debug("Incoming POST decision for component {}", request.getComponentId());

@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -26,8 +27,8 @@ public class UpdateDecisionDto {
   @JsonProperty("state")
   private DecisionState state;
 
-  /** The version this was decided about; a newer one reopens the decision. */
   @Nullable
+  @Schema(description = "The version this was decided about — the newest the last check had found. A newer one reopens the decision.")
   @JsonProperty("decidedForVersion")
   private String decidedForVersion;
 

@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -17,17 +18,19 @@ public class ComponentDependencyRequest {
 
   @Nonnull
   @NotNull
+  @Schema(description = "The prerequisite, a component of the same project.")
   @JsonProperty("dependsOnId")
   private UUID dependsOnId;
 
-  /** A version range in the npm style, for example {@code >=14 <18}. */
   @Nonnull
   @NotBlank
   @Size(max = 200)
+  @Schema(description = "The versions of the prerequisite that work, as an npm style range such as `>=14 <18`.")
   @JsonProperty("versionRange")
   private String versionRange;
 
   @Nullable
+  @Schema(description = "Where the requirement was read.")
   @JsonProperty("note")
   private String note;
 }

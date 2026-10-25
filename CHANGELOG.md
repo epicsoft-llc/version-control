@@ -4,6 +4,20 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.3.0] - 2026-10-25
+
+### Added
+- The API describes itself: an OpenAPI 3.1 document at `/api/v1/openapi.json`, with a summary for every operation,
+  the meaning of every enum value — what `SKIPPED` or `POSTPONED` do to the task list, what `checkEnabled` stops —
+  and the error shape every operation shares. Without the Swagger UI
+- `PATCH /api/v1/components/{id}` changes single fields of a component as a JSON merge patch (RFC 7386): a field that
+  is left out keeps its value, `null` clears it, a list replaces the stored one. A field the component does not have is
+  refused rather than ignored
+- Dependency `springdoc-openapi-starter-webmvc-api` 3.2.0 for the API description
+
+### Fixed
+- The packages of a component are validated without the Hibernate Validator warning about `@Valid` on a list
+
 ## [0.2.2] - 2026-10-20
 
 ### Security

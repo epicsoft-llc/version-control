@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -27,20 +28,23 @@ public class UpdateDecisionRequest {
 
   @Nonnull
   @NotNull
+  @Schema(description = "Any state but `BLOCKED`, which comes from the dependency check.")
   @JsonProperty("state")
   private DecisionState state;
 
-  /** Required for a postponement — that is what makes it come back. */
   @Nullable
+  @Schema(description = "Required for `POSTPONED`, and in the future: the update returns as `SNOOZE_EXPIRED` once it has passed.")
   @JsonProperty("snoozeUntil")
   private Instant snoozeUntil;
 
   @Nullable
+  @Schema(description = "Why — kept when a newer version reopens the decision.")
   @JsonProperty("note")
   private String note;
 
   @Nullable
   @Size(max = 500)
+  @Schema(description = "The release notes the decision is based on.")
   @JsonProperty("releaseUrl")
   private String releaseUrl;
 }

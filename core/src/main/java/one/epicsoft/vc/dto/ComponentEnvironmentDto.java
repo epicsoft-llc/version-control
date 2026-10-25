@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -26,8 +27,8 @@ public class ComponentEnvironmentDto {
   @JsonProperty("environmentId")
   private UUID environmentId;
 
-  /** False means "deliberately not present here". */
   @Nonnull
+  @Schema(description = "False: the component is deliberately not present in this environment.")
   @JsonProperty("active")
   private Boolean active;
 
@@ -43,13 +44,13 @@ public class ComponentEnvironmentDto {
   @JsonProperty("lastChangedAt")
   private Instant lastChangedAt;
 
-  /** Active, but no version recorded — a gap, which an inactive cell is not. */
   @Nonnull
+  @Schema(description = "Active, but no version recorded — a gap, which an inactive cell is not.")
   @JsonProperty("versionUnknown")
   private Boolean versionUnknown;
 
-  /** latest, stable, 17-alpine: allowed, but worth a warning. */
   @Nonnull
+  @Schema(description = "The version is a tag that moves, such as `latest`, `stable` or `17-alpine`: allowed, but worth a warning.")
   @JsonProperty("movingTag")
   private Boolean movingTag;
 

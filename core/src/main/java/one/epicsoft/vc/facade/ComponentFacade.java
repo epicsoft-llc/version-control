@@ -2,6 +2,9 @@ package one.epicsoft.vc.facade;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ComponentDto;
@@ -27,6 +30,11 @@ import one.epicsoft.vc.version.ConstraintEvaluator;
 import one.epicsoft.vc.service.ProjectService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -57,6 +65,8 @@ public class ComponentFacade {
   private final ComponentDependencyMapper componentDependencyMapper;
   private final ConstraintEvaluator constraintEvaluator;
   private final UpdateCheckFacade updateCheckFacade;
+  private final JsonMapper jsonMapper;
+  private final Validator validator;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
@@ -111,6 +121,62 @@ public class ComponentFacade {
       this.updateCheckFacade.reapplyRule(saved.getId());
     }
     return this.toDtos(List.of(saved)).getFirst();
+  }
+
+  /**
+   * Changes the fields the patch names and keeps the rest — JSON merge patch, RFC 7386. The merged state takes
+   * the same way as a replacement, so both hold the same rules.
+   */
+  @Nonnull
+  @Transactional(rollbackFor = Throwable.class)
+  public ComponentDto patch(@Nonnull final UUID id, @Nonnull final JsonNode patch) {
+    final ComponentEntity entity = this.componentService.getById(id);
+    if (!patch.isObject()) {
+      throw AppValidationException.patchNotApplicable("Component", id, "the root");
+    }
+    // Merged as JSON, not through the setters: a null would reach a setter that refuses it, and the answer would
+    // lose the field the validation below names.
+    final ObjectNode merged = this.jsonMapper.valueToTree(this.componentMapper.toRequest(entity));
+    patch.properties().forEach(field -> {
+      if (field.getValue().isNull()) {
+        merged.remove(field.getKey());
+      } else {
+        merged.set(field.getKey(), field.getValue());
+      }
+    });
+    final ComponentRequest request;
+    try {
+      // Unknown fields fail here although the API ignores them elsewhere: a misspelt name would otherwise
+      // answer 200 for a change that never happened.
+      request = this.jsonMapper.readerFor(ComponentRequest.class)
+                               .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                               .readValue(merged);
+    } catch (final JacksonException exception) {
+      throw AppValidationException.patchNotApplicable("Component", id, exception.getPathReference());
+    }
+    clearNullLists(request, patch);
+    final Set<ConstraintViolation<ComponentRequest>> violations = this.validator.validate(request);
+    if (!violations.isEmpty()) {
+      throw new ConstraintViolationException(violations);
+    }
+    return this.update(id, request);
+  }
+
+  /** In a merge patch null removes. A null list keeps the stored one in a replacement, so it becomes empty here. */
+  private static void clearNullLists(@Nonnull final ComponentRequest request, @Nonnull final JsonNode patch) {
+    if (isNullValue(patch, "packages")) {
+      request.setPackages(List.of());
+    }
+    if (isNullValue(patch, "upgradeStops")) {
+      request.setUpgradeStops(List.of());
+    }
+    if (isNullValue(patch, "dependencies")) {
+      request.setDependencies(List.of());
+    }
+  }
+
+  private static boolean isNullValue(@Nonnull final JsonNode patch, @Nonnull final String field) {
+    return patch.has(field) && patch.get(field).isNull();
   }
 
   /** What decides which candidate wins; a change here reads the last check again. */

@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.EolStatusDto;
@@ -27,12 +29,15 @@ import static java.util.Objects.nonNull;
 @RestController
 @RequestMapping(value = EolStatusController.PATH_PREFIX, produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "End of life", description = "When support ends for what is running, from endoflife.date.")
 public class EolStatusController {
 
   public static final String PATH_PREFIX = "api/v1/eol-statuses";
 
   private final EolStatusFacade eolStatusFacade;
 
+  @Operation(summary = "The end-of-life status of a component or of every component of a project",
+             description = "One of `componentId` and `projectId` is required. A component without `eolProduct` is not checked and answers with an empty list.")
   @GetMapping
   public ResponseEntity<List<EolStatusDto>> find(@RequestParam(required = false) final UUID projectId,
                                                  @RequestParam(required = false) final UUID componentId) {
@@ -46,7 +51,8 @@ public class EolStatusController {
     throw AppValidationException.parameterRequired("projectId or componentId");
   }
 
-  /** Asks the end-of-life database now, on its own cycle and its own error state. */
+  @Operation(summary = "Look up the end of life of a component now",
+             description = "Asks endoflife.date right away, with its own cycle and error state, apart from the update check.")
   @PostMapping
   public ResponseEntity<List<EolStatusDto>> checkNow(@RequestParam final UUID componentId) {
     log.debug("Incoming POST end-of-life lookup for component {}", componentId);

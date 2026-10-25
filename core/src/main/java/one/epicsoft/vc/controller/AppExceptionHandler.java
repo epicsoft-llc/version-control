@@ -1,6 +1,10 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.annotation.Nonnull;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ErrorDto;
@@ -10,6 +14,7 @@ import one.epicsoft.vc.exception.AppNotFoundException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -23,6 +28,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 import static java.util.Objects.requireNonNullElse;
@@ -80,6 +86,19 @@ public class AppExceptionHandler {
     return this.build(HttpStatus.BAD_REQUEST, KEY_VALIDATION, fields);
   }
 
+  /** The same answer for a body that is validated after binding — a merged patch, for one. */
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ErrorDto> handleConstraintViolation(@Nonnull final ConstraintViolationException exception) {
+    final List<ErrorDto.FieldErrorDto> fields = exception.getConstraintViolations()
+                                                         .stream()
+                                                         .map(violation -> new ErrorDto.FieldErrorDto(violation.getPropertyPath().toString(),
+                                                                                                      violation.getMessage()))
+                                                         .sorted(Comparator.comparing(ErrorDto.FieldErrorDto::getField))
+                                                         .toList();
+    log.debug("Validation failed: {}", fields);
+    return this.build(HttpStatus.BAD_REQUEST, KEY_VALIDATION, fields);
+  }
+
   /**
    * A missing parameter, an id that is not a uuid, a body that is not JSON. All of
    * them are the caller's mistake and must not be logged as a server error.
@@ -122,6 +141,10 @@ public class AppExceptionHandler {
     return this.build(HttpStatus.METHOD_NOT_ALLOWED, KEY_METHOD, List.of());
   }
 
+  // Declared once here, the API description lists this shape as the error answer of every operation.
+  @ApiResponse(responseCode = "default",
+               description = "Any error: 400 malformed or against a rule, 404 unknown id, 409 name taken, 500 a defect.",
+               content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorDto.class)))
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorDto> handleUnexpected(@Nonnull final Exception exception) {
     log.error("Unexpected error", exception);

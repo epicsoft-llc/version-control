@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +31,15 @@ import static java.util.Objects.nonNull;
                 consumes = MediaType.APPLICATION_JSON_VALUE,
                 produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Component environments", description = "The version of one component in one environment — the cells of the matrix.")
 public class ComponentEnvironmentController {
 
   public static final String PATH_PREFIX = "api/v1/component-environments";
 
   private final ComponentEnvironmentFacade componentEnvironmentFacade;
 
-  /** Everything the matrix of one project needs, or the rows of one component. */
+  @Operation(summary = "List the cells of a project or of a component",
+             description = "`componentId` gives the cells of one component, `projectId` those of a whole project; one of the two is required.")
   @GetMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<List<ComponentEnvironmentDto>> find(@RequestParam(required = false) final UUID projectId,
                                                             @RequestParam(required = false) final UUID componentId) {
@@ -51,18 +55,25 @@ public class ComponentEnvironmentController {
     return ResponseEntity.ok(this.componentEnvironmentFacade.findAllByProject(projectId));
   }
 
+  @Operation(summary = "Get a cell")
   @GetMapping(path = "/{id}", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<ComponentEnvironmentDto> getById(@PathVariable final UUID id) {
     log.debug("Incoming GET 'api/v1/component-environments/{}'", id);
     return ResponseEntity.ok(this.componentEnvironmentFacade.getById(id));
   }
 
+  @Operation(summary = "Create or update the cell of a component in an environment",
+             description = """
+                 Sets whether the component is present in the environment (`active`) and records the first version of a \
+                 cell that has none. A recorded version is changed only through `POST /api/v1/version-changes`, which \
+                 writes the history entry; sending it unchanged here is fine.""")
   @PostMapping
   public ResponseEntity<ComponentEnvironmentDto> createOrUpdate(@RequestBody @Valid final ComponentEnvironmentRequest request) {
     log.debug("Incoming POST 'api/v1/component-environments' with: {}", request);
     return ResponseEntity.ok(this.componentEnvironmentFacade.createOrUpdate(request));
   }
 
+  @Operation(summary = "Delete a cell")
   @DeleteMapping(path = "/{id}", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<Void> delete(@PathVariable final UUID id) {
     log.debug("Incoming DELETE 'api/v1/component-environments/{}'", id);

@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.2.2.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.3.0.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
@@ -83,6 +83,24 @@ backend, so there is a single entry point and the frontend build is environment 
 
 **Access control is not part of this application.** It is meant to sit behind a reverse proxy or an
 access gateway that handles authentication. Do not expose it directly.
+
+## API
+
+Everything the interface does goes through a REST API under `/api/v1`, and the API describes itself: the
+OpenAPI 3.1 document is at `/api/v1/openapi.json` — <http://localhost:8081/api/v1/openapi.json> with the
+compose file. It names every operation and field, explains every enum value — what `SKIPPED` does to the
+task list, what switching `checkEnabled` off stops — and shows the one shape every error has. Scripts and
+other tools can work from it without reading the code.
+
+A component can be changed field by field. `PATCH /api/v1/components/{id}` takes a JSON merge patch
+(RFC 7386): a field that is sent changes, a field that is left out keeps its value, `null` clears it.
+
+```bash
+curl -X PATCH -H 'Content-Type: application/merge-patch+json' -d '{"checkEnabled": false}' \
+  http://localhost:8081/api/v1/components/<id>
+```
+
+`PUT` remains the way to replace a component as a whole.
 
 ## Developing
 

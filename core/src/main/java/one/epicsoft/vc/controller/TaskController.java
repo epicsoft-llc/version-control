@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.TaskListDto;
@@ -17,12 +19,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping(value = TaskController.PATH_PREFIX, produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Tasks", description = "What has to be done in a project, in the order it should be read.")
 public class TaskController {
 
   public static final String PATH_PREFIX = "api/v1/tasks";
 
   private final TaskListFacade taskListFacade;
 
+  @Operation(summary = "The task list of a project",
+             description = "Only the sections that have entries, in the order of `TaskSection`. An update somebody decided about leaves the list until a newer version shows up.")
   @GetMapping
   public ResponseEntity<TaskListDto> getByProject(@RequestParam final UUID projectId) {
     log.debug("Incoming GET task list of project {}", projectId);
