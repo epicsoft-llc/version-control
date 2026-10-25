@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,6 +125,7 @@ public class TaskListFacade {
 
       this.addEolTask(entries, component, eolStatuses.get(component.getId()));
       this.addViolatedDependencies(entries, component, violations);
+      addRolloutPlans(entries, component, componentCells);
       this.addUpdateTask(entries, component, check, decision, componentCells, index);
       this.addCheckError(entries, component, check);
       addMovingTags(entries, component, componentCells);
@@ -196,10 +198,35 @@ public class TaskListFacade {
   }
 
   /**
+   * A rollout planned for one environment: overdue once its day has passed, otherwise announced at the end of
+   * the list. Whatever was decided about the component, the plan is the more precise statement and is shown.
+   */
+  private static void addRolloutPlans(@Nonnull final Map<TaskSection, List<TaskEntryDto>> entries,
+                                      @Nonnull final ComponentEntity component,
+                                      @Nonnull final List<ComponentEnvironmentEntity> cells) {
+    final LocalDate today = LocalDate.now();
+    cells.stream()
+         .filter(ComponentEnvironmentEntity::isActive)
+         .filter(ComponentEnvironmentEntity::hasPlan)
+         .sorted(Comparator.comparing((ComponentEnvironmentEntity cell) -> cell.getEnvironment().getSortOrder())
+                           .thenComparing(cell -> cell.getEnvironment().getName()))
+         .forEach(cell -> {
+           final TaskEntryDto entry = entry(component, cell.getEnvironment().getName(), cell.getCurrentVersion(),
+                                            cell.getPlannedVersion());
+           entry.setDetail(cell.getPlannedNote());
+           // Noon, not midnight: shown in the reader's time zone, midnight UTC is the evening before in America.
+           entry.setSince(nonNull(cell.getPlannedFor()) ? cell.getPlannedFor().atTime(12, 0).toInstant(ZoneOffset.UTC) : null);
+           final boolean overdue = nonNull(cell.getPlannedFor()) && cell.getPlannedFor().isBefore(today);
+           add(entries, overdue ? TaskSection.ROLLOUT_OVERDUE : TaskSection.ROLLOUT_PLANNED, entry);
+         });
+  }
+
+  /**
    * An available update, filed by what was decided about it: nothing yet, a
    * postponement that has run out, or a block that came from the dependency
    * check. A planned or skipped update is a closed question and stays off the
-   * list until a newer version reopens it.
+   * list until a newer version reopens it; a held one stays off for good. An
+   * environment with a rollout plan is filed under its plan instead.
    */
   private void addUpdateTask(@Nonnull final Map<TaskSection, List<TaskEntryDto>> entries,
                              @Nonnull final ComponentEntity component,
@@ -220,6 +247,7 @@ public class TaskListFacade {
 
     cells.stream()
          .filter(ComponentEnvironmentEntity::isActive)
+         .filter(cell -> !cell.hasPlan())
          // A moving tag never equals a version number and would sit here for
          // good; it has a section of its own where it can actually be acted on.
          .filter(cell -> !cell.isMovingTag())
@@ -282,7 +310,7 @@ public class TaskListFacade {
     if (DecisionState.BLOCKED.equals(decision.getState())) {
       return TaskSection.BLOCKED;
     }
-    // Planned and skipped are answers; they come back when a newer version does.
+    // Planned and skipped are answers that come back with a newer version; held does not come back.
     return null;
   }
 

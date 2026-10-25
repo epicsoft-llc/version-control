@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
     - `PLANNED`: will be done; off the task list.
     - `POSTPONED`: off the task list until `snoozeUntil`, then back as `SNOOZE_EXPIRED`.
     - `SKIPPED`: will not be done; off the task list.
+    - `HELD`: stays on the running version for good, for the reason in `note`; no newer version reopens it.
     - `BLOCKED`: derived from the dependency check, cannot be set by hand.
     """)
 public enum DecisionState {
@@ -19,6 +20,9 @@ public enum DecisionState {
   PLANNED,
   POSTPONED,
   SKIPPED,
+
+  /** Stays where it is, whatever comes out; the reason is required, and nothing newer reopens it. */
+  HELD,
 
   /** Derived from the dependency check, never set by hand. */
   BLOCKED

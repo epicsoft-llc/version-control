@@ -122,4 +122,15 @@ describe('DecisionDialogComponent', () => {
     // Stored, it would look like an explanation in the history and say nothing.
     expect(request.note).toBeUndefined();
   });
+
+  it('refuses to hold without a reason', async () => {
+    await choose('HELD');
+
+    // A hold stays for good; the reason is what lets somebody lift it later.
+    expect(saveButton().disabled).toBe(true);
+
+    await type(fixture.nativeElement.querySelector('#decisionNote') as HTMLInputElement, 'Last free version');
+
+    expect(saveButton().disabled).toBe(false);
+  });
 });

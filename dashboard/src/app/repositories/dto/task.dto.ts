@@ -1,18 +1,17 @@
 import {DependencyCheckDto} from './dependency.dto';
 
-/**
- * The sections of the task list, in the order they are read. Two of them cannot
- * be filled yet: the dependency check and the end-of-life watch are later steps.
- */
+/** The sections of the task list, in the order they are read. */
 export type TaskSection =
   'EOL_EXCEEDED'
   | 'DEPENDENCY_VIOLATED'
+  | 'ROLLOUT_OVERDUE'
   | 'UPDATE_OPEN'
   | 'SNOOZE_EXPIRED'
   | 'BLOCKED'
   | 'CHECK_ERROR'
   | 'MOVING_TAG_IN_PRODUCTION'
-  | 'EOL_WARNING';
+  | 'EOL_WARNING'
+  | 'ROLLOUT_PLANNED';
 
 /** One thing to do, with what it takes to judge it without opening anything. */
 export class TaskEntryDto {

@@ -9,7 +9,9 @@ import {catchError, forkJoin, of, Subject, Subscription, switchMap, tap} from 'r
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
+import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ProjectRepo} from '../../repositories/api/project.repo';
+import {TaskRepo} from '../../repositories/api/task.repo';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
@@ -44,6 +46,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   private readonly componentRepo: ComponentRepo = inject(ComponentRepo);
   private readonly componentEnvironmentRepo: ComponentEnvironmentRepo = inject(ComponentEnvironmentRepo);
   private readonly updateCheckRepo: UpdateCheckRepo = inject(UpdateCheckRepo);
+  private readonly taskRepo: TaskRepo = inject(TaskRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
   private readonly modal: NgbModal = inject(NgbModal);
   private readonly subs: Subscription[] = [];
@@ -59,6 +62,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   protected matrix?: MatrixDto;
   /** By component id, so a row can show what the last check found. */
   protected checks = new Map<string, UpdateCheckDto>();
+  /** Held components by id: they stay on their version on purpose, so the row must not call for an update. */
+  protected holds = new Map<string, UpdateDecisionDto>();
   protected loading = true;
   protected errorMessage?: string;
 
@@ -76,7 +81,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
         matrix: this.projectRepo.getMatrix(projectId),
         // The available column is auxiliary. A failure there must not take the
         // matrix with it — that is the screen people came for.
-        checks: this.updateCheckRepo.findAllByProject(projectId).pipe(catchError(() => of([])))
+        checks: this.updateCheckRepo.findAllByProject(projectId).pipe(catchError(() => of([]))),
+        decisions: this.taskRepo.findDecisionsByProject(projectId).pipe(catchError(() => of([])))
       }).pipe(catchError((error) => {
         this.showError(error);
         return of(undefined);
@@ -84,6 +90,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
     ).subscribe((loaded) => {
       this.matrix = loaded?.matrix;
       this.checks = new Map((loaded?.checks ?? []).map((check) => [check.componentId, check]));
+      this.holds = new Map((loaded?.decisions ?? []).filter((decision) => decision.state === 'HELD')
+                                                     .map((decision) => [decision.componentId, decision]));
       this.loading = false;
     }));
 
@@ -116,6 +124,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
     return this.checks.get(componentId);
   }
 
+  protected heldOf(componentId: string): UpdateDecisionDto | undefined {
+    return this.holds.get(componentId);
+  }
+
   /**
    * True when the source offers something the row does not run anywhere. Read
    * from the recorded versions rather than from a comparison of version numbers:
@@ -123,7 +135,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
    */
   protected updateAvailable(row: MatrixRowDto): boolean {
     const latest = this.checkOf(row.componentId)?.latestVersion;
-    if (notDefined(latest)) {
+    if (notDefined(latest) || isDefined(this.heldOf(row.componentId))) {
       return false;
     }
     // Any environment that is behind counts, not only the case where every one

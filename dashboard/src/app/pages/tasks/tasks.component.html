@@ -72,7 +72,14 @@
                 }
                 {{ entry.detail }}
                 @if (entry.since) {
-                  <div>{{ 'tasks.since' | translate }}: {{ entry.since | date: 'mediumDate' }}</div>
+                  <div>
+                    @if (planned(section.section)) {
+                      {{ 'plan.field.date' | translate }}:
+                    } @else {
+                      {{ 'tasks.since' | translate }}:
+                    }
+                    {{ entry.since | date: 'mediumDate' }}
+                  </div>
                 }
               </td>
               <td class="text-end">
@@ -88,4 +95,30 @@
       </table>
     </section>
   }
+}
+
+@if (changes.length > 0) {
+  <section class="mt-4">
+    <h2 class="h6 text-uppercase text-secondary">{{ 'tasks.recentChanges' | translate }}</h2>
+    <table class="table table-sm align-middle">
+      <tbody>
+        @for (change of changes; track change.id) {
+          <tr>
+            <td class="text-nowrap small text-secondary">{{ change.changedAt | date: 'short' }}</td>
+            <th scope="row" class="fw-normal">
+              <a [routerLink]="['/components', change.componentId]">{{ change.componentName }}</a>
+            </th>
+            <td><code>{{ change.field }}</code></td>
+            <td class="small">
+              @if (change.oldValue) {
+                <span class="text-secondary">{{ change.oldValue }}</span>
+                <i class="bi bi-arrow-right mx-1"></i>
+              }
+              {{ change.newValue }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
 }

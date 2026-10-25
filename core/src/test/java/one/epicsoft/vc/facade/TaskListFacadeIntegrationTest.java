@@ -3,14 +3,17 @@ package one.epicsoft.vc.facade;
 import one.epicsoft.vc.AbstractIntegrationTest;
 import one.epicsoft.vc.dto.ComponentDependencyRequest;
 import one.epicsoft.vc.dto.ComponentDto;
+import one.epicsoft.vc.dto.ComponentEnvironmentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentRequest;
 import one.epicsoft.vc.dto.ComponentRequest;
 import one.epicsoft.vc.dto.EnvironmentDto;
 import one.epicsoft.vc.dto.EnvironmentRequest;
 import one.epicsoft.vc.dto.ProjectRequest;
+import one.epicsoft.vc.dto.RolloutPlanRequest;
 import one.epicsoft.vc.dto.TaskListDto;
 import one.epicsoft.vc.dto.TaskSectionDto;
 import one.epicsoft.vc.dto.UpdateDecisionRequest;
+import one.epicsoft.vc.dto.VersionChangeRequest;
 import one.epicsoft.vc.enums.CheckState;
 import one.epicsoft.vc.enums.DecisionState;
 import one.epicsoft.vc.enums.MaxStep;
@@ -36,6 +39,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -76,6 +80,9 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired
   private ComponentService componentService;
+
+  @Autowired
+  private VersionChangeFacade versionChangeFacade;
 
   @Test
   void listsAnAvailableUpdateNobodyDecidedAbout() {
@@ -436,6 +443,116 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
                  () -> this.decide(component.getId(), DecisionState.POSTPONED, null));
   }
 
+  @Test
+  void refusesAHoldWithoutAReason() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "3.76.1");
+    final UpdateDecisionRequest request = new UpdateDecisionRequest();
+    request.setComponentId(component.getId());
+    request.setState(DecisionState.HELD);
+
+    // A hold stays for good; without the reason nobody dares to lift it later.
+    assertThrows(AppValidationException.class, () -> this.updateDecisionFacade.decide(request));
+  }
+
+  @Test
+  void keepsAHeldComponentOffTheListWhateverComesOut() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "3.76.1");
+    this.recordCheck(component, "3.97.2", CheckState.OK, Instant.now());
+    this.decide(component.getId(), DecisionState.HELD, null);
+
+    // Unlike a skip, a newer version does not reopen it.
+    assertFalse(this.updateDecisionFacade.reopenIfNewerVersion(component.getId(), "3.98.0"));
+    assertEquals(DecisionState.HELD, this.updateDecisionService.findByComponent(component.getId()).orElseThrow().getState());
+    assertTrue(this.sections(this.taskListFacade.getByProject(projectId)).stream()
+                   .noneMatch(section -> TaskSection.UPDATE_OPEN.equals(section.getSection())));
+  }
+
+  @Test
+  void announcesAPlannedRolloutInsteadOfAnOpenUpdate() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "Component " + UUID.randomUUID()));
+    final EnvironmentDto environment = this.environment(projectId, "Production " + UUID.randomUUID(), true);
+    final ComponentEnvironmentDto cell = this.cell(component.getId(), environment.getId(), "17.2");
+    this.recordCheck(component, "17.4", CheckState.OK, Instant.now());
+
+    this.componentEnvironmentFacade.plan(cell.getId(), this.plan("17.4", LocalDate.now().plusDays(3)));
+
+    final TaskListDto list = this.taskListFacade.getByProject(projectId);
+    // The update is answered by the plan; listing it as open as well would ask the same question twice.
+    assertTrue(this.sections(list).stream().noneMatch(section -> TaskSection.UPDATE_OPEN.equals(section.getSection())));
+    final TaskSectionDto planned = this.section(list, TaskSection.ROLLOUT_PLANNED);
+    assertEquals("17.4", planned.getEntries().getFirst().getLatestVersion());
+    assertEquals("Sunday window", planned.getEntries().getFirst().getDetail());
+    // The plan reads after everything that needs doing today.
+    assertEquals(TaskSection.ROLLOUT_PLANNED, list.getSections().getLast().getSection());
+  }
+
+  @Test
+  void reportsAPlannedRolloutWhoseDayHasPassed() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "Component " + UUID.randomUUID()));
+    final EnvironmentDto environment = this.environment(projectId, "Production " + UUID.randomUUID(), true);
+    final ComponentEnvironmentDto cell = this.cell(component.getId(), environment.getId(), "17.2");
+
+    this.componentEnvironmentFacade.plan(cell.getId(), this.plan("17.4", LocalDate.now().minusDays(1)));
+
+    assertEquals(1, this.section(this.taskListFacade.getByProject(projectId), TaskSection.ROLLOUT_OVERDUE).getEntries().size());
+  }
+
+  @Test
+  void endsAPlanOnceItsVersionIsRecorded() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "Component " + UUID.randomUUID()));
+    final EnvironmentDto environment = this.environment(projectId, "Production " + UUID.randomUUID(), true);
+    final ComponentEnvironmentDto cell = this.cell(component.getId(), environment.getId(), "17.2");
+    this.componentEnvironmentFacade.plan(cell.getId(), this.plan("17.4", LocalDate.now().plusDays(3)));
+
+    // A step on the way is not the rollout that was planned.
+    this.changeVersion(cell.getId(), "17.3");
+    assertEquals("17.4", this.componentEnvironmentFacade.getById(cell.getId()).getPlannedVersion());
+
+    this.changeVersion(cell.getId(), "17.4");
+    final ComponentEnvironmentDto done = this.componentEnvironmentFacade.getById(cell.getId());
+    assertNull(done.getPlannedVersion());
+    assertNull(done.getPlannedFor());
+  }
+
+  @Test
+  void refusesAPlanForTheRecordedVersionAndForAnEnvironmentWithoutTheComponent() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "Component " + UUID.randomUUID()));
+    final EnvironmentDto environment = this.environment(projectId, "Production " + UUID.randomUUID(), true);
+    final ComponentEnvironmentDto cell = this.cell(component.getId(), environment.getId(), "17.2");
+
+    assertThrows(AppValidationException.class,
+                 () -> this.componentEnvironmentFacade.plan(cell.getId(), this.plan("17.2", LocalDate.now())));
+
+    final ComponentEnvironmentRequest off = new ComponentEnvironmentRequest();
+    off.setComponentId(component.getId());
+    off.setEnvironmentId(environment.getId());
+    off.setActive(Boolean.FALSE);
+    this.componentEnvironmentFacade.createOrUpdate(off);
+    assertThrows(AppValidationException.class,
+                 () -> this.componentEnvironmentFacade.plan(cell.getId(), this.plan("17.4", LocalDate.now())));
+  }
+
+  private RolloutPlanRequest plan(final String version, final LocalDate day) {
+    final RolloutPlanRequest request = new RolloutPlanRequest();
+    request.setPlannedVersion(version);
+    request.setPlannedFor(day);
+    request.setNote("Sunday window");
+    return request;
+  }
+
+  private void changeVersion(final UUID cellId, final String version) {
+    final VersionChangeRequest request = new VersionChangeRequest();
+    request.setComponentEnvironmentId(cellId);
+    request.setToVersion(version);
+    this.versionChangeFacade.changeVersion(request);
+  }
+
   private TaskSectionDto section(final TaskListDto list, final TaskSection section) {
     return this.sections(list).stream()
                .filter(entry -> section.equals(entry.getSection()))
@@ -529,12 +646,12 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
     return component;
   }
 
-  private void cell(final UUID componentId, final UUID environmentId, final String version) {
+  private ComponentEnvironmentDto cell(final UUID componentId, final UUID environmentId, final String version) {
     final ComponentEnvironmentRequest request = new ComponentEnvironmentRequest();
     request.setComponentId(componentId);
     request.setEnvironmentId(environmentId);
     request.setCurrentVersion(version);
-    this.componentEnvironmentFacade.createOrUpdate(request);
+    return this.componentEnvironmentFacade.createOrUpdate(request);
   }
 
   private UUID project() {

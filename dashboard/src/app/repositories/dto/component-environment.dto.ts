@@ -21,6 +21,11 @@ export class ComponentEnvironmentDto {
   public currentVersion?: string;
   public currentDigest?: string;
   public lastChangedAt?: string;
+  /** The version of a planned rollout; absent while nothing is planned. */
+  public plannedVersion?: string;
+  /** The day of the planned rollout, as `YYYY-MM-DD`. */
+  public plannedFor?: string;
+  public plannedNote?: string;
   /** Active, but no version recorded — a gap, which an inactive cell is not. */
   public versionUnknown!: boolean;
   /** latest, stable, 17-alpine: allowed, but worth a warning. */
@@ -45,6 +50,19 @@ export class ComponentEnvironmentRequest {
   public currentVersion?: string;
 
   constructor(init?: Partial<ComponentEnvironmentRequest>) {
+    Object.assign(this, init);
+  }
+}
+
+/** A rollout planned for one environment; it ends by itself once the version is recorded. */
+export class RolloutPlanRequest {
+
+  public plannedVersion!: string;
+  /** `YYYY-MM-DD`. */
+  public plannedFor!: string;
+  public note?: string;
+
+  constructor(init?: Partial<RolloutPlanRequest>) {
     Object.assign(this, init);
   }
 }

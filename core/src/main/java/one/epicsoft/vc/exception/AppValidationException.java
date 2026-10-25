@@ -137,6 +137,13 @@ public class AppValidationException extends AppException {
         "error.snoozeDateRequired");
   }
 
+  /** A hold stays for good, so it has to say why — otherwise nobody dares to lift it later. */
+  @Nonnull
+  public static AppValidationException holdReasonRequired(@Nonnull final UUID componentId) {
+    return new AppValidationException("Holding component '%s' needs a reason in the note".formatted(componentId),
+                                      "error.holdReasonRequired");
+  }
+
   /** A cell marked as deliberately absent cannot carry a deployed version. */
   @Nonnull
   public static AppValidationException inactiveCell(@Nonnull final UUID componentEnvironmentId) {

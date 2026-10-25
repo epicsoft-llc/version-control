@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import one.epicsoft.vc.enums.MatrixCellState;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /** One component in one environment, as the matrix shows it. */
@@ -34,6 +35,15 @@ public class MatrixCellDto {
   @Nullable
   @JsonProperty("lastChangedAt")
   private Instant lastChangedAt;
+
+  /** The version of a planned rollout; missing while nothing is planned. */
+  @Nullable
+  @JsonProperty("plannedVersion")
+  private String plannedVersion;
+
+  @Nullable
+  @JsonProperty("plannedFor")
+  private LocalDate plannedFor;
 
   /** latest, stable, 17-alpine — allowed, but worth a small warning. */
   @Nonnull

@@ -7,6 +7,7 @@ import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +44,20 @@ public class ComponentEnvironmentDto {
   @Nullable
   @JsonProperty("lastChangedAt")
   private Instant lastChangedAt;
+
+  @Nullable
+  @Schema(description = "The version a rollout is planned to; missing while nothing is planned.")
+  @JsonProperty("plannedVersion")
+  private String plannedVersion;
+
+  @Nullable
+  @Schema(description = "The day of the planned rollout.")
+  @JsonProperty("plannedFor")
+  private LocalDate plannedFor;
+
+  @Nullable
+  @JsonProperty("plannedNote")
+  private String plannedNote;
 
   @Nonnull
   @Schema(description = "Active, but no version recorded — a gap, which an inactive cell is not.")

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ComponentEnvironmentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentRequest;
+import one.epicsoft.vc.dto.RolloutPlanRequest;
 import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.facade.ComponentEnvironmentFacade;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -71,6 +73,26 @@ public class ComponentEnvironmentController {
   public ResponseEntity<ComponentEnvironmentDto> createOrUpdate(@RequestBody @Valid final ComponentEnvironmentRequest request) {
     log.debug("Incoming POST 'api/v1/component-environments' with: {}", request);
     return ResponseEntity.ok(this.componentEnvironmentFacade.createOrUpdate(request));
+  }
+
+  @Operation(summary = "Plan a rollout for a cell",
+             description = """
+                 Version, day and an optional note; a plan already there is replaced. The plan ends by itself once the \
+                 version, or a newer one, is recorded. Before that it is `ROLLOUT_PLANNED` on the task list, and \
+                 `ROLLOUT_OVERDUE` once the day has passed. Refused for an inactive cell and for the version already \
+                 recorded.""")
+  @PutMapping("/{id}/plan")
+  public ResponseEntity<ComponentEnvironmentDto> plan(@PathVariable final UUID id,
+                                                      @RequestBody @Valid final RolloutPlanRequest request) {
+    log.debug("Incoming PUT plan for component environment {}", id);
+    return ResponseEntity.ok(this.componentEnvironmentFacade.plan(id, request));
+  }
+
+  @Operation(summary = "Drop the rollout plan of a cell")
+  @DeleteMapping(path = "/{id}/plan", consumes = MediaType.ALL_VALUE)
+  public ResponseEntity<ComponentEnvironmentDto> unplan(@PathVariable final UUID id) {
+    log.debug("Incoming DELETE plan for component environment {}", id);
+    return ResponseEntity.ok(this.componentEnvironmentFacade.unplan(id));
   }
 
   @Operation(summary = "Delete a cell")

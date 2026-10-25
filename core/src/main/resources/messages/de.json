@@ -8,6 +8,7 @@
   "error.duplicateName": "Dieser Name ist bereits vergeben.",
   "error.duplicatePackage": "Ein Paket ist mehrfach aufgeführt.",
   "error.duplicateUpgradeStop": "Dieser Zwischenschritt ist bereits eingetragen.",
+  "error.holdReasonRequired": "Das Festhalten braucht einen Grund. Tragen Sie ihn als Notiz ein.",
   "error.inactiveCell": "Die Komponente ist in dieser Umgebung als nicht vorhanden markiert.",
   "error.invalidVersionRange": "Der Versionsbereich lässt sich nicht lesen. Erwartet wird die npm-Schreibweise, zum Beispiel >=14 <18.",
   "error.methodNotAllowed": "Diese Aktion ist hier nicht erlaubt.",
@@ -27,6 +28,8 @@
   "taskSection.EOL_EXCEEDED": "Support abgelaufen",
   "taskSection.EOL_WARNING": "Support endet bald",
   "taskSection.MOVING_TAG_IN_PRODUCTION": "Beweglicher Tag in Produktion",
+  "taskSection.ROLLOUT_OVERDUE": "Rollout überfällig",
+  "taskSection.ROLLOUT_PLANNED": "Rollout geplant",
   "taskSection.SNOOZE_EXPIRED": "Wiedervorlage fällig",
   "taskSection.UPDATE_OPEN": "Update offen"
 }

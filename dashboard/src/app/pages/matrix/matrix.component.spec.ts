@@ -7,11 +7,13 @@ import {HttpErrorResponse} from '@angular/common/http';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
+import {TaskRepo} from '../../repositories/api/task.repo';
 import {EnvironmentDto} from '../../repositories/dto/environment.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {MatrixCellState} from '../../repositories/dto/enums.dto';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
+import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {MatrixComponent} from './matrix.component';
 
@@ -27,6 +29,7 @@ describe('MatrixComponent', () => {
   let getMatrix: ReturnType<typeof vi.fn>;
   let findChecks: ReturnType<typeof vi.fn>;
   let findProjects: ReturnType<typeof vi.fn>;
+  let findDecisions: ReturnType<typeof vi.fn>;
 
   const cells = (): HTMLTableCellElement[] =>
     [...fixture.nativeElement.querySelectorAll('tbody tr:first-child td')] as HTMLTableCellElement[];
@@ -70,6 +73,7 @@ describe('MatrixComponent', () => {
     getMatrix = vi.fn();
     findChecks = vi.fn();
     findProjects = vi.fn().mockReturnValue(of([new ProjectDto({id: 'project-1', name: 'Platform'})]));
+    findDecisions = vi.fn().mockReturnValue(of([]));
     // The chosen project outlives a page; without this one test would choose for the next.
     localStorage.clear();
 
@@ -80,7 +84,8 @@ describe('MatrixComponent', () => {
         provideRouter([]),
         provideTranslateService({fallbackLang: 'en'}),
         {provide: ProjectRepo, useValue: {findAll: findProjects, getMatrix}},
-        {provide: UpdateCheckRepo, useValue: {findAllByProject: findChecks}}
+        {provide: UpdateCheckRepo, useValue: {findAllByProject: findChecks}},
+        {provide: TaskRepo, useValue: {findDecisionsByProject: findDecisions}}
       ]
     }).compileComponents();
 
@@ -91,7 +96,9 @@ describe('MatrixComponent', () => {
       'matrix.cell.unknownShort': '?',
       'matrix.movingTag': 'Moving tag',
       'matrix.updateAvailable': 'Update available',
-      'check.state.ERROR': 'Error'
+      'check.state.ERROR': 'Error',
+      'decisionState.HELD': 'Held',
+      'decisionState.PLANNED': 'Planned'
     });
   });
 
@@ -193,5 +200,29 @@ describe('MatrixComponent', () => {
     // wrong trade.
     expect(cells()[0].textContent).toContain('17.2');
     expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+  });
+
+  it('marks a held component and asks for no update', async () => {
+    findDecisions.mockReturnValue(of([
+      new UpdateDecisionDto({id: 'decision-1', componentId: 'component-1', state: 'HELD', note: 'Last free version',
+                             decidedAt: '2026-10-25T10:00:00Z'})
+    ]));
+
+    await render(matrix(cell('production', 'RECORDED', {currentVersion: '3.76.1'})),
+                 [new UpdateCheckDto({componentId: 'component-1', checkState: 'OK', latestVersion: '3.97.2',
+                                      checkedAt: '2026-10-25T05:00:00Z'})]);
+
+    // The row stays on its version on purpose; an arrow would call for an update nobody is going to make.
+    const available = cells().at(-1) as HTMLTableCellElement;
+    expect(available.textContent).toContain('Held');
+    expect(available.querySelector('[title="Last free version"]')).not.toBeNull();
+    expect(available.querySelector('[title="Update available"]')).toBeNull();
+  });
+
+  it('shows a planned rollout in its cell', async () => {
+    await render(matrix(cell('production', 'RECORDED', {currentVersion: '17.2', plannedVersion: '17.4',
+                                                        plannedFor: '2026-11-01'})));
+
+    expect(titles()[0]).toContain('Planned: 17.4');
   });
 });

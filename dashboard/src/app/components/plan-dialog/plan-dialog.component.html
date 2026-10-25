@@ -1,0 +1,40 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ 'plan.title' | translate }}</h5>
+  <button type="button" class="btn-close" (click)="cancel()"></button>
+</div>
+
+<div class="modal-body">
+  <p class="text-secondary small mb-3">
+    {{ componentName }} &middot; {{ environmentName }}
+    @if (cell.currentVersion) {
+      &middot; {{ 'versionChange.currentVersion' | translate }}: {{ cell.currentVersion }}
+    }
+  </p>
+
+  @if (errorMessage) {
+    <div class="alert alert-danger py-2">{{ errorMessage }}</div>
+  }
+
+  <div class="mb-3">
+    <label class="form-label" for="plannedVersion">{{ 'plan.field.version' | translate }}</label>
+    <input type="text" class="form-control" id="plannedVersion" name="plannedVersion" [(ngModel)]="version">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="plannedFor">{{ 'plan.field.date' | translate }}</label>
+    <input type="date" class="form-control" id="plannedFor" name="plannedFor" [(ngModel)]="day">
+  </div>
+
+  <div class="mb-1">
+    <label class="form-label" for="planNote">{{ 'decision.field.note' | translate }}</label>
+    <textarea class="form-control" id="planNote" name="planNote" rows="2" [(ngModel)]="note"></textarea>
+    <div class="form-text">{{ 'plan.hint' | translate }}</div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+  <button type="button" class="btn btn-primary" [disabled]="!canSave()" (click)="save()">
+    {{ 'common.save' | translate }}
+  </button>
+</div>

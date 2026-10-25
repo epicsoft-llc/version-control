@@ -61,7 +61,13 @@ monitoring stack, the Docker packages on a host. Sources it can check:
 | Manual | anything without a machine readable source; kept by hand, never an error state |
 
 On top of that it tracks end-of-life dates, records every change with a note, backup reference,
-rollback path and downtime, and remembers why an available update was deliberately postponed.
+rollback path and downtime, and remembers why an available update was deliberately postponed — or why a
+component is held on its version for good. Rollouts can be planned per environment and leave the task
+list by themselves once the version is recorded; one that misses its day comes back as overdue. Every
+change to a component's settings, decisions and plans is logged, and the task list ends with the latest of them.
+
+Before an upgrade, the proposal lists every version between the running one and the target, each linked to
+its release notes — reading those for breaking changes is the slow part of every update.
 
 Once a day it reports what is new — to a Telegram chat, by mail through any SMTP server, or both,
 whichever is configured. On a day without news it sends nothing.

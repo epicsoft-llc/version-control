@@ -56,6 +56,11 @@ export class DecisionDialogComponent implements OnDestroy {
     return this.state === 'POSTPONED';
   }
 
+  /** A hold stays for good; without the reason nobody dares to lift it later. */
+  protected needsReason(): boolean {
+    return this.state === 'HELD';
+  }
+
   /** Today, so the date field cannot offer a day that is already over. */
   protected today(): string {
     const now = new Date();
@@ -63,7 +68,7 @@ export class DecisionDialogComponent implements OnDestroy {
   }
 
   protected canSave(): boolean {
-    return !this.saving && (!this.needsDate() || nonBlank(this.snoozeUntil));
+    return !this.saving && (!this.needsDate() || nonBlank(this.snoozeUntil)) && (!this.needsReason() || nonBlank(this.note));
   }
 
   protected save(): void {

@@ -53,6 +53,13 @@ public class UpgradeProposalDto {
   @JsonProperty("stops")
   private List<UpgradeStopDto> stops;
 
+  @Nonnull
+  @Schema(description = """
+      Every version after the running one up to the target — up to `beyond` where there is no target — oldest \
+      first, with its release notes: the list to read for breaking changes before the step.""")
+  @JsonProperty("releases")
+  private List<ReleaseLinkDto> releases;
+
   /** From the component: what to read and whether a window is needed. */
   @Nullable
   @JsonProperty("upgradePathNotes")

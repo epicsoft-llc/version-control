@@ -8,8 +8,10 @@ import {TranslatePipe} from '@ngx-translate/core';
 import {catchError, of, Subject, Subscription, switchMap, tap} from 'rxjs';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {TaskEntryDto, TaskListDto, TaskSection} from '../../repositories/dto/task.dto';
+import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
+import {ComponentChangeRepo} from '../../repositories/api/component-change.repo';
 import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
@@ -39,6 +41,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   private readonly projectRepo: ProjectRepo = inject(ProjectRepo);
   private readonly taskRepo: TaskRepo = inject(TaskRepo);
+  private readonly componentChangeRepo: ComponentChangeRepo = inject(ComponentChangeRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
   private readonly modal: NgbModal = inject(NgbModal);
   private readonly subs: Subscription[] = [];
@@ -48,6 +51,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   protected projects: ProjectDto[] = [];
   protected selectedProjectId?: string;
   protected list?: TaskListDto;
+  /** What was changed lately in the project, so a reader who looks in now and then sees what happened. */
+  protected changes: ComponentChangeDto[] = [];
   protected loading = true;
   protected errorMessage?: string;
 
@@ -56,6 +61,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       tap((projectId) => {
         this.selectedProjectId = projectId;
         this.list = undefined;
+        this.changes = [];
         this.loading = true;
         this.errorMessage = undefined;
       }),
@@ -66,6 +72,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     ).subscribe((list) => {
       this.list = list;
       this.loading = false;
+    }));
+
+    // A pipeline of its own: the list must neither wait for the changes nor fail with them.
+    this.subs.push(this.selection.pipe(
+      switchMap((projectId) => this.componentChangeRepo.findRecentByProject(projectId, 15).pipe(catchError(() => of([]))))
+    ).subscribe((changes) => {
+      this.changes = changes;
     }));
 
     this.subs.push(this.projectRepo.findAll().subscribe({
@@ -101,6 +114,11 @@ export class TasksComponent implements OnInit, OnDestroy {
    */
   protected decidable(section: TaskSection): boolean {
     return section === 'UPDATE_OPEN' || section === 'SNOOZE_EXPIRED' || section === 'BLOCKED';
+  }
+
+  /** A plan carries the day it is planned for where the other sections say since when. */
+  protected planned(section: TaskSection): boolean {
+    return section === 'ROLLOUT_OVERDUE' || section === 'ROLLOUT_PLANNED';
   }
 
   protected openDecision(entry: TaskEntryDto): void {

@@ -65,6 +65,7 @@ public class ComponentFacade {
   private final ComponentDependencyMapper componentDependencyMapper;
   private final ConstraintEvaluator constraintEvaluator;
   private final UpdateCheckFacade updateCheckFacade;
+  private final ComponentChangeFacade componentChangeFacade;
   private final JsonMapper jsonMapper;
   private final Validator validator;
 
@@ -95,6 +96,7 @@ public class ComponentFacade {
     this.applyUpgradeStops(saved, request.getUpgradeStops());
     this.applyDependencies(saved, request.getDependencies());
     this.applyPackages(saved, request.getPackages());
+    this.componentChangeFacade.recordCreated(saved);
     return this.toDtos(List.of(saved)).getFirst();
   }
 
@@ -111,12 +113,14 @@ public class ComponentFacade {
       throw AppConflictException.duplicateName("Component", request.getName());
     }
     final List<Object> ruleBefore = ruleOf(entity);
+    final Map<String, String> before = this.componentChangeFacade.snapshot(entity);
     this.componentMapper.updateEntity(entity, request);
     normalise(entity);
     final ComponentEntity saved = this.componentService.save(entity);
     this.applyUpgradeStops(saved, request.getUpgradeStops());
     this.applyDependencies(saved, request.getDependencies());
     this.applyPackages(saved, request.getPackages());
+    this.componentChangeFacade.recordDifferences(saved, before, this.componentChangeFacade.snapshot(saved));
     if (nonEquals(ruleBefore, ruleOf(saved))) {
       this.updateCheckFacade.reapplyRule(saved.getId());
     }

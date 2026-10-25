@@ -16,12 +16,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
     - `EOL_EXCEEDED`: out of support, or past the escalation threshold.
     - `DEPENDENCY_VIOLATED`: a dependency that is violated right now.
+    - `ROLLOUT_OVERDUE`: a rollout planned for one environment, and its day has passed.
     - `UPDATE_OPEN`: a newer version is available and nothing is decided.
     - `SNOOZE_EXPIRED`: postponed, and the date it was postponed to has passed.
     - `BLOCKED`: blocked by another component; the entry names it.
     - `CHECK_ERROR`: the check has been failing longer than the grace period.
     - `MOVING_TAG_IN_PRODUCTION`: a tag that moves, running in a production environment.
     - `EOL_WARNING`: support ends within the warning threshold.
+    - `ROLLOUT_PLANNED`: a rollout planned for one environment, still ahead; for information.
     """)
 public enum TaskSection {
 
@@ -30,6 +32,9 @@ public enum TaskSection {
 
   /** A dependency that is violated right now. */
   DEPENDENCY_VIOLATED,
+
+  /** A planned rollout whose day has passed without the version being recorded. */
+  ROLLOUT_OVERDUE,
 
   /** A newer version is available and nobody has decided anything. */
   UPDATE_OPEN,
@@ -47,5 +52,8 @@ public enum TaskSection {
   MOVING_TAG_IN_PRODUCTION,
 
   /** Support ends within the warning threshold. */
-  EOL_WARNING
+  EOL_WARNING,
+
+  /** A planned rollout still ahead — last, because it needs nothing today. */
+  ROLLOUT_PLANNED
 }

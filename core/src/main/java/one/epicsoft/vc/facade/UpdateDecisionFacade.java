@@ -31,7 +31,8 @@ import static one.epicsoft.vc.util.VcUtil.nonBlank;
  *
  * <p>One row per component, overwritten. The decision records the version it was
  * about, and the check reopens it when a newer one shows up — a postponement is
- * a statement about one version, never a standing order.
+ * a statement about one version, never a standing order. A hold is the one
+ * standing order, and it has to say why.
  */
 @Slf4j
 @Service
@@ -43,6 +44,7 @@ public class UpdateDecisionFacade {
   private final ComponentService componentService;
   private final ProjectService projectService;
   private final UpdateDecisionMapper updateDecisionMapper;
+  private final ComponentChangeFacade componentChangeFacade;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
@@ -80,9 +82,15 @@ public class UpdateDecisionFacade {
       // list before the reader has finished reading the dialog.
       throw AppValidationException.snoozeDateRequired(request.getComponentId());
     }
+    if (DecisionState.HELD.equals(request.getState()) && !nonBlank(request.getNote())) {
+      // A hold without a reason is the frozen component nobody dares to touch
+      // three years later, because nobody remembers why.
+      throw AppValidationException.holdReasonRequired(request.getComponentId());
+    }
 
     final UpdateDecisionEntity decision = this.updateDecisionService.findByComponent(component.getId())
                                               .orElseGet(() -> newDecision(component));
+    final DecisionState before = decision.getState();
     decision.setState(request.getState());
     decision.setSnoozeUntil(request.getSnoozeUntil());
     decision.setNote(request.getNote());
@@ -94,6 +102,7 @@ public class UpdateDecisionFacade {
                                       .orElse(null));
 
     final UpdateDecisionEntity saved = this.updateDecisionService.save(decision);
+    this.componentChangeFacade.recordDecision(component, before, saved.getState(), saved.getNote());
     log.info("Recorded decision {} for component {}", saved.getState(), component.getId());
     return this.updateDecisionMapper.toDto(saved);
   }
@@ -114,7 +123,7 @@ public class UpdateDecisionFacade {
       return false;
     }
     final UpdateDecisionEntity decision = stored.get();
-    if (DecisionState.OPEN.equals(decision.getState())) {
+    if (DecisionState.OPEN.equals(decision.getState()) || DecisionState.HELD.equals(decision.getState())) {
       return false;
     }
     // A decision taken while nothing was available covers nothing; the first
@@ -129,6 +138,7 @@ public class UpdateDecisionFacade {
     }
     log.info("Reopening decision for component {}: {} supersedes {}", componentId, latestVersion,
              decision.getDecidedForVersion());
+    this.componentChangeFacade.recordDecision(decision.getComponent(), decision.getState(), DecisionState.OPEN, null);
     decision.setState(DecisionState.OPEN);
     decision.setSnoozeUntil(null);
     decision.setDecidedForVersion(null);

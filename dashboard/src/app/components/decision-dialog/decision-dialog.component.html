@@ -36,6 +36,9 @@
   <div class="mb-3">
     <label class="form-label" for="decisionNote">{{ 'decision.field.note' | translate }}</label>
     <textarea class="form-control" id="decisionNote" name="decisionNote" rows="3" [(ngModel)]="note"></textarea>
+    @if (needsReason()) {
+      <div class="form-text">{{ 'decision.heldHint' | translate }}</div>
+    }
   </div>
 
   <div class="mb-1">

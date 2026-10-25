@@ -34,6 +34,8 @@ export class ComponentDto {
   public maxStep!: MaxStep;
   public upgradePathNotes?: string;
   public upgradeDocUrl?: string;
+  /** Where the release notes of one version are; `{version}` stands for the tag. */
+  public releaseNotesUrl?: string;
   public needsMaintenanceWindow!: boolean;
   public eolProduct?: string;
   public eolCycle?: string;
@@ -77,6 +79,7 @@ export class ComponentRequest {
   public maxStep?: MaxStep;
   public upgradePathNotes?: string;
   public upgradeDocUrl?: string;
+  public releaseNotesUrl?: string;
   public needsMaintenanceWindow?: boolean;
   public eolProduct?: string;
   public eolCycle?: string;

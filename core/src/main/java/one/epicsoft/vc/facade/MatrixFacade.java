@@ -144,6 +144,8 @@ public class MatrixFacade {
     }
     dto.setCurrentVersion(cell.getCurrentVersion());
     dto.setLastChangedAt(cell.getLastChangedAt());
+    dto.setPlannedVersion(cell.getPlannedVersion());
+    dto.setPlannedFor(cell.getPlannedFor());
     dto.setMovingTag(cell.isMovingTag());
     dto.setDeviating(nonNull(reference) && nonBlank(cell.getCurrentVersion())
                      && nonEquals(reference, cell.getCurrentVersion()));

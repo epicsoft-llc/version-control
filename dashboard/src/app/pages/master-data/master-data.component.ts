@@ -103,6 +103,8 @@ export class MasterDataComponent implements OnInit, OnDestroy {
   protected environmentForm?: EnvironmentRequest;
   protected environmentFormId?: string;
   protected componentForm?: ComponentRequest;
+  /** The placeholder of the release notes field: a URL with its {version}, which is no text to translate. */
+  protected readonly releaseNotesExample = 'https://github.com/traefik/traefik/releases/tag/v{version}';
   protected componentFormId?: string;
   protected packageRows: PackageRow[] = [];
   protected stopRows: StopRow[] = [];
@@ -271,6 +273,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
       maxStep: component.maxStep,
       upgradePathNotes: component.upgradePathNotes,
       upgradeDocUrl: component.upgradeDocUrl,
+      releaseNotesUrl: component.releaseNotesUrl,
       needsMaintenanceWindow: component.needsMaintenanceWindow,
       eolProduct: component.eolProduct,
       eolCycle: component.eolCycle,

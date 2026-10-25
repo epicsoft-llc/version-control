@@ -110,6 +110,15 @@ public class ComponentRequest {
   private String upgradeDocUrl;
 
   @Nullable
+  @Size(max = 500)
+  @Schema(description = """
+      Where the release notes of one version are, with `{version}` standing for the tag — such as \
+      `https://github.com/traefik/traefik/releases/tag/{version}`. Not needed for `GITHUB_RELEASE`, whose releases \
+      are linked by themselves.""")
+  @JsonProperty("releaseNotesUrl")
+  private String releaseNotesUrl;
+
+  @Nullable
   @Schema(description = "Whether an update needs a maintenance window; left out means false.")
   @JsonProperty("needsMaintenanceWindow")
   private Boolean needsMaintenanceWindow;

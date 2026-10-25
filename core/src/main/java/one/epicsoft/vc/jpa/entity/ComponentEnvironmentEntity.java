@@ -15,12 +15,16 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.version.TagRule;
+import one.epicsoft.vc.version.VersionComparison;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Objects.isNull;
+import static one.epicsoft.vc.util.VcUtil.isEquals;
 import static one.epicsoft.vc.util.VcUtil.isTrue;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
 
@@ -53,6 +57,19 @@ public class ComponentEnvironmentEntity extends AbstractDeletableEntity {
   @Nullable
   @Column(name = "last_changed_at")
   private Instant lastChangedAt;
+
+  /** The version a rollout is planned to; null while nothing is planned. */
+  @Nullable
+  @Column(name = "planned_version", length = 200)
+  private String plannedVersion;
+
+  @Nullable
+  @Column(name = "planned_for")
+  private LocalDate plannedFor;
+
+  @Nullable
+  @Column(name = "planned_note", columnDefinition = "TEXT")
+  private String plannedNote;
 
   @Nonnull
   @ToString.Exclude
@@ -107,6 +124,23 @@ public class ComponentEnvironmentEntity extends AbstractDeletableEntity {
    */
   public boolean isMovingTag() {
     return TagRule.isMovingTag(this.currentVersion);
+  }
+
+  public boolean hasPlan() {
+    return nonBlank(this.plannedVersion);
+  }
+
+  /** The planned version or a newer one is recorded — the plan has done its job. */
+  public boolean isPlanReached(@Nonnull final VersionStrategy strategy) {
+    return this.hasPlan() && nonBlank(this.currentVersion)
+           && (isEquals(this.currentVersion, this.plannedVersion)
+               || !VersionComparison.isBehind(this.currentVersion, this.plannedVersion, strategy));
+  }
+
+  public void clearPlan() {
+    this.plannedVersion = null;
+    this.plannedFor = null;
+    this.plannedNote = null;
   }
 
   // #### Custom Getter and Setter
