@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.6.0.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.6.1.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
@@ -36,7 +36,7 @@ rollouts come last, and the latest changes to the inventory close the page.
 The matrix is the second view: one row per component, one column per environment, and the newest
 available version at the end. Rows whose environments disagree are marked, a cell that is deliberately
 empty (`–`) is not the same as one nobody has filled in. A held component carries a lock, one that
-updates itself a circular arrow, a planned rollout a calendar.
+updates itself a circular arrow instead of its versions, a planned rollout a calendar.
 
 ![Version matrix](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/matrix.jpg)
 

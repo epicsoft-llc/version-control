@@ -101,6 +101,8 @@ describe('ComponentDetailComponent', () => {
       'constraintState.SATISFIED': 'Satisfied',
       'matrix.cell.unknown': 'Unknown',
       'decisionState.HELD': 'Held',
+      'matrix.cell.autoUpdate': 'Updates itself',
+      'component.action.changeVersion': 'Change version',
       'decisionState.PLANNED': 'Planned',
       'proposal.releases': 'Versions on the way'
     });
@@ -183,6 +185,18 @@ describe('ComponentDetailComponent', () => {
     // The reason is the point of a hold: without it nobody dares to lift it later.
     expect(text()).toContain('Held');
     expect(text()).toContain('Last free version');
+  });
+
+  it('shows no version, proposal or version buttons for a component that updates itself', async () => {
+    repos['findDecisions'].mockReturnValue(of([
+      new UpdateDecisionDto({id: 'decision-1', componentId: 'component-1', state: 'AUTO_UPDATE', decidedAt: '2026-10-25T10:00:00Z'})
+    ]));
+
+    await render();
+
+    expect(text()).not.toContain('17.2');
+    expect(text()).toContain('Updates itself');
+    expect(text()).not.toContain('Change version');
   });
 
   it('shows the rollout planned for an environment', async () => {

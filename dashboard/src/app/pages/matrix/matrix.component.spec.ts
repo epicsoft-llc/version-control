@@ -236,6 +236,20 @@ describe('MatrixComponent', () => {
     expect(available.querySelector('[title="Update available"]')).toBeNull();
   });
 
+  it('shows no version for a component that updates itself', async () => {
+    findDecisions.mockReturnValue(of([
+      new UpdateDecisionDto({id: 'decision-1', componentId: 'component-1', state: 'AUTO_UPDATE', decidedAt: '2026-10-25T10:00:00Z'})
+    ]));
+
+    await render(matrix(cell('production', 'RECORDED', {currentVersion: '1.104.1', deviating: true})));
+
+    // What was recorded last is not what runs, and two hosts a day apart are no deviation.
+    const production = cells()[0];
+    expect(production.textContent).not.toContain('1.104.1');
+    expect(production.querySelector('.bi-arrow-repeat')).not.toBeNull();
+    expect(production.classList.contains('table-warning')).toBe(false);
+  });
+
   it('shows a planned rollout in its cell', async () => {
     await render(matrix(cell('production', 'RECORDED', {currentVersion: '17.2', plannedVersion: '17.4',
                                                         plannedFor: '2026-11-01'})));

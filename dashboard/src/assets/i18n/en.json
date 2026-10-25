@@ -104,6 +104,7 @@
   "masterData.stops.add": "Add intermediate version",
   "masterData.stops.hint": "Versions that must not be skipped during upgrade.",
   "masterData.stops.note": "Note",
+  "matrix.cell.autoUpdate": "Updates itself – the version is not kept here",
   "matrix.cell.inactive": "Not present here",
   "matrix.cell.notRecorded": "Not set up",
   "matrix.cell.unknown": "Version not recorded",
