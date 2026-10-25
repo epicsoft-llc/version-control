@@ -276,6 +276,10 @@ concatenating strings. DTOs are plain classes with a `constructor(init?: Partial
 No user-visible literal in a template or a component. Every string is a translation key, resolved with
 the `translate` pipe or `TranslateService`. See [`docs/i18n.md`](docs/i18n.md).
 
+Dates go through the `localDate` pipe, never Angular's `date`: that one formats in the `LOCALE_ID` fixed
+at startup and ignores the language the reader chose. A new language brings its locale data to
+`libs/pipes/local-date.pipe.ts`; a test fails for a language of the environment without it.
+
 ### Dependency versions
 
 **Every version in `package.json` is exact — `"22.1.4"`, never `"^22.1.4"` or `"~22.1.4"`.** A range

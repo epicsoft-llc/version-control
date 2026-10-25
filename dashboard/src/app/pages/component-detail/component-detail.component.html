@@ -86,7 +86,7 @@
             <vc-copy-value [value]="check.latestVersion" />
           }
           @if (check.latestReleasedAt) {
-            <span class="text-secondary ms-1">({{ check.latestReleasedAt | date: 'mediumDate' }})</span>
+            <span class="text-secondary ms-1">({{ check.latestReleasedAt | localDate: 'mediumDate' }})</span>
           }
         </dd>
 
@@ -105,7 +105,7 @@
         }
 
         <dt class="col-sm-3">{{ 'check.field.checkedAt' | translate }}</dt>
-        <dd class="col-sm-9">{{ check.checkedAt | date: 'medium' }}</dd>
+        <dd class="col-sm-9">{{ check.checkedAt | localDate: 'medium' }}</dd>
 
         @if (check.checkState === 'ERROR') {
           <dt class="col-sm-3">{{ 'check.field.errorMessage' | translate }}</dt>
@@ -113,7 +113,7 @@
             <span class="text-danger-emphasis">{{ check.errorMessage }}</span>
             @if (check.lastSuccessfulCheckAt) {
               <div class="text-secondary">
-                {{ 'check.lastSuccess' | translate }}: {{ check.lastSuccessfulCheckAt | date: 'medium' }}
+                {{ 'check.lastSuccess' | translate }}: {{ check.lastSuccessfulCheckAt | localDate: 'medium' }}
               </div>
             }
           </dd>
@@ -138,14 +138,14 @@
       <dl class="row mb-0 small">
         <dt class="col-sm-3">{{ 'eol.field.eolDate' | translate }}</dt>
         <dd class="col-sm-9">
-          {{ (eol.eolDate | date: 'mediumDate') || dash }}
+          {{ (eol.eolDate | localDate: 'mediumDate') || dash }}
           @if (eol.eol) {
             <span class="badge text-bg-danger ms-1">{{ 'eol.over' | translate }}</span>
           }
         </dd>
         @if (eol.supportedUntil) {
           <dt class="col-sm-3">{{ 'eol.field.supportedUntil' | translate }}</dt>
-          <dd class="col-sm-9">{{ eol.supportedUntil | date: 'mediumDate' }}</dd>
+          <dd class="col-sm-9">{{ eol.supportedUntil | localDate: 'mediumDate' }}</dd>
         }
       </dl>
     </section>
@@ -338,7 +338,7 @@
                 @if (row.cell.plannedVersion) {
                   <div class="small text-secondary">
                     <i class="bi bi-calendar-event me-1"></i>{{ 'decisionState.PLANNED' | translate }}:
-                    {{ row.cell.plannedVersion }} &middot; {{ row.cell.plannedFor | date: 'mediumDate' }}
+                    {{ row.cell.plannedVersion }} &middot; {{ row.cell.plannedFor | localDate: 'mediumDate' }}
                     @if (row.cell.plannedNote) {
                       &middot; {{ row.cell.plannedNote }}
                     }
@@ -350,7 +350,7 @@
                 <span class="text-secondary opacity-50">{{ 'matrix.cell.notRecorded' | translate }}</span>
               }
             </td>
-            <td class="text-secondary small">{{ row.cell?.lastChangedAt | date: 'medium' }}</td>
+            <td class="text-secondary small">{{ row.cell?.lastChangedAt | localDate: 'medium' }}</td>
             <td class="text-end">
               @if (row.cell && row.cell.active) {
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
@@ -399,7 +399,7 @@
           <tbody>
             @for (entry of history; track entry.id) {
               <tr>
-                <td class="text-nowrap">{{ entry.changedAt | date: 'short' }}</td>
+                <td class="text-nowrap">{{ entry.changedAt | localDate: 'short' }}</td>
                 <td>{{ environmentName(entry.environmentId) }}</td>
                 <td class="text-nowrap">
                   @if (entry.fromVersion) {
@@ -459,7 +459,7 @@
           <tbody>
             @for (change of changes; track change.id) {
               <tr>
-                <td class="text-nowrap">{{ change.changedAt | date: 'short' }}</td>
+                <td class="text-nowrap">{{ change.changedAt | localDate: 'short' }}</td>
                 <!-- The field by its API name: the log describes data, and the same name is in the API description. -->
                 <td><code>{{ change.field }}</code></td>
                 <td class="text-secondary">{{ change.oldValue ?? dash }}</td>
