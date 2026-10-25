@@ -23,6 +23,17 @@ export class UpgradeStopRequest {
   }
 }
 
+/** A version on the way to the target, with its release notes where the component says where they are. */
+export class ReleaseLinkDto {
+
+  public version!: string;
+  public url?: string;
+
+  constructor(init?: Partial<ReleaseLinkDto>) {
+    Object.assign(this, init);
+  }
+}
+
 /**
  * What can be done in one environment, and what merely exists beyond it.
  *
@@ -41,6 +52,8 @@ export class UpgradeProposalDto {
   public target?: string;
   public beyond?: string;
   public stops: UpgradeStopDto[] = [];
+  /** Every version after the running one up to the target, oldest first. */
+  public releases: ReleaseLinkDto[] = [];
   public upgradePathNotes?: string;
   public upgradeDocUrl?: string;
   public needsMaintenanceWindow!: boolean;

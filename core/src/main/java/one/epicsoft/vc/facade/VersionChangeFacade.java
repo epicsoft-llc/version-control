@@ -59,6 +59,7 @@ public class VersionChangeFacade {
   private final ComponentService componentService;
   private final ProjectService projectService;
   private final VersionChangeMapper versionChangeMapper;
+  private final ComponentEnvironmentFacade componentEnvironmentFacade;
 
   /**
    * The three list methods read what they filter by first. An unknown or deleted
@@ -134,6 +135,7 @@ public class VersionChangeFacade {
                                    : this.applyPackageVersions(cell, configured, packages);
 
     cell.setLastChangedAt(changedAt);
+    this.componentEnvironmentFacade.endPlanIfReached(cell);
     this.componentEnvironmentService.save(cell);
 
     final VersionChangeEntity entity = new VersionChangeEntity();

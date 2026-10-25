@@ -7,6 +7,8 @@ import {HttpErrorResponse} from '@angular/common/http';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
+import {ComponentChangeRepo} from '../../repositories/api/component-change.repo';
+import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {DependencyCheckDto} from '../../repositories/dto/dependency.dto';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {TaskEntryDto, TaskListDto, TaskSection, TaskSectionDto} from '../../repositories/dto/task.dto';
@@ -23,6 +25,7 @@ describe('TasksComponent', () => {
 
   let fixture: ComponentFixture<TasksComponent>;
   let getByProject: ReturnType<typeof vi.fn>;
+  let findRecentChanges: ReturnType<typeof vi.fn>;
 
   const text = (): string => fixture.nativeElement.textContent as string;
 
@@ -53,6 +56,7 @@ describe('TasksComponent', () => {
 
   beforeEach(async () => {
     getByProject = vi.fn();
+    findRecentChanges = vi.fn().mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [TasksComponent],
@@ -64,7 +68,8 @@ describe('TasksComponent', () => {
         provideRouter([]),
         provideTranslateService({fallbackLang: 'en'}),
         {provide: ProjectRepo, useValue: {findAll: () => of([new ProjectDto({id: 'project-1', name: 'Platform'})])}},
-        {provide: TaskRepo, useValue: {getByProject}}
+        {provide: TaskRepo, useValue: {getByProject}},
+        {provide: ComponentChangeRepo, useValue: {findRecentByProject: findRecentChanges}}
       ]
     }).compileComponents();
 
@@ -77,7 +82,11 @@ describe('TasksComponent', () => {
       'taskSection.EOL_WARNING': 'Support ends soon',
       'tasks.action.decide': 'Decide',
       'dependency.needs': 'needs',
-      'constraintState.VIOLATED': 'Violated'
+      'constraintState.VIOLATED': 'Violated',
+      'taskSection.ROLLOUT_PLANNED': 'Rollout planned',
+      'plan.field.date': 'Planned for',
+      'tasks.since': 'Since',
+      'tasks.recentChanges': 'Latest changes'
     });
   });
 
@@ -168,5 +177,33 @@ describe('TasksComponent', () => {
     expect(fixture.nativeElement.querySelector('.alert-danger')).not.toBeNull();
     expect(text()).toContain('Service unavailable');
     expect(rows().length).toBe(0);
+  });
+
+  it('shows a planned rollout with its day, and offers no decision for it', async () => {
+    await render(list(['ROLLOUT_PLANNED', [entry('Nexus', {environmentName: 'Production', currentVersion: '3.76.1',
+                                                          latestVersion: '3.77.0', since: '2026-11-01T12:00:00Z'})]]));
+
+    // The plan is the answer already; a decide button would ask the same question again. The copy buttons
+    // beside the two versions are buttons too, so the decision is looked for by its label.
+    expect(decideButtons().some((button) => button.textContent?.includes('Decide'))).toBe(false);
+    const row = rows()[0].textContent ?? '';
+    expect(row).toContain('3.77.0');
+    expect(row).toContain('Planned for');
+    expect(row).not.toContain('Since');
+  });
+
+  it('lists the latest changes of the project below the tasks', async () => {
+    findRecentChanges.mockReturnValue(of([
+      new ComponentChangeDto({id: 'change-1', componentId: 'component-Nexus', componentName: 'Nexus',
+                              changedAt: '2026-10-25T10:00:00Z', field: 'decision', oldValue: 'SKIPPED', newValue: 'HELD'})
+    ]));
+
+    await render(list());
+
+    // For a reader who looks in now and then: what happened since.
+    expect(text()).toContain('Latest changes');
+    expect(text()).toContain('Nexus');
+    expect(text()).toContain('SKIPPED');
+    expect(text()).toContain('HELD');
   });
 });

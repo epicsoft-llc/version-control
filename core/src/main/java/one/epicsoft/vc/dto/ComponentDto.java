@@ -79,6 +79,10 @@ public class ComponentDto {
   @JsonProperty("upgradeDocUrl")
   private String upgradeDocUrl;
 
+  @Nullable
+  @JsonProperty("releaseNotesUrl")
+  private String releaseNotesUrl;
+
   @Nonnull
   @JsonProperty("needsMaintenanceWindow")
   private Boolean needsMaintenanceWindow;

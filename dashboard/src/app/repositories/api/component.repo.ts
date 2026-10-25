@@ -5,6 +5,7 @@ import {UrlBuilder} from '../item/url.item';
 import {ComponentDto, ComponentRequest} from '../dto/component.dto';
 import {UpgradeProposalDto} from '../dto/upgrade.dto';
 import {DependencyCheckDto} from '../dto/dependency.dto';
+import {ComponentChangeDto} from '../dto/component-change.dto';
 
 @Injectable({providedIn: 'root'})
 export class ComponentRepo {
@@ -15,6 +16,7 @@ export class ComponentRepo {
   private readonly pathOne = '/v1/components/{id}';
   private readonly pathProposals = '/v1/components/{id}/proposals';
   private readonly pathDependencies = '/v1/components/{id}/dependencies';
+  private readonly pathChanges = '/v1/components/{id}/changes';
 
   public findAllByProject(projectId: string): Observable<ComponentDto[]> {
     return this.http.get<ComponentDto[]>(UrlBuilder.builder()
@@ -44,6 +46,14 @@ export class ComponentRepo {
                                                          .addPath(this.pathDependencies)
                                                          .addParam('id', id)
                                                          .addQuery('dependents', dependents)
+                                                         .build().getUrl());
+  }
+
+  /** Master data, decisions and rollout plans, newest first; version changes have their own history. */
+  public getChanges(id: string): Observable<ComponentChangeDto[]> {
+    return this.http.get<ComponentChangeDto[]>(UrlBuilder.builder()
+                                                         .addPath(this.pathChanges)
+                                                         .addParam('id', id)
                                                          .build().getUrl());
   }
 

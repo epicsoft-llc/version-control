@@ -29,6 +29,14 @@ export class TaskRepo {
                                                         .build().getUrl());
   }
 
+  /** Every decision in a project, so the matrix can tell a held component from one that is merely behind. */
+  public findDecisionsByProject(projectId: string): Observable<UpdateDecisionDto[]> {
+    return this.http.get<UpdateDecisionDto[]>(UrlBuilder.builder()
+                                                        .addPath(this.pathDecisions)
+                                                        .addQuery('projectId', projectId)
+                                                        .build().getUrl());
+  }
+
   public decide(request: UpdateDecisionRequest): Observable<UpdateDecisionDto> {
     return this.http.post<UpdateDecisionDto>(UrlBuilder.builder().addPath(this.pathDecisions).build().getUrl(),
                                              request);

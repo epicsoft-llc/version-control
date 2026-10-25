@@ -44,6 +44,7 @@ public interface ComponentMapper {
   @Mapping(target = "maxStep", source = "maxStep", defaultValue = "MINOR")
   @Mapping(target = "upgradePathNotes", source = "upgradePathNotes")
   @Mapping(target = "upgradeDocUrl", source = "upgradeDocUrl")
+  @Mapping(target = "releaseNotesUrl", source = "releaseNotesUrl")
   @Mapping(target = "needsMaintenanceWindow", source = "needsMaintenanceWindow", defaultValue = "false")
   @Mapping(target = "eolProduct", source = "eolProduct")
   @Mapping(target = "eolCycle", source = "eolCycle")

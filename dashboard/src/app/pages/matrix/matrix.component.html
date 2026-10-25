@@ -68,6 +68,10 @@
                       <i class="bi bi-exclamation-triangle text-warning ms-1"
                          [title]="'matrix.movingTag' | translate"></i>
                     }
+                    @if (cell.plannedVersion) {
+                      <i class="bi bi-calendar-event text-primary ms-1"
+                         [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | date: 'mediumDate')"></i>
+                    }
                   }
                   @case ('UNKNOWN') {
                     <button type="button"
@@ -88,6 +92,11 @@
             }
 
             <td class="border-start">
+              @if (heldOf(row.componentId); as hold) {
+                <span class="badge text-bg-dark me-1" [title]="hold.note ?? ''">
+                  <i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}
+                </span>
+              }
               @if (checkOf(row.componentId); as check) {
                 @switch (check.checkState) {
                   @case ('OK') {

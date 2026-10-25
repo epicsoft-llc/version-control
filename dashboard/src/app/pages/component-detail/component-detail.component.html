@@ -6,6 +6,9 @@
   <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
     <h1 class="h4 mb-0">{{ component.name }}</h1>
     <span class="badge text-bg-secondary">{{ 'sourceType.' + component.sourceType | translate }}</span>
+    @if (held()) {
+      <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}</span>
+    }
   </div>
   <p class="text-secondary">
     <a routerLink="/matrix">{{ 'nav.matrix' | translate }}</a>
@@ -13,6 +16,9 @@
       <span class="ms-2">{{ component.description }}</span>
     }
   </p>
+  @if (held() && decision?.note) {
+    <p class="small"><i class="bi bi-lock-fill text-secondary me-1"></i>{{ decision.note }}</p>
+  }
 
   <section class="mb-4">
     <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.source' | translate }}</h2>
@@ -50,6 +56,9 @@
       <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'check.section' | translate }}</h2>
       <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="checking" (click)="checkNow()">
         {{ 'check.action.checkNow' | translate }}
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openDecision()">
+        {{ 'tasks.action.decide' | translate }}
       </button>
     </div>
 
@@ -197,9 +206,21 @@
                 }
               </td>
             </tr>
-            @if (proposal.stops.length > 0 || proposal.upgradePathNotes || proposal.upgradeDocUrl) {
+            @if (proposal.releases.length > 0 || proposal.stops.length > 0 || proposal.upgradePathNotes || proposal.upgradeDocUrl) {
               <tr>
                 <td colspan="4" class="small">
+                  @if (proposal.releases.length > 0) {
+                    <div>
+                      <span class="text-secondary">{{ 'proposal.releases' | translate }}:</span>
+                      @for (release of proposal.releases; track release.version) {
+                        @if (release.url) {
+                          <a class="ms-1" [href]="release.url" target="_blank" rel="noopener"><code>{{ release.version }}</code></a>
+                        } @else {
+                          <code class="ms-1">{{ release.version }}</code>
+                        }
+                      }
+                    </div>
+                  }
                   @if (proposal.stops.length > 0) {
                     <div>
                       <span class="text-secondary">{{ 'proposal.stops' | translate }}:</span>
@@ -310,6 +331,15 @@
                 } @else {
                   <span class="text-secondary fst-italic">{{ 'matrix.cell.unknown' | translate }}</span>
                 }
+                @if (row.cell.plannedVersion) {
+                  <div class="small text-secondary">
+                    <i class="bi bi-calendar-event me-1"></i>{{ 'decisionState.PLANNED' | translate }}:
+                    {{ row.cell.plannedVersion }} &middot; {{ row.cell.plannedFor | date: 'mediumDate' }}
+                    @if (row.cell.plannedNote) {
+                      &middot; {{ row.cell.plannedNote }}
+                    }
+                  </div>
+                }
               } @else if (row.cell) {
                 <span class="text-secondary opacity-50">{{ 'matrix.cell.inactive' | translate }}</span>
               } @else {
@@ -322,6 +352,14 @@
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
                         (click)="openVersionChange(row)">{{ 'component.action.changeVersion' | translate }}
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                        (click)="openPlan(row)">{{ 'plan.title' | translate }}
+                </button>
+                @if (row.cell.plannedVersion) {
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-1" [title]="'common.remove' | translate"
+                          (click)="unplan(row)"><i class="bi bi-calendar-x"></i>
+                  </button>
+                }
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                         (click)="setActive(row, false)">{{ 'component.action.deactivate' | translate }}
                 </button>
@@ -390,6 +428,39 @@
                     <div class="text-secondary">{{ entry.rollbackPath }}</div>
                   }
                 </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="mt-4">
+    <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.changes' | translate }}</h2>
+    @if (changes.length === 0) {
+      <p class="text-secondary">{{ 'history.empty' | translate }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+          <tr>
+            <th scope="col">{{ 'history.column.changedAt' | translate }}</th>
+            <th scope="col">{{ 'changes.column.field' | translate }}</th>
+            <th scope="col">{{ 'changes.column.before' | translate }}</th>
+            <th scope="col">{{ 'changes.column.after' | translate }}</th>
+            <th scope="col">{{ 'history.column.note' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (change of changes; track change.id) {
+              <tr>
+                <td class="text-nowrap">{{ change.changedAt | date: 'short' }}</td>
+                <!-- The field by its API name: the log describes data, and the same name is in the API description. -->
+                <td><code>{{ change.field }}</code></td>
+                <td class="text-secondary">{{ change.oldValue ?? dash }}</td>
+                <td>{{ change.newValue ?? dash }}</td>
+                <td class="small">{{ change.note }}</td>
               </tr>
             }
           </tbody>

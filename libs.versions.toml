@@ -3,7 +3,7 @@
 #### Library and plugin versions
 ###############################################################################
 #### https://plugins.gradle.org/plugin/org.springframework.boot
-springBoot = "4.1.1"
+springBoot = "4.1.2"
 #### https://plugins.gradle.org/plugin/io.spring.dependency-management
 springDependencyManagement = "1.1.7"
 #### https://gitlab.com/epicsoft-networks/gradle-plugin-depcheck

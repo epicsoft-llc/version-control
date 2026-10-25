@@ -10,6 +10,9 @@ export class MatrixCellDto {
   public state!: MatrixCellState;
   public currentVersion?: string;
   public lastChangedAt?: string;
+  /** The version of a planned rollout; absent while nothing is planned. */
+  public plannedVersion?: string;
+  public plannedFor?: string;
   public movingTag!: boolean;
   /** This version differs from what runs in production. */
   public deviating!: boolean;

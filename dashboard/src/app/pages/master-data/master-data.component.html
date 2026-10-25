@@ -248,6 +248,12 @@
             <input type="text" class="form-control" id="componentEolProduct" name="componentEolProduct"
                    [(ngModel)]="componentForm.eolProduct">
           </div>
+          <div class="col-12 mb-2">
+            <label class="form-label" for="componentReleaseNotesUrl">{{ 'component.field.releaseNotesUrl' | translate }}</label>
+            <input type="url" class="form-control" id="componentReleaseNotesUrl" name="componentReleaseNotesUrl"
+                   [placeholder]="releaseNotesExample" [(ngModel)]="componentForm.releaseNotesUrl">
+            <div class="form-text">{{ 'masterData.releaseNotesUrl.hint' | translate }}</div>
+          </div>
         </div>
 
         @if (usesPackages()) {

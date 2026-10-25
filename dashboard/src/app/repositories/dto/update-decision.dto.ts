@@ -1,8 +1,8 @@
 /** BLOCKED is derived from the dependency check and never set by hand. */
-export type DecisionState = 'OPEN' | 'PLANNED' | 'POSTPONED' | 'SKIPPED' | 'BLOCKED';
+export type DecisionState = 'OPEN' | 'PLANNED' | 'POSTPONED' | 'SKIPPED' | 'HELD' | 'BLOCKED';
 
 /** The states somebody can choose; BLOCKED is not among them on purpose. */
-export const DECISION_STATES: DecisionState[] = ['OPEN', 'PLANNED', 'POSTPONED', 'SKIPPED'];
+export const DECISION_STATES: DecisionState[] = ['OPEN', 'PLANNED', 'POSTPONED', 'SKIPPED', 'HELD'];
 
 export class UpdateDecisionDto {
 

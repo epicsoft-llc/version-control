@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ComponentEnvironmentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentPackageDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentRequest;
+import one.epicsoft.vc.dto.RolloutPlanRequest;
 import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
@@ -24,8 +25,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
+import static one.epicsoft.vc.util.VcUtil.isEquals;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
 import static one.epicsoft.vc.util.VcUtil.nonEquals;
+import static one.epicsoft.vc.util.VcUtil.trimmed;
 
 @Slf4j
 @Service
@@ -36,6 +39,7 @@ public class ComponentEnvironmentFacade {
   private final ComponentService componentService;
   private final EnvironmentService environmentService;
   private final ComponentEnvironmentMapper componentEnvironmentMapper;
+  private final ComponentChangeFacade componentChangeFacade;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
@@ -100,6 +104,55 @@ public class ComponentEnvironmentFacade {
     this.componentEnvironmentService.delete(this.componentEnvironmentService.getById(id));
   }
 
+  /** Plans a rollout for one environment; a plan already there is replaced. */
+  @Nonnull
+  @Transactional(rollbackFor = Throwable.class)
+  public ComponentEnvironmentDto plan(@Nonnull final UUID id, @Nonnull final RolloutPlanRequest request) {
+    final ComponentEnvironmentEntity cell = this.componentEnvironmentService.getById(id);
+    if (!cell.isActive()) {
+      // A rollout into an environment the component deliberately stays out of is a contradiction.
+      throw AppValidationException.inactiveCell(cell.getId());
+    }
+    final String version = trimmed(request.getPlannedVersion());
+    if (isEquals(version, cell.getCurrentVersion())) {
+      throw AppValidationException.versionUnchanged(cell.getId(), version);
+    }
+    final String before = ComponentChangeFacade.planText(cell);
+    cell.setPlannedVersion(version);
+    cell.setPlannedFor(request.getPlannedFor());
+    cell.setPlannedNote(nonBlank(request.getNote()) ? request.getNote().trim() : null);
+    final ComponentEnvironmentEntity saved = this.componentEnvironmentService.save(cell);
+    this.componentChangeFacade.recordPlan(saved, before);
+    return this.toDtos(List.of(saved)).getFirst();
+  }
+
+  /** Drops the plan of a cell; a cell without one answers as it is. */
+  @Nonnull
+  @Transactional(rollbackFor = Throwable.class)
+  public ComponentEnvironmentDto unplan(@Nonnull final UUID id) {
+    final ComponentEnvironmentEntity cell = this.componentEnvironmentService.getById(id);
+    if (cell.hasPlan()) {
+      final String before = ComponentChangeFacade.planText(cell);
+      cell.clearPlan();
+      this.componentEnvironmentService.save(cell);
+      this.componentChangeFacade.recordPlan(cell, before);
+    }
+    return this.toDtos(List.of(cell)).getFirst();
+  }
+
+  /**
+   * Ends a plan once its version, or a newer one, is recorded. Called on both ways a version gets into a cell,
+   * so neither leaves a plan behind that has already happened.
+   */
+  @Transactional(rollbackFor = Throwable.class)
+  public void endPlanIfReached(@Nonnull final ComponentEnvironmentEntity cell) {
+    if (cell.isPlanReached(cell.getComponent().getVersionStrategy())) {
+      final String before = ComponentChangeFacade.planText(cell);
+      cell.clearPlan();
+      this.componentChangeFacade.recordPlan(cell, before);
+    }
+  }
+
   private void recordFirstVersion(@Nonnull final ComponentEnvironmentEntity entity, @Nonnull final String version) {
     if (nonBlank(entity.getCurrentVersion())) {
       if (nonEquals(entity.getCurrentVersion(), version)) {
@@ -118,6 +171,7 @@ public class ComponentEnvironmentFacade {
     }
     entity.setCurrentVersion(version);
     entity.setLastChangedAt(Instant.now());
+    this.endPlanIfReached(entity);
   }
 
   /**

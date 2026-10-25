@@ -99,6 +99,11 @@ public class ComponentEntity extends AbstractDeletableEntity {
   @Column(name = "upgrade_doc_url", length = 500)
   private String upgradeDocUrl;
 
+  /** Where the release notes of one version are; {@code {version}} stands for the tag. */
+  @Nullable
+  @Column(name = "release_notes_url", length = 500)
+  private String releaseNotesUrl;
+
   @Nonnull
   @Getter(AccessLevel.NONE)
   @Column(name = "needs_maintenance_window", nullable = false)

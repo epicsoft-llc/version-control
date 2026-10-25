@@ -1,10 +1,14 @@
 package one.epicsoft.vc.facade;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import one.epicsoft.vc.dto.ReleaseLinkDto;
 import one.epicsoft.vc.dto.UpgradeProposalDto;
 import one.epicsoft.vc.dto.UpgradeStopDto;
+import one.epicsoft.vc.enums.SourceType;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
@@ -93,6 +97,7 @@ public class UpgradeProposalFacade {
     proposal.setUpgradeDocUrl(component.getUpgradeDocUrl());
     proposal.setNeedsMaintenanceWindow(component.isNeedsMaintenanceWindow());
     proposal.setStops(this.stopsBetween(stops, cell.getCurrentVersion(), target, component));
+    proposal.setReleases(releasesBetween(candidates, cell.getCurrentVersion(), target, component));
     // Forwards: would this target break something that needs this component? If
     // so it is reported as blocked rather than available, and the entries name
     // what blocks it and which range it violates. Answering that question is
@@ -122,6 +127,38 @@ public class UpgradeProposalFacade {
         stops.stream()
              .filter(stop -> this.between(stop.getVersion(), current, upper, component))
              .toList());
+  }
+
+  /**
+   * Every version after the running one up to the target, oldest first, with its release notes. Reading those
+   * for breaking changes is the slow part of every update; here they are one click each.
+   */
+  @Nonnull
+  private static List<ReleaseLinkDto> releasesBetween(@Nonnull final List<String> candidates,
+                                                      final String current,
+                                                      @Nonnull final UpgradeTarget target,
+                                                      @Nonnull final ComponentEntity component) {
+    final String upper = nonBlank(target.target()) ? target.target() : target.beyond();
+    if (!nonBlank(current) || !nonBlank(upper)) {
+      return List.of();
+    }
+    final VersionStrategy strategy = component.getVersionStrategy();
+    // The candidates come newest first; a version nothing can order is left out rather than guessed into place.
+    return candidates.reversed().stream()
+                     .filter(version -> VersionComparison.isBehind(current, version, strategy)
+                                        && !VersionComparison.isBehind(upper, version, strategy))
+                     .map(version -> new ReleaseLinkDto(version, releaseNotesUrl(component, version)))
+                     .toList();
+  }
+
+  @Nullable
+  private static String releaseNotesUrl(@Nonnull final ComponentEntity component, @Nonnull final String version) {
+    if (nonBlank(component.getReleaseNotesUrl())) {
+      return component.getReleaseNotesUrl().trim().replace("{version}", version);
+    }
+    return SourceType.GITHUB_RELEASE.equals(component.getSourceType()) && nonBlank(component.getSourceRef())
+           ? "https://github.com/%s/releases/tag/%s".formatted(component.getSourceRef().trim(), version)
+           : null;
   }
 
   /**

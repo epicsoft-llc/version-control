@@ -13,13 +13,18 @@ import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {UpgradeProposalDto} from '../../repositories/dto/upgrade.dto';
 import {DependencyCheckDto} from '../../repositories/dto/dependency.dto';
 import {VersionChangeDto} from '../../repositories/dto/version-change.dto';
+import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
+import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
 import {EnvironmentRepo} from '../../repositories/api/environment.repo';
 import {EolStatusRepo} from '../../repositories/api/eol-status.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {VersionChangeRepo} from '../../repositories/api/version-change.repo';
+import {TaskRepo} from '../../repositories/api/task.repo';
 import {VersionChangeDialogComponent} from '../../components/version-change-dialog/version-change-dialog.component';
+import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
+import {PlanDialogComponent} from '../../components/plan-dialog/plan-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {isDefined, nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
@@ -60,6 +65,7 @@ export class ComponentDetailComponent implements OnDestroy {
   private readonly versionChangeRepo: VersionChangeRepo = inject(VersionChangeRepo);
   private readonly updateCheckRepo: UpdateCheckRepo = inject(UpdateCheckRepo);
   private readonly eolStatusRepo: EolStatusRepo = inject(EolStatusRepo);
+  private readonly taskRepo: TaskRepo = inject(TaskRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
   private readonly modal: NgbModal = inject(NgbModal);
   private readonly subs: Subscription[] = [];
@@ -79,6 +85,10 @@ export class ComponentDetailComponent implements OnDestroy {
   protected requires: DependencyCheckDto[] = [];
   /** What needs this component — the direction that blocks an update. */
   protected requiredBy: DependencyCheckDto[] = [];
+  /** What was decided about updates; a hold is shown with its reason next to the name. */
+  protected decision?: UpdateDecisionDto;
+  /** Master data, decisions and rollout plans, newest first. */
+  protected changes: ComponentChangeDto[] = [];
   protected checking = false;
   protected checkingEol = false;
   protected loading = true;
@@ -109,6 +119,48 @@ export class ComponentDetailComponent implements OnDestroy {
 
   protected environmentName(environmentId: string): string {
     return this.rows.find((row) => row.environment.id === environmentId)?.environment.name ?? '';
+  }
+
+  protected held(): boolean {
+    return this.decision?.state === 'HELD';
+  }
+
+  /**
+   * Also here, not only on the task list: a component that is not behind is not on that list, and holding it
+   * is exactly the decision taken before it would be.
+   */
+  protected openDecision(): void {
+    if (!isDefined(this.component)) {
+      return;
+    }
+    const reference = this.modal.open(DecisionDialogComponent);
+    reference.componentInstance.componentId = this.component.id;
+    reference.componentInstance.componentName = this.component.name;
+    reference.componentInstance.latestVersion = this.check?.latestVersion;
+    reference.result.then(() => this.load(), () => undefined);
+  }
+
+  protected openPlan(row: EnvironmentRow): void {
+    if (!isDefined(this.component) || !isDefined(row.cell) || !row.cell.active) {
+      return;
+    }
+    const reference = this.modal.open(PlanDialogComponent);
+    reference.componentInstance.cell = row.cell;
+    reference.componentInstance.componentName = this.component.name;
+    reference.componentInstance.environmentName = row.environment.name;
+    reference.componentInstance.suggestedVersion =
+      this.proposals.find((proposal) => proposal.environmentId === row.environment.id)?.target;
+    reference.result.then(() => this.load(), () => undefined);
+  }
+
+  protected unplan(row: EnvironmentRow): void {
+    if (!isDefined(row.cell)) {
+      return;
+    }
+    this.subs.push(this.componentEnvironmentRepo.unplan(row.cell.id).subscribe({
+      next: () => this.load(),
+      error: (error: HttpErrorResponse) => this.showError(error)
+    }));
   }
 
   protected openVersionChange(row: EnvironmentRow): void {
@@ -214,7 +266,9 @@ export class ComponentDetailComponent implements OnDestroy {
       eol: this.eolStatusRepo.findAllByComponent(component.id).pipe(catchError(() => of([]))),
       proposals: this.componentRepo.getProposals(component.id).pipe(catchError(() => of([]))),
       requires: this.componentRepo.getDependencies(component.id, false).pipe(catchError(() => of([]))),
-      requiredBy: this.componentRepo.getDependencies(component.id, true).pipe(catchError(() => of([])))
+      requiredBy: this.componentRepo.getDependencies(component.id, true).pipe(catchError(() => of([]))),
+      decisions: this.taskRepo.findDecisionsByComponent(component.id).pipe(catchError(() => of([]))),
+      changes: this.componentRepo.getChanges(component.id).pipe(catchError(() => of([])))
     }).subscribe({
       next: (loaded) => {
         // Never checked is an empty list, not an error: it is the state every
@@ -224,6 +278,8 @@ export class ComponentDetailComponent implements OnDestroy {
         this.proposals = loaded.proposals;
         this.requires = loaded.requires;
         this.requiredBy = loaded.requiredBy;
+        this.decision = loaded.decisions.at(0);
+        this.changes = loaded.changes;
         this.rows = loaded.environments.map((environment) => new EnvironmentRow({
           environment: environment,
           cell: loaded.cells.find((cell) => cell.environmentId === environment.id)
@@ -248,6 +304,8 @@ export class ComponentDetailComponent implements OnDestroy {
     this.proposals = [];
     this.requires = [];
     this.requiredBy = [];
+    this.decision = undefined;
+    this.changes = [];
     this.loading = false;
     this.showError(error);
   }

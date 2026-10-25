@@ -4,6 +4,27 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.4.0] - 2026-10-25
+
+### Added
+- A component can be held on its version for good: the decision `HELD` needs a reason, no newer version reopens it, and
+  the matrix and the component page show it with a lock and the reason. The decision dialog is on the component page as
+  well now, for components that are not on the task list
+- Rollout plans per environment — version, day and note, planned from the component page or through
+  `PUT /api/v1/component-environments/{id}/plan`. A plan ends by itself once its version, or a newer one, is recorded.
+  Until then the task list shows it last, under "Rollout planned"; once the day has passed it moves up to "Rollout
+  overdue", which the daily notification reports
+- The upgrade proposal lists every version between the running one and the target, oldest first, each linked to its
+  release notes: by itself for GitHub releases, otherwise through the new component field `releaseNotesUrl`, in which
+  `{version}` stands for the tag
+- A change log per component: every changed field of its master data, every decision and every rollout plan, with the
+  value before and after (`GET /api/v1/components/{id}/changes`). The component page shows it, and the end of the task
+  list shows the latest changes of the project (`GET /api/v1/component-changes`)
+- Migration `V0.4.0` with the columns of the rollout plan, the release notes URL and the table `component_change`
+
+### Changed
+- Spring Boot 4.1.2; Angular CLI and Angular build 22.2.4
+
 ## [0.3.0] - 2026-10-25
 
 ### Added

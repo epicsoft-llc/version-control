@@ -7,10 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import one.epicsoft.vc.dto.ComponentChangeDto;
 import one.epicsoft.vc.dto.ComponentDto;
 import one.epicsoft.vc.dto.ComponentRequest;
 import one.epicsoft.vc.dto.DependencyCheckDto;
 import one.epicsoft.vc.dto.UpgradeProposalDto;
+import one.epicsoft.vc.facade.ComponentChangeFacade;
 import one.epicsoft.vc.facade.ComponentFacade;
 import one.epicsoft.vc.facade.DependencyFacade;
 import one.epicsoft.vc.facade.UpgradeProposalFacade;
@@ -62,6 +64,7 @@ public class ComponentController {
   private final ComponentFacade componentFacade;
   private final UpgradeProposalFacade upgradeProposalFacade;
   private final DependencyFacade dependencyFacade;
+  private final ComponentChangeFacade componentChangeFacade;
 
   @Operation(summary = "List the components of a project")
   @GetMapping(consumes = MediaType.ALL_VALUE)
@@ -98,6 +101,14 @@ public class ComponentController {
     log.debug("Incoming GET dependencies of component {} (dependents={})", id, dependents);
     return ResponseEntity.ok(dependents ? this.dependencyFacade.checkDependents(id)
                                         : this.dependencyFacade.checkComponent(id));
+  }
+
+  @Operation(summary = "What was changed on a component",
+             description = "Fields of its master data, decisions and rollout plans, newest first. Version changes have their own history.")
+  @GetMapping(path = "/{id}/changes", consumes = MediaType.ALL_VALUE)
+  public ResponseEntity<List<ComponentChangeDto>> getChanges(@PathVariable final UUID id) {
+    log.debug("Incoming GET changes of component {}", id);
+    return ResponseEntity.ok(this.componentChangeFacade.findAllByComponent(id));
   }
 
   @Operation(summary = "Create a component")

@@ -51,6 +51,7 @@ public class NotificationFacade {
   /** Sections worth a message; the rest is visible on the screen anyway. */
   private static final Set<TaskSection> REPORTED = Set.of(TaskSection.EOL_EXCEEDED,
                                                           TaskSection.DEPENDENCY_VIOLATED,
+                                                          TaskSection.ROLLOUT_OVERDUE,
                                                           TaskSection.UPDATE_OPEN,
                                                           TaskSection.SNOOZE_EXPIRED,
                                                           TaskSection.BLOCKED,
