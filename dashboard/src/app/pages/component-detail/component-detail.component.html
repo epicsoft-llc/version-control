@@ -154,7 +154,7 @@
     </section>
   }
 
-  @if (proposals.length > 0) {
+  @if (proposals.length > 0 && !autoUpdating()) {
     <section class="card card-body mb-4">
       <h2 class="vc-eyebrow">{{ 'proposal.section' | translate }}</h2>
       <table class="table table-sm align-middle">
@@ -327,7 +327,9 @@
           <tr>
             <th scope="row" class="fw-normal">{{ row.environment.name }}</th>
             <td>
-              @if (row.cell && row.cell.active) {
+              @if (row.cell && row.cell.active && autoUpdating()) {
+                <span class="text-secondary"><i class="bi bi-arrow-repeat me-1"></i>{{ 'matrix.cell.autoUpdate' | translate }}</span>
+              } @else if (row.cell && row.cell.active) {
                 @if (row.cell.currentVersion) {
                   {{ row.cell.currentVersion }}
                   <vc-copy-value [value]="row.cell.currentVersion" />
@@ -356,16 +358,18 @@
             <td class="text-secondary small">{{ row.cell?.lastChangedAt | localDate: 'medium' }}</td>
             <td class="text-end">
               @if (row.cell && row.cell.active) {
-                <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                        (click)="openVersionChange(row)">{{ 'component.action.changeVersion' | translate }}
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                        (click)="openPlan(row)">{{ 'plan.title' | translate }}
-                </button>
-                @if (row.cell.plannedVersion) {
-                  <button type="button" class="btn btn-sm btn-outline-secondary me-1" [title]="'common.remove' | translate"
-                          (click)="unplan(row)"><i class="bi bi-calendar-x"></i>
+                @if (!autoUpdating()) {
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                          (click)="openVersionChange(row)">{{ 'component.action.changeVersion' | translate }}
                   </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                          (click)="openPlan(row)">{{ 'plan.title' | translate }}
+                  </button>
+                  @if (row.cell.plannedVersion) {
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" [title]="'common.remove' | translate"
+                            (click)="unplan(row)"><i class="bi bi-calendar-x"></i>
+                    </button>
+                  }
                 }
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                         (click)="setActive(row, false)">{{ 'component.action.deactivate' | translate }}

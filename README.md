@@ -36,7 +36,7 @@ rollouts come last, and the latest changes to the inventory close the page.
 The matrix is the second view: one row per component, one column per environment, and the newest
 available version at the end. Rows whose environments disagree are marked, a cell that is deliberately
 empty (`–`) is not the same as one nobody has filled in. A held component carries a lock, one that
-updates itself a circular arrow, a planned rollout a calendar.
+updates itself a circular arrow instead of its versions, a planned rollout a calendar.
 
 ![Version matrix](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/matrix.jpg)
 

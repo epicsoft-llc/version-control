@@ -43,50 +43,55 @@
             <tr>
               <th scope="row" class="fw-normal">
                 <a [routerLink]="['/components', row.componentId]">{{ row.componentName }}</a>
-                @if (row.deviating) {
+                @if (row.deviating && !autoUpdating(row.componentId)) {
                   <i class="bi bi-arrow-left-right text-warning ms-1" [title]="'matrix.deviating' | translate"></i>
                 }
               </th>
 
               @for (cell of row.cells; track cell.environmentId) {
-                <td [class.table-warning]="cell.deviating">
-                  @switch (cell.state) {
-                    @case ('RECORDED') {
-                      @if (cell.lastChangedAt) {
+                <td [class.table-warning]="cell.deviating && !autoUpdating(row.componentId)">
+                  @if (autoUpdating(row.componentId) && (cell.state === 'RECORDED' || cell.state === 'UNKNOWN')) {
+                    <!-- What was recorded last is not what runs: the host installs every version by itself. -->
+                    <i class="bi bi-arrow-repeat text-secondary" [title]="'matrix.cell.autoUpdate' | translate"></i>
+                  } @else {
+                    @switch (cell.state) {
+                      @case ('RECORDED') {
+                        @if (cell.lastChangedAt) {
+                          <button type="button"
+                                  class="btn btn-sm vc-version"
+                                  [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | localDate: 'medium')"
+                                  (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                        } @else {
+                          <button type="button"
+                                  class="btn btn-sm vc-version"
+                                  (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                        }
+                        @if (cell.currentVersion) {
+                          <vc-copy-value [value]="cell.currentVersion" />
+                        }
+                        @if (cell.movingTag) {
+                          <i class="bi bi-exclamation-triangle text-warning ms-1"
+                             [title]="'matrix.movingTag' | translate"></i>
+                        }
+                        @if (cell.plannedVersion) {
+                          <i class="bi bi-calendar-event text-primary ms-1"
+                             [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>
+                        }
+                      }
+                      @case ('UNKNOWN') {
                         <button type="button"
-                                class="btn btn-sm vc-version"
-                                [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | localDate: 'medium')"
-                                (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
-                      } @else {
-                        <button type="button"
-                                class="btn btn-sm vc-version"
-                                (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                                class="btn btn-sm vc-version vc-version-unknown"
+                                [title]="'matrix.cell.unknown' | translate"
+                                (click)="openVersionChange(row.componentId, cell)">
+                          {{ 'matrix.cell.unknownShort' | translate }}
+                        </button>
                       }
-                      @if (cell.currentVersion) {
-                        <vc-copy-value [value]="cell.currentVersion" />
+                      @case ('INACTIVE') {
+                        <span class="text-secondary opacity-50" [title]="'matrix.cell.inactive' | translate">&ndash;</span>
                       }
-                      @if (cell.movingTag) {
-                        <i class="bi bi-exclamation-triangle text-warning ms-1"
-                           [title]="'matrix.movingTag' | translate"></i>
+                      @default {
+                        <span class="text-secondary opacity-25" [title]="'matrix.cell.notRecorded' | translate">&middot;</span>
                       }
-                      @if (cell.plannedVersion) {
-                        <i class="bi bi-calendar-event text-primary ms-1"
-                           [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>
-                      }
-                    }
-                    @case ('UNKNOWN') {
-                      <button type="button"
-                              class="btn btn-sm vc-version vc-version-unknown"
-                              [title]="'matrix.cell.unknown' | translate"
-                              (click)="openVersionChange(row.componentId, cell)">
-                        {{ 'matrix.cell.unknownShort' | translate }}
-                      </button>
-                    }
-                    @case ('INACTIVE') {
-                      <span class="text-secondary opacity-50" [title]="'matrix.cell.inactive' | translate">&ndash;</span>
-                    }
-                    @default {
-                      <span class="text-secondary opacity-25" [title]="'matrix.cell.notRecorded' | translate">&middot;</span>
                     }
                   }
                 </td>

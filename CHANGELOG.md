@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## 2026-10-25
+
+### Changed
+- A component that updates itself shows no versions: the matrix marks its environments with the circular arrow
+  instead of the version recorded last, without a deviation, and its page leaves out the proposal and the buttons
+  to change a version or plan a rollout. The history stays
+
 ## [0.6.0] - 2026-10-25
 
 ### Added

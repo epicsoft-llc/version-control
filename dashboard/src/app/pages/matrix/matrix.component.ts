@@ -128,6 +128,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
     return this.holds.get(componentId);
   }
 
+  protected autoUpdating(componentId: string): boolean {
+    return this.heldOf(componentId)?.state === 'AUTO_UPDATE';
+  }
+
   /**
    * True when the source offers something the row does not run anywhere. Read
    * from the recorded versions rather than from a comparison of version numbers:
