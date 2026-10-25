@@ -25,6 +25,9 @@ All notable changes to this project are documented here, grouped as in
 
 ### Fixed
 - The versions on the way to the target wrap instead of pushing the component page sideways
+- The API description no longer looks its texts up as message keys: since 0.3.0 every request of
+  `/api/v1/openapi.json` wrote a few hundred error lines into the log, and every start a warning that the
+  endpoint is on
 
 ## [0.4.0] - 2026-10-25
 
