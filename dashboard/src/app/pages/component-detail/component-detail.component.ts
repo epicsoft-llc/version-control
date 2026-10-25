@@ -1,10 +1,10 @@
 import {ChangeDetectionStrategy, Component, inject, Input, OnDestroy} from '@angular/core';
-import {DatePipe} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {RouterLink} from '@angular/router';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
 import {catchError, forkJoin, of, Subscription} from 'rxjs';
+import {LocalDatePipe} from '../../libs/pipes/local-date.pipe';
 import {ComponentDto} from '../../repositories/dto/component.dto';
 import {ComponentEnvironmentDto, ComponentEnvironmentRequest} from '../../repositories/dto/component-environment.dto';
 import {EnvironmentDto} from '../../repositories/dto/environment.dto';
@@ -54,7 +54,7 @@ export class EnvironmentRow {
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-component-detail',
-  imports: [CopyValueComponent, DatePipe, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, LocalDatePipe, RouterLink, TranslatePipe],
   templateUrl: './component-detail.component.html'
 })
 export class ComponentDetailComponent implements OnDestroy {

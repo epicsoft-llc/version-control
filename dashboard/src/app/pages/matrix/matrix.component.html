@@ -55,7 +55,7 @@
                       @if (cell.lastChangedAt) {
                         <button type="button"
                                 class="btn btn-sm vc-version"
-                                [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | date: 'medium')"
+                                [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | localDate: 'medium')"
                                 (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
                       } @else {
                         <button type="button"
@@ -71,7 +71,7 @@
                       }
                       @if (cell.plannedVersion) {
                         <i class="bi bi-calendar-event text-primary ms-1"
-                           [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | date: 'mediumDate')"></i>
+                           [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>
                       }
                     }
                     @case ('UNKNOWN') {

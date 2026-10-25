@@ -1,11 +1,11 @@
 import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
-import {DatePipe} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {FormsModule} from '@angular/forms';
 import {RouterLink} from '@angular/router';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
 import {catchError, of, Subject, Subscription, switchMap, tap} from 'rxjs';
+import {LocalDatePipe} from '../../libs/pipes/local-date.pipe';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {TaskEntryDto, TaskListDto, TaskSection} from '../../repositories/dto/task.dto';
 import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
@@ -34,7 +34,7 @@ import {isDefined, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-tasks',
-  imports: [CopyValueComponent, DatePipe, FormsModule, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe],
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit, OnDestroy {

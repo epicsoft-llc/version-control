@@ -4,6 +4,12 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.5.1] - 2026-10-25
+
+### Fixed
+- Dates follow the language of the interface: the German page wrote them in English, "Oct 24, 2026" instead of
+  "24.10.2026", because Angular's date pipe formats in the language fixed when the application starts
+
 ## [0.5.0] - 2026-10-25
 
 ### Added

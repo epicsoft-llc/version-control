@@ -78,7 +78,7 @@
                     } @else {
                       {{ 'tasks.since' | translate }}:
                     }
-                    {{ entry.since | date: 'mediumDate' }}
+                    {{ entry.since | localDate: 'mediumDate' }}
                   </div>
                 }
               </td>
@@ -104,7 +104,7 @@
       <tbody>
         @for (change of changes; track change.id) {
           <tr>
-            <td class="text-nowrap small text-secondary">{{ change.changedAt | date: 'short' }}</td>
+            <td class="text-nowrap small text-secondary">{{ change.changedAt | localDate: 'short' }}</td>
             <th scope="row" class="fw-normal">
               <a [routerLink]="['/components', change.componentId]">{{ change.componentName }}</a>
             </th>

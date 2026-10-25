@@ -1,11 +1,11 @@
 import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
-import {DatePipe} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {FormsModule} from '@angular/forms';
 import {RouterLink} from '@angular/router';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
 import {catchError, forkJoin, of, Subject, Subscription, switchMap, tap} from 'rxjs';
+import {LocalDatePipe} from '../../libs/pipes/local-date.pipe';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
@@ -37,7 +37,7 @@ import {isDefined, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-matrix',
-  imports: [CopyValueComponent, DatePipe, FormsModule, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe],
   templateUrl: './matrix.component.html'
 })
 export class MatrixComponent implements OnInit, OnDestroy {

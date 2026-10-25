@@ -192,6 +192,15 @@ describe('TasksComponent', () => {
     expect(row).not.toContain('Since');
   });
 
+  it('writes the day in the language the reader chose', async () => {
+    // Angular's own date pipe formats in the LOCALE_ID fixed at startup: a German page said "Nov 1, 2026".
+    TestBed.inject(TranslateService).use('de');
+    await render(list(['ROLLOUT_PLANNED', [entry('Nexus', {environmentName: 'Production', currentVersion: '3.76.1',
+                                                          latestVersion: '3.77.0', since: '2026-11-01T12:00:00Z'})]]));
+
+    expect(rows()[0].textContent).toContain('01.11.2026');
+  });
+
   it('lists the latest changes of the project below the tasks', async () => {
     findRecentChanges.mockReturnValue(of([
       new ComponentChangeDto({id: 'change-1', componentId: 'component-Nexus', componentName: 'Nexus',
