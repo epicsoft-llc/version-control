@@ -35,7 +35,7 @@ services:
     # build:
     #   context: ../core
     #   args:
-    #     JAR_FILE: build/libs/vc-core-0.5.2.jar
+    #     JAR_FILE: build/libs/vc-core-0.6.0.jar
     restart: unless-stopped
     depends_on:
       postgres:
