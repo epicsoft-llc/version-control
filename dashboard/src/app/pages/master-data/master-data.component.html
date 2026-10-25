@@ -1,12 +1,12 @@
-<h1 class="h4 mb-3">{{ 'nav.masterData' | translate }}</h1>
+<h1 class="h3 mb-3">{{ 'nav.masterData' | translate }}</h1>
 
 @if (errorMessage) {
   <div class="alert alert-danger py-2">{{ errorMessage }}</div>
 }
 
-<section class="mb-4">
+<section class="card card-body mb-4">
   <div class="d-flex align-items-center gap-2 mb-2">
-    <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'masterData.section.projects' | translate }}</h2>
+    <h2 class="vc-eyebrow mb-0">{{ 'masterData.section.projects' | translate }}</h2>
     <button type="button" class="btn btn-sm btn-outline-primary" (click)="newProject()">
       {{ 'common.new' | translate }}
     </button>
@@ -67,9 +67,9 @@
 </section>
 
 @if (selectedProjectId) {
-  <section class="mb-4">
+  <section class="card card-body mb-4">
     <div class="d-flex align-items-center gap-2 mb-2">
-      <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'masterData.section.environments' | translate }}</h2>
+      <h2 class="vc-eyebrow mb-0">{{ 'masterData.section.environments' | translate }}</h2>
       <button type="button" class="btn btn-sm btn-outline-primary" (click)="newEnvironment()">
         {{ 'common.new' | translate }}
       </button>
@@ -130,9 +130,9 @@
     }
   </section>
 
-  <section>
+  <section class="card card-body mb-4">
     <div class="d-flex align-items-center gap-2 mb-2">
-      <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'masterData.section.components' | translate }}</h2>
+      <h2 class="vc-eyebrow mb-0">{{ 'masterData.section.components' | translate }}</h2>
       <button type="button" class="btn btn-sm btn-outline-primary" (click)="newComponent()">
         {{ 'common.new' | translate }}
       </button>

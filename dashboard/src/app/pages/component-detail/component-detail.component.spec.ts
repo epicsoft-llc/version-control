@@ -215,6 +215,21 @@ describe('ComponentDetailComponent', () => {
     expect(link).not.toBeNull();
     expect(link?.textContent).toContain('17.3');
     expect(text()).toContain('Versions on the way');
+    expect((fixture.nativeElement.querySelector('details.vc-releases') as HTMLDetailsElement).open).toBe(true);
+  });
+
+  it('folds a long list of versions on the way, so the rest of the page stays in view', async () => {
+    const releases = ['17.1', '17.2', '17.3', '17.4', '17.5', '17.6', '17.7'].map((version) => new ReleaseLinkDto({version}));
+    repos['getProposals'].mockReturnValue(of([
+      new UpgradeProposalDto({environmentId: 'environment-1', environmentName: 'Production', currentVersion: '17.0',
+                              target: '17.7', needsMaintenanceWindow: false, releases})
+    ]));
+
+    await render();
+
+    const list = fixture.nativeElement.querySelector('details.vc-releases') as HTMLDetailsElement;
+    expect(list.open).toBe(false);
+    expect(list.querySelector('summary')?.textContent).toContain('(7)');
   });
 
   it('lists what was changed on the component', async () => {

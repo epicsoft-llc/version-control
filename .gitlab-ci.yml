@@ -193,8 +193,6 @@ BLD:dashboard:
   before_script: *npm-setup
   script:
     - npm ci --cache .npm --prefer-offline --no-audit --no-fund
-    - node scripts/i18n-pull.mjs
-    #### After the pull, so it judges the state the build actually uses.
     - npm run i18n:verify
     - npm run build
   cache: *node-cache

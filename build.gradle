@@ -26,7 +26,6 @@ depsUpdate {
   includePreRelease = false
   mavenRepositories = [
     "https://gitlab.com/api/v4/projects/82634030/packages/maven",
-    "https://gitlab.com/api/v4/projects/85970987/packages/maven",
   ]
 }
 

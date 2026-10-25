@@ -14,8 +14,8 @@ class JsonMessageSourceTest {
 
   private final JsonMessageSource source = new JsonMessageSource(List.of("en", "de"), "en");
 
-  // The texts themselves belong to Tolgee and change without this code changing,
-  // so the assertions are about behaviour, never about wording.
+  // The texts change without this code changing, so the assertions are about
+  // behaviour, never about wording.
 
   @Test
   void resolvesTheRequestedLanguage() {

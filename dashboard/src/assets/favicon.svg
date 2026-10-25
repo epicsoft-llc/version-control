@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
-  <rect width="16" height="16" rx="3" fill="#0d6efd"/>
+  <defs>
+    <linearGradient id="vc-mark" x1="0" y1="0" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#04a9f3"/>
+      <stop offset="1" stop-color="#0270a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="16" height="16" rx="4" fill="url(#vc-mark)"/>
   <path d="M4 5h8M4 8h8M4 11h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
 </svg>

@@ -1,5 +1,5 @@
 <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-  <h1 class="h4 mb-0">{{ 'nav.matrix' | translate }}</h1>
+  <h1 class="h3 mb-0">{{ 'nav.matrix' | translate }}</h1>
   @if (projects.length > 1) {
     <select class="form-select form-select-sm w-auto"
             name="project"
@@ -21,113 +21,115 @@
 } @else if (matrix && matrix.rows.length === 0) {
   <p class="text-secondary">{{ 'matrix.empty' | translate }}</p>
 } @else if (matrix) {
-  <div class="table-responsive">
-    <table class="table table-sm align-middle vc-matrix">
-      <thead>
-      <tr>
-        <th scope="col">{{ 'matrix.column.component' | translate }}</th>
-        @for (environment of matrix.environments; track environment.id) {
-          <th scope="col">
-            {{ environment.name }}
-            @if (environment.production) {
-              <i class="bi bi-broadcast text-secondary ms-1" [title]="'matrix.production' | translate"></i>
-            }
-          </th>
-        }
-        <th scope="col" class="border-start">{{ 'matrix.column.available' | translate }}</th>
-      </tr>
-      </thead>
-      <tbody>
-        @for (row of matrix.rows; track row.componentId) {
-          <tr>
-            <th scope="row" class="fw-normal">
-              <a [routerLink]="['/components', row.componentId]">{{ row.componentName }}</a>
-              @if (row.deviating) {
-                <i class="bi bi-arrow-left-right text-warning ms-1" [title]="'matrix.deviating' | translate"></i>
+  <section class="card card-body mb-4">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle vc-matrix">
+        <thead>
+        <tr>
+          <th scope="col">{{ 'matrix.column.component' | translate }}</th>
+          @for (environment of matrix.environments; track environment.id) {
+            <th scope="col">
+              {{ environment.name }}
+              @if (environment.production) {
+                <i class="bi bi-broadcast text-secondary ms-1" [title]="'matrix.production' | translate"></i>
               }
             </th>
+          }
+          <th scope="col" class="border-start">{{ 'matrix.column.available' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (row of matrix.rows; track row.componentId) {
+            <tr>
+              <th scope="row" class="fw-normal">
+                <a [routerLink]="['/components', row.componentId]">{{ row.componentName }}</a>
+                @if (row.deviating) {
+                  <i class="bi bi-arrow-left-right text-warning ms-1" [title]="'matrix.deviating' | translate"></i>
+                }
+              </th>
 
-            @for (cell of row.cells; track cell.environmentId) {
-              <td [class.table-warning]="cell.deviating">
-                @switch (cell.state) {
-                  @case ('RECORDED') {
-                    @if (cell.lastChangedAt) {
+              @for (cell of row.cells; track cell.environmentId) {
+                <td [class.table-warning]="cell.deviating">
+                  @switch (cell.state) {
+                    @case ('RECORDED') {
+                      @if (cell.lastChangedAt) {
+                        <button type="button"
+                                class="btn btn-sm vc-version"
+                                [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | date: 'medium')"
+                                (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                      } @else {
+                        <button type="button"
+                                class="btn btn-sm vc-version"
+                                (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                      }
+                      @if (cell.currentVersion) {
+                        <vc-copy-value [value]="cell.currentVersion" />
+                      }
+                      @if (cell.movingTag) {
+                        <i class="bi bi-exclamation-triangle text-warning ms-1"
+                           [title]="'matrix.movingTag' | translate"></i>
+                      }
+                      @if (cell.plannedVersion) {
+                        <i class="bi bi-calendar-event text-primary ms-1"
+                           [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | date: 'mediumDate')"></i>
+                      }
+                    }
+                    @case ('UNKNOWN') {
                       <button type="button"
-                              class="btn btn-link btn-sm p-0 text-decoration-none"
-                              [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | date: 'medium')"
-                              (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
-                    } @else {
-                      <button type="button"
-                              class="btn btn-link btn-sm p-0 text-decoration-none"
-                              (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                              class="btn btn-sm vc-version vc-version-unknown"
+                              [title]="'matrix.cell.unknown' | translate"
+                              (click)="openVersionChange(row.componentId, cell)">
+                        {{ 'matrix.cell.unknownShort' | translate }}
+                      </button>
                     }
-                    @if (cell.currentVersion) {
-                      <vc-copy-value [value]="cell.currentVersion" />
+                    @case ('INACTIVE') {
+                      <span class="text-secondary opacity-50" [title]="'matrix.cell.inactive' | translate">&ndash;</span>
                     }
-                    @if (cell.movingTag) {
-                      <i class="bi bi-exclamation-triangle text-warning ms-1"
-                         [title]="'matrix.movingTag' | translate"></i>
-                    }
-                    @if (cell.plannedVersion) {
-                      <i class="bi bi-calendar-event text-primary ms-1"
-                         [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | date: 'mediumDate')"></i>
+                    @default {
+                      <span class="text-secondary opacity-25" [title]="'matrix.cell.notRecorded' | translate">&middot;</span>
                     }
                   }
-                  @case ('UNKNOWN') {
-                    <button type="button"
-                            class="btn btn-link btn-sm p-0 text-decoration-none link-secondary fst-italic"
-                            [title]="'matrix.cell.unknown' | translate"
-                            (click)="openVersionChange(row.componentId, cell)">
-                      {{ 'matrix.cell.unknownShort' | translate }}
-                    </button>
+                </td>
+              }
+
+              <td class="border-start">
+                @if (heldOf(row.componentId); as hold) {
+                  <span class="badge text-bg-dark me-1" [title]="hold.note ?? ''">
+                    <i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}
+                  </span>
+                }
+                @if (checkOf(row.componentId); as check) {
+                  @switch (check.checkState) {
+                    @case ('OK') {
+                      @if (check.latestVersion) {
+                        <span [class.fw-semibold]="updateAvailable(row)">{{ check.latestVersion }}</span>
+                        <vc-copy-value [value]="check.latestVersion" />
+                        @if (updateAvailable(row)) {
+                          <i class="bi bi-arrow-up-circle text-primary ms-1"
+                             [title]="'matrix.updateAvailable' | translate"></i>
+                        }
+                      } @else {
+                        <span class="text-secondary fst-italic">{{ 'check.noVersion' | translate }}</span>
+                      }
+                    }
+                    @case ('ERROR') {
+                      <i class="bi bi-x-octagon text-danger" [title]="check.errorMessage"></i>
+                      <span class="text-secondary small ms-1">{{ 'check.state.ERROR' | translate }}</span>
+                    }
+                    @default {
+                      <span class="text-secondary opacity-50" [title]="'check.state.NOT_APPLICABLE' | translate">
+                        &ndash;
+                      </span>
+                    }
                   }
-                  @case ('INACTIVE') {
-                    <span class="text-secondary opacity-50" [title]="'matrix.cell.inactive' | translate">&ndash;</span>
-                  }
-                  @default {
-                    <span class="text-secondary opacity-25" [title]="'matrix.cell.notRecorded' | translate">&middot;</span>
-                  }
+                } @else {
+                  <span class="text-secondary opacity-50" [title]="'check.never' | translate">&middot;</span>
                 }
               </td>
-            }
-
-            <td class="border-start">
-              @if (heldOf(row.componentId); as hold) {
-                <span class="badge text-bg-dark me-1" [title]="hold.note ?? ''">
-                  <i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}
-                </span>
-              }
-              @if (checkOf(row.componentId); as check) {
-                @switch (check.checkState) {
-                  @case ('OK') {
-                    @if (check.latestVersion) {
-                      <span [class.fw-semibold]="updateAvailable(row)">{{ check.latestVersion }}</span>
-                      <vc-copy-value [value]="check.latestVersion" />
-                      @if (updateAvailable(row)) {
-                        <i class="bi bi-arrow-up-circle text-primary ms-1"
-                           [title]="'matrix.updateAvailable' | translate"></i>
-                      }
-                    } @else {
-                      <span class="text-secondary fst-italic">{{ 'check.noVersion' | translate }}</span>
-                    }
-                  }
-                  @case ('ERROR') {
-                    <i class="bi bi-x-octagon text-danger" [title]="check.errorMessage"></i>
-                    <span class="text-secondary small ms-1">{{ 'check.state.ERROR' | translate }}</span>
-                  }
-                  @default {
-                    <span class="text-secondary opacity-50" [title]="'check.state.NOT_APPLICABLE' | translate">
-                      &ndash;
-                    </span>
-                  }
-                }
-              } @else {
-                <span class="text-secondary opacity-50" [title]="'check.never' | translate">&middot;</span>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 }

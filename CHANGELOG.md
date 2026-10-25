@@ -4,6 +4,28 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## 2026-10-25
+
+### Added
+- Dependency `@fontsource-variable/inter` 5.3.0 — the typeface comes with the dashboard, no font service is
+  called
+
+### Changed
+- A new look: other colours, Inter as the typeface and calmer shapes — a dark header, every section of a page
+  on a card of its own, buttons as pills, the versions in the matrix as chips. A long list of versions on the
+  way to the target stays folded until it is opened
+- The translations are maintained in the repository: the JSON files are the source, written by hand like
+  code, and no build fetches them any more. `./gradlew :core:check` and `npm run i18n:verify` make sure every
+  language carries every key with a text and the same placeholders, one key per line in alphabetical order,
+  and that no key is left over which the code no longer uses
+
+### Removed
+- The Gradle plugin `one.epicsoft.tolgee`, the pull script of the dashboard and the variables `VC_TOLGEE_URL`,
+  `VC_TOLGEE_PROJECT_ID` and `VC_TOLGEE_API_KEY`
+
+### Fixed
+- The versions on the way to the target wrap instead of pushing the component page sideways
+
 ## [0.4.0] - 2026-10-25
 
 ### Added

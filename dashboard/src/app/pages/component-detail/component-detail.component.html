@@ -4,7 +4,7 @@
 
 @if (component) {
   <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-    <h1 class="h4 mb-0">{{ component.name }}</h1>
+    <h1 class="h3 mb-0">{{ component.name }}</h1>
     <span class="badge text-bg-secondary">{{ 'sourceType.' + component.sourceType | translate }}</span>
     @if (held()) {
       <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}</span>
@@ -20,8 +20,8 @@
     <p class="small"><i class="bi bi-lock-fill text-secondary me-1"></i>{{ decision.note }}</p>
   }
 
-  <section class="mb-4">
-    <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.source' | translate }}</h2>
+  <section class="card card-body mb-4">
+    <h2 class="vc-eyebrow">{{ 'component.section.source' | translate }}</h2>
     <dl class="row mb-0 small">
       <dt class="col-sm-3">{{ 'component.field.sourceRef' | translate }}</dt>
       <dd class="col-sm-9">{{ component.sourceRef || dash }}</dd>
@@ -51,9 +51,9 @@
     </dl>
   </section>
 
-  <section class="mb-4">
+  <section class="card card-body mb-4">
     <div class="d-flex align-items-center gap-2 mb-2">
-      <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'check.section' | translate }}</h2>
+      <h2 class="vc-eyebrow mb-0">{{ 'check.section' | translate }}</h2>
       <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="checking" (click)="checkNow()">
         {{ 'check.action.checkNow' | translate }}
       </button>
@@ -125,9 +125,9 @@
   </section>
 
   @if (eol) {
-    <section class="mb-4">
+    <section class="card card-body mb-4">
       <div class="d-flex align-items-center gap-2 mb-2">
-        <h2 class="h6 text-uppercase text-secondary mb-0">{{ 'eol.section' | translate }}</h2>
+        <h2 class="vc-eyebrow mb-0">{{ 'eol.section' | translate }}</h2>
         <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="checkingEol" (click)="checkEolNow()">
           {{ 'check.action.checkNow' | translate }}
         </button>
@@ -152,8 +152,8 @@
   }
 
   @if (proposals.length > 0) {
-    <section class="mb-4">
-      <h2 class="h6 text-uppercase text-secondary">{{ 'proposal.section' | translate }}</h2>
+    <section class="card card-body mb-4">
+      <h2 class="vc-eyebrow">{{ 'proposal.section' | translate }}</h2>
       <table class="table table-sm align-middle">
         <thead>
         <tr>
@@ -210,24 +210,28 @@
               <tr>
                 <td colspan="4" class="small">
                   @if (proposal.releases.length > 0) {
-                    <div>
-                      <span class="text-secondary">{{ 'proposal.releases' | translate }}:</span>
-                      @for (release of proposal.releases; track release.version) {
-                        @if (release.url) {
-                          <a class="ms-1" [href]="release.url" target="_blank" rel="noopener"><code>{{ release.version }}</code></a>
-                        } @else {
-                          <code class="ms-1">{{ release.version }}</code>
+                    <!-- A short list stays open; a long one would bury the rest of the page. -->
+                    <details class="vc-releases" [open]="proposal.releases.length <= 6">
+                      <summary class="text-secondary">{{ 'proposal.releases' | translate }} ({{ proposal.releases.length }})</summary>
+                      <!-- A flex row, so the list wraps: the template keeps no spaces between the links. -->
+                      <div class="d-flex flex-wrap gap-1 mt-1">
+                        @for (release of proposal.releases; track release.version) {
+                          @if (release.url) {
+                            <a [href]="release.url" target="_blank" rel="noopener"><code>{{ release.version }}</code></a>
+                          } @else {
+                            <code>{{ release.version }}</code>
+                          }
                         }
-                      }
-                    </div>
+                      </div>
+                    </details>
                   }
                   @if (proposal.stops.length > 0) {
-                    <div>
-                      <span class="text-secondary">{{ 'proposal.stops' | translate }}:</span>
+                    <div class="d-flex flex-wrap align-items-baseline gap-1">
+                      <span class="text-secondary text-nowrap">{{ 'proposal.stops' | translate }}:</span>
                       @for (stop of proposal.stops; track stop.id) {
-                        <span class="ms-1"><code>{{ stop.version }}</code>
+                        <span><code>{{ stop.version }}</code>
                           @if (stop.note) {
-                            <span class="text-secondary">({{ stop.note }})</span>
+                            <span class="text-secondary ms-1">({{ stop.note }})</span>
                           }
                         </span>
                       }
@@ -251,8 +255,8 @@
   }
 
   @if (requires.length > 0 || requiredBy.length > 0) {
-    <section class="mb-4">
-      <h2 class="h6 text-uppercase text-secondary">{{ 'dependency.section' | translate }}</h2>
+    <section class="card card-body mb-4">
+      <h2 class="vc-eyebrow">{{ 'dependency.section' | translate }}</h2>
       <table class="table table-sm align-middle">
         <thead>
         <tr>
@@ -304,8 +308,8 @@
     </section>
   }
 
-  <section class="mb-4">
-    <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.environments' | translate }}</h2>
+  <section class="card card-body mb-4">
+    <h2 class="vc-eyebrow">{{ 'component.section.environments' | translate }}</h2>
     <table class="table table-sm align-middle">
       <thead>
       <tr>
@@ -375,8 +379,8 @@
     </table>
   </section>
 
-  <section>
-    <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.history' | translate }}</h2>
+  <section class="card card-body mb-4">
+    <h2 class="vc-eyebrow">{{ 'component.section.history' | translate }}</h2>
     @if (history.length === 0) {
       <p class="text-secondary">{{ 'history.empty' | translate }}</p>
     } @else {
@@ -397,7 +401,7 @@
               <tr>
                 <td class="text-nowrap">{{ entry.changedAt | date: 'short' }}</td>
                 <td>{{ environmentName(entry.environmentId) }}</td>
-                <td>
+                <td class="text-nowrap">
                   @if (entry.fromVersion) {
                     <span class="text-secondary">{{ entry.fromVersion }}</span>
                     <vc-copy-value [value]="entry.fromVersion" />
@@ -436,8 +440,8 @@
     }
   </section>
 
-  <section class="mt-4">
-    <h2 class="h6 text-uppercase text-secondary">{{ 'component.section.changes' | translate }}</h2>
+  <section class="card card-body mb-4">
+    <h2 class="vc-eyebrow">{{ 'component.section.changes' | translate }}</h2>
     @if (changes.length === 0) {
       <p class="text-secondary">{{ 'history.empty' | translate }}</p>
     } @else {

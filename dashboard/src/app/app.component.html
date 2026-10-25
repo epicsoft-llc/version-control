@@ -1,7 +1,10 @@
-<nav class="navbar navbar-expand navbar-dark bg-dark">
+<nav class="navbar navbar-expand vc-header" data-bs-theme="dark">
   <div class="container-fluid vc-content">
-    <span class="navbar-brand">{{ 'app.title' | translate }}</span>
-    <ul class="navbar-nav me-auto">
+    <a class="navbar-brand" routerLink="/tasks">
+      <img class="vc-mark" src="assets/favicon.svg" alt="">
+      {{ 'app.title' | translate }}
+    </a>
+    <ul class="navbar-nav me-auto gap-1">
       <li class="nav-item">
         <a class="nav-link" routerLink="/tasks" routerLinkActive="active">{{ 'nav.tasks' | translate }}</a>
       </li>
