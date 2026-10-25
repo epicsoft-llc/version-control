@@ -125,6 +125,10 @@ export class ComponentDetailComponent implements OnDestroy {
     return this.decision?.state === 'HELD';
   }
 
+  protected autoUpdating(): boolean {
+    return this.decision?.state === 'AUTO_UPDATE';
+  }
+
   /**
    * Also here, not only on the task list: a component that is not behind is not on that list, and holding it
    * is exactly the decision taken before it would be.

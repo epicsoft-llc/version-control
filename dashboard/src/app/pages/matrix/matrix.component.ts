@@ -9,7 +9,7 @@ import {LocalDatePipe} from '../../libs/pipes/local-date.pipe';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
-import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
+import {PERMANENT_STATES, UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
 import {ComponentRepo} from '../../repositories/api/component.repo';
@@ -90,7 +90,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     ).subscribe((loaded) => {
       this.matrix = loaded?.matrix;
       this.checks = new Map((loaded?.checks ?? []).map((check) => [check.componentId, check]));
-      this.holds = new Map((loaded?.decisions ?? []).filter((decision) => decision.state === 'HELD')
+      this.holds = new Map((loaded?.decisions ?? []).filter((decision) => PERMANENT_STATES.includes(decision.state))
                                                      .map((decision) => [decision.componentId, decision]));
       this.loading = false;
     }));
