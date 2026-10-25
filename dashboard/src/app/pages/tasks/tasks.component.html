@@ -1,5 +1,5 @@
 <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-  <h1 class="h4 mb-0">{{ 'nav.tasks' | translate }}</h1>
+  <h1 class="h3 mb-0">{{ 'nav.tasks' | translate }}</h1>
   @if (projects.length > 1) {
     <select class="form-select form-select-sm w-auto"
             name="project"
@@ -22,8 +22,8 @@
   <p class="text-secondary">{{ 'tasks.empty' | translate }}</p>
 } @else if (list) {
   @for (section of list.sections; track section.section) {
-    <section class="mb-4">
-      <h2 class="h6 text-uppercase text-secondary">
+    <section class="card card-body mb-4">
+      <h2 class="vc-eyebrow">
         {{ 'taskSection.' + section.section | translate }}
         <span class="badge text-bg-secondary ms-1">{{ section.entries.length }}</span>
       </h2>
@@ -98,8 +98,8 @@
 }
 
 @if (changes.length > 0) {
-  <section class="mt-4">
-    <h2 class="h6 text-uppercase text-secondary">{{ 'tasks.recentChanges' | translate }}</h2>
+  <section class="card card-body mb-4">
+    <h2 class="vc-eyebrow">{{ 'tasks.recentChanges' | translate }}</h2>
     <table class="table table-sm align-middle">
       <tbody>
         @for (change of changes; track change.id) {

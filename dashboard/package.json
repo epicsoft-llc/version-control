@@ -1,6 +1,6 @@
 {
   "name": "vc-dashboard",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Version Control dashboard",
   "private": true,
   "engines": {
@@ -13,7 +13,6 @@
     "build:dev": "ng build --configuration=development",
     "watch": "ng build --watch --configuration=development",
     "test": "ng test",
-    "i18n:pull": "node scripts/i18n-pull.mjs",
     "i18n:verify": "node scripts/i18n-verify.mjs",
     "dep:update": "npm-check-updates --errorLevel 2 -x typescript -x zone.js"
   },
@@ -25,6 +24,7 @@
     "@angular/localize": "22.2.3",
     "@angular/platform-browser": "22.2.3",
     "@angular/router": "22.2.3",
+    "@fontsource-variable/inter": "5.3.0",
     "@ng-bootstrap/ng-bootstrap": "21.0.0",
     "@ngx-translate/core": "18.0.0",
     "@ngx-translate/http-loader": "18.0.0",

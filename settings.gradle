@@ -29,9 +29,8 @@ pluginManagement {
       }
     }
     gradlePluginPortal()
-    // Public, readable without credentials: one.epicsoft.deps-update, one.epicsoft.tolgee
+    // Public, readable without credentials: one.epicsoft.depcheck
     maven { url = "https://gitlab.com/api/v4/projects/82634030/packages/maven" }
-    maven { url = "https://gitlab.com/api/v4/projects/85970987/packages/maven" }
   }
 }
 

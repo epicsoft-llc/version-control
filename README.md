@@ -21,26 +21,29 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.4.0.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.5.0.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
 ## What it looks like
 
 The start page is the task list, not the matrix — it answers what needs doing, in a fixed order: out of
-support before merely behind, a check that has been failing for days before a cosmetic warning.
+support before merely behind, a check that has been failing for days before a cosmetic warning. Planned
+rollouts come last, and the latest changes to the inventory close the page.
 
 ![Task list](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/tasks.jpg)
 
 The matrix is the second view: one row per component, one column per environment, and the newest
 available version at the end. Rows whose environments disagree are marked, a cell that is deliberately
-empty (`–`) is not the same as one nobody has filled in.
+empty (`–`) is not the same as one nobody has filled in. A held component carries a lock, a planned
+rollout a calendar.
 
 ![Version matrix](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/matrix.jpg)
 
 A component page carries the source and its version rule, the last check, what may be upgraded to next
-per environment — and what would be a bigger jump than allowed, shown as a hint rather than a task —
-plus the dependencies in both directions, evaluated per environment.
+per environment — every version on the way linked to its release notes, and what would be a bigger jump
+than allowed shown as a hint rather than a task — plus the dependencies in both directions, evaluated per
+environment.
 
 ![Component detail](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/component-detail.jpg)
 
@@ -122,7 +125,7 @@ npm ci
 npm start                      # dev server on :4200, /api proxied to localhost:8080
 npm run build
 npm test                       # unit tests, vitest in jsdom
-npm run i18n:verify            # every key used by the interface exists
+npm run i18n:verify            # every key in every language, and used by the interface
 ```
 
 Unit tests run anywhere. Tests tagged `integration` start a PostgreSQL container through
@@ -192,7 +195,6 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `VC_MAIL_HOST` / `_PORT` / `_SECURITY` | no | the daily summary by mail, through any SMTP server. `_SECURITY` is `starttls` (default, port 587), `tls` (465) or `none` (25, login in clear text); `_PORT` only for a different port |
 | `VC_MAIL_USERNAME` / `_PASSWORD` | no | the login at the mail server; without a username none is attempted |
 | `VC_MAIL_FROM` / `VC_MAIL_TO` | no | the sender (`Version Control <vc@example.com>` works) and comma separated recipients; without host, sender and recipient no mail is sent |
-| `VC_TOLGEE_URL` / `_PROJECT_ID` / `_API_KEY` | no | build time only, to re-export the translations |
 
 **Application settings** — `application.yml`, overridable per environment:
 

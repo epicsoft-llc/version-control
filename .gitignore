@@ -20,13 +20,8 @@ out/
 ### Local configuration — never committed ###
 .env
 .npmrc
-#### Project-scoped Gradle settings for this machine: the Tolgee project id
-#### belongs to this repository, so it does not go into the user-wide
-#### ~/.gradle/gradle.properties, and it does not belong in the repository either.
+#### Gradle settings of this machine for this repository only.
 /gradle.properties
-
-### Working documents — internal, not part of the public repository ###
-TOLGEE.md
 
 ### OS ###
 .DS_Store

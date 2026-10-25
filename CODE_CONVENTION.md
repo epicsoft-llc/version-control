@@ -298,6 +298,12 @@ patch of one of them forces all of them up — align them rather than letting np
 Bootstrap utilities and ng-bootstrap components carry the layout; custom CSS only where Bootstrap has
 nothing. Bootstrap Icons for iconography.
 
+The look is one theme in `src/styles.scss`: palette, type and shapes are mapped onto Bootstrap's own CSS
+variables there, so a template keeps Bootstrap's classes — `btn-primary`, `card`, `badge` — and gets the
+theme with them. A colour or a radius written into a template or a component stylesheet is a second theme
+next to the first; it goes into the variables instead. A section of a page is a `card card-body`, its
+heading a `vc-eyebrow`.
+
 A centred container inside a flex column needs an explicit `width: 100%` alongside `max-width` and
 `margin: 0 auto`. Two auto margins on the cross axis turn `stretch` off, the item falls back to
 `fit-content`, and a single long unbreakable string then pushes the whole page sideways.

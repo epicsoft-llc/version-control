@@ -2,7 +2,6 @@ plugins {
   id "java"
   alias(libs.plugins.spring.boot)
   alias(libs.plugins.spring.dependency.management)
-  alias(libs.plugins.epicsoft.tolgee)
 }
 
 description = "Version Control backend"
@@ -73,42 +72,81 @@ dependencies {
 }
 
 // ###########################################################
-// #### Translations (Tolgee)
-// #### ./gradlew :core:pullTranslations
+// #### Translations — src/main/resources/messages/<language>.json
 // #### ./gradlew :core:verifyTranslations
+// #### ./gradlew :core:verifyMessageKeys
 // ###########################################################
-// Instance and project come from the environment, never from this repository.
-// verifyTranslations needs neither, so `check` stays green without them.
-tolgee {
-  //// Environment first, then ~/.gradle/gradle.properties.
-  url = providers.environmentVariable("VC_TOLGEE_URL").orElse(providers.gradleProperty("vcTolgeeUrl"))
-  projectId = providers.environmentVariable("VC_TOLGEE_PROJECT_ID")
-                       .orElse(providers.gradleProperty("vcTolgeeProjectId"))
-                       .map { Integer.parseInt(it) }
-  //// Which keys this artifact consumes — a property of the module.
-  tag = "core"
-  languages = ["de", "en"]
-  outputDir = layout.projectDirectory.dir("src/main/resources/messages")
-  fallbackLanguage = "en"
-  //// The variable's name, never the token.
-  apiKeyEnv = "VC_TOLGEE_API_KEY"
-}
-
-// Verification is offline and cheap, so both run with `check`. The download
-// stays manual — an ordinary build must not need the network.
+// The files are the source and are written by hand, like code. Both checks are
+// offline and cheap, so both run with `check`.
 tasks.named("check") {
   dependsOn tasks.named("verifyTranslations")
   dependsOn tasks.named("verifyMessageKeys")
 }
 
+// The language files among themselves: every file carries every key, each with
+// a text and the same placeholders, one key per line in alphabetical order. The
+// order keeps the files line by line side by side, so a review sees a missing
+// text, and it turns a key written twice into an error — JSON keeps the second
+// one and drops the first without a word.
+tasks.register("verifyTranslations") {
+  group = "verification"
+  description = "Checks that every translation file carries every key, with a text and the same placeholders"
+
+  final def bundles = fileTree("src/main/resources/messages") { include "*.json" }
+  inputs.files(bundles)
+  outputs.upToDateWhen { false }
+
+  doLast {
+    final def lineKey = ~/(?m)^\s*"((?:[^"\\]|\\.)*)"\s*:/
+    //// {0}, {1,number} — the argument index is what has to match.
+    final def placeholder = ~/\{(\d+)/
+    final def problems = []
+    final Map<String, Map> texts = [:]
+    bundles.files.sort { it.name }.each { bundle ->
+      final String text = bundle.getText("UTF-8")
+      final def parsed = new groovy.json.JsonSlurper().parseText(text)
+      if (!(parsed instanceof Map) || parsed.values().any { !(it instanceof String) }) {
+        problems << "${bundle.name}: not a flat object of texts"
+        return
+      }
+      texts[bundle.name] = parsed
+      final def written = text.findAll(lineKey) { match, key -> key }
+      if (written.toSet() != parsed.keySet()) {
+        problems << "${bundle.name}: write one key per line"
+      }
+      written.eachWithIndex { key, index ->
+        if (index > 0 && key <= written[index - 1]) {
+          problems << "${bundle.name}: '${key}' is ${key == written[index - 1] ? 'written twice' : "out of order, after '${written[index - 1]}'"}"
+        }
+      }
+      parsed.findAll { key, value -> value.isBlank() }.each { key, value -> problems << "${bundle.name}: '${key}' has no text" }
+    }
+    final def keys = texts.values().collectMany { it.keySet() } as SortedSet
+    texts.each { name, bundle ->
+      (keys - bundle.keySet()).each { problems << "${name}: '${it}' is missing" }
+    }
+    keys.each { key ->
+      final def forms = texts.findAll { name, bundle -> bundle[key] instanceof String }
+                             .collectEntries { name, bundle -> [(name): bundle[key].findAll(placeholder) { match, index -> index } as SortedSet] }
+      if (forms.values().toSet().size() > 1) {
+        problems << "'${key}' has different placeholders: ${forms.collect { name, found -> "${name} ${found}" }.join(', ')}"
+      }
+    }
+    if (!problems.isEmpty()) {
+      throw new GradleException("${problems.size()} problem(s) in src/main/resources/messages:\n  " + problems.join("\n  "))
+    }
+    logger.lifecycle("Translations: ${keys.size()} keys in ${texts.keySet().join(', ')}, complete and in order.")
+  }
+}
+
 // ###########################################################
 // #### ./gradlew :core:verifyMessageKeys
 // ###########################################################
-// What `verifyTranslations` cannot see: it compares the exported files against
-// each other, so a key the code asks for and Tolgee never had is complete and
-// missing at the same time. `TranslationService` then hands the key itself to
-// whoever reads the message — the Telegram line says "taskSection.UPDATE_OPEN"
-// and nothing anywhere reports a fault.
+// What `verifyTranslations` cannot see: it compares the files against each
+// other, so a key the code asks for and no file has is complete and missing at
+// the same time. `TranslationService` then hands the key itself to whoever
+// reads the message — the Telegram line says "taskSection.UPDATE_OPEN" and
+// nothing anywhere reports a fault.
 //
 // Dynamic keys are resolved, not skipped: "taskSection." + section.name() is
 // expanded over the constants of the enum of that name.
@@ -206,8 +244,18 @@ tasks.register("verifyMessageKeys") {
     if (!missing.isEmpty()) {
       throw new GradleException("${missing.size()} message key(s) are missing from ${bundle.name}:\n  "
                                     + missing.join("\n  ")
-                                    + "\nRun ./gradlew :core:pullTranslations once they exist in Tolgee.")
+                                    + "\nAdd them to every file in src/main/resources/messages.")
     }
-    logger.lifecycle("Message keys: ${used.size()} used, all present in ${bundle.name}.")
+    //// The other direction: a text no code asks for any more. A key passed
+    //// around before it reaches the service counts as used once it is written
+    //// as a literal anywhere in the sources.
+    final String code = sources.collect { it.text }.join("\n")
+    final def unused = texts.keySet().findAll { !used.contains(it) && !code.contains("\"${it}\"") }.sort()
+    if (!unused.isEmpty()) {
+      throw new GradleException("${unused.size()} message key(s) in ${bundle.name} are used nowhere in the code:\n  "
+                                    + unused.join("\n  ")
+                                    + "\nRemove them from every file in src/main/resources/messages.")
+    }
+    logger.lifecycle("Message keys: ${used.size()} used, all present in ${bundle.name}, none left over.")
   }
 }

@@ -73,9 +73,9 @@ describe('TasksComponent', () => {
       ]
     }).compileComponents();
 
-    // The keys are pulled from Tolgee, so the bundle is not part of this test —
-    // only that the interface asks for the right ones and puts the data around
-    // them. Anything unset renders as the key, which would be a silent pass.
+    // The bundle is not part of this test — only that the interface asks for
+    // the right keys and puts the data around them. Anything unset renders as
+    // the key, which would be a silent pass.
     TestBed.inject(TranslateService).setTranslation('en', {
       'taskSection.UPDATE_OPEN': 'Update open',
       'taskSection.DEPENDENCY_VIOLATED': 'Dependency violated',

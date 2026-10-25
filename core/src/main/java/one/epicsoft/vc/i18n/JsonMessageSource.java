@@ -17,11 +17,11 @@ import java.util.Map;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
 
 /**
- * Message source over the flat translation files exported from Tolgee
- * ({@code messages/<language>.json}).
+ * Message source over the flat translation files {@code messages/<language>.json}.
  *
- * <p>The files are flat by design — the export sends an empty
- * {@code structureDelimiter}. A nested file would silently resolve nothing here.
+ * <p>The files are flat by design: one key per line, the dots belong to the key.
+ * A nested file would silently resolve nothing here, so {@code verifyTranslations}
+ * refuses one at build time.
  */
 @Slf4j
 public class JsonMessageSource extends AbstractMessageSource {
