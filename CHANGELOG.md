@@ -4,7 +4,7 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
-## 2026-10-25
+## [0.5.2] - 2026-10-25
 
 ### Fixed
 - The translations and the icon are asked for again on every load: they keep their names from release to
