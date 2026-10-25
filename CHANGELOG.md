@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## 2026-10-25
+
+### Added
+- The decision `AUTO_UPDATE` for a component that updates itself — an updater on the host installs every new
+  version, so none of them is a task. Like `HELD` it needs no newer version to be decided again, but it asks for
+  no reason; the matrix and the component page mark it with a circular arrow
+
 ## [0.5.2] - 2026-10-25
 
 ### Fixed

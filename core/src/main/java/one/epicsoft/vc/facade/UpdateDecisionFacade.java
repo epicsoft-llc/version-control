@@ -123,7 +123,7 @@ public class UpdateDecisionFacade {
       return false;
     }
     final UpdateDecisionEntity decision = stored.get();
-    if (DecisionState.OPEN.equals(decision.getState()) || DecisionState.HELD.equals(decision.getState())) {
+    if (DecisionState.OPEN.equals(decision.getState()) || decision.getState().isPermanent()) {
       return false;
     }
     // A decision taken while nothing was available covers nothing; the first

@@ -9,6 +9,9 @@
     @if (held()) {
       <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}</span>
     }
+    @if (autoUpdating()) {
+      <span class="badge text-bg-primary"><i class="bi bi-arrow-repeat me-1"></i>{{ 'decisionState.AUTO_UPDATE' | translate }}</span>
+    }
   </div>
   <p class="text-secondary">
     <a routerLink="/matrix">{{ 'nav.matrix' | translate }}</a>

@@ -98,6 +98,7 @@ describe('MatrixComponent', () => {
       'matrix.updateAvailable': 'Update available',
       'check.state.ERROR': 'Error',
       'decisionState.HELD': 'Held',
+      'decisionState.AUTO_UPDATE': 'Auto-update',
       'decisionState.PLANNED': 'Planned'
     });
   });
@@ -216,6 +217,22 @@ describe('MatrixComponent', () => {
     const available = cells().at(-1) as HTMLTableCellElement;
     expect(available.textContent).toContain('Held');
     expect(available.querySelector('[title="Last free version"]')).not.toBeNull();
+    expect(available.querySelector('[title="Update available"]')).toBeNull();
+  });
+
+  it('marks a component that updates itself and asks for no update', async () => {
+    findDecisions.mockReturnValue(of([
+      new UpdateDecisionDto({id: 'decision-1', componentId: 'component-1', state: 'AUTO_UPDATE', decidedAt: '2026-10-25T10:00:00Z'})
+    ]));
+
+    await render(matrix(cell('production', 'RECORDED', {currentVersion: '1.104.1'})),
+                 [new UpdateCheckDto({componentId: 'component-1', checkState: 'OK', latestVersion: '1.104.2',
+                                      checkedAt: '2026-10-25T05:00:00Z'})]);
+
+    // It installs the newer version by itself; an arrow would ask for work nobody has to do.
+    const available = cells().at(-1) as HTMLTableCellElement;
+    expect(available.textContent).toContain('Auto-update');
+    expect(available.querySelector('.bi-arrow-repeat')).not.toBeNull();
     expect(available.querySelector('[title="Update available"]')).toBeNull();
   });
 

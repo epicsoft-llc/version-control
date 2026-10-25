@@ -39,6 +39,9 @@
     @if (needsReason()) {
       <div class="form-text">{{ 'decision.heldHint' | translate }}</div>
     }
+    @if (state === 'AUTO_UPDATE') {
+      <div class="form-text">{{ 'decision.autoUpdateHint' | translate }}</div>
+    }
   </div>
 
   <div class="mb-1">

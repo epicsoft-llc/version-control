@@ -35,8 +35,8 @@ rollouts come last, and the latest changes to the inventory close the page.
 
 The matrix is the second view: one row per component, one column per environment, and the newest
 available version at the end. Rows whose environments disagree are marked, a cell that is deliberately
-empty (`–`) is not the same as one nobody has filled in. A held component carries a lock, a planned
-rollout a calendar.
+empty (`–`) is not the same as one nobody has filled in. A held component carries a lock, one that
+updates itself a circular arrow, a planned rollout a calendar.
 
 ![Version matrix](https://gitlab.com/epicsoft-networks/version-control/-/raw/main/docs/images/matrix.jpg)
 
@@ -65,9 +65,10 @@ monitoring stack, the Docker packages on a host. Sources it can check:
 
 On top of that it tracks end-of-life dates, records every change with a note, backup reference,
 rollback path and downtime, and remembers why an available update was deliberately postponed — or why a
-component is held on its version for good. Rollouts can be planned per environment and leave the task
-list by themselves once the version is recorded; one that misses its day comes back as overdue. Every
-change to a component's settings, decisions and plans is logged, and the task list ends with the latest of them.
+component is held on its version for good, or that it updates itself and needs no task. Rollouts can be
+planned per environment and leave the task list by themselves once the version is recorded; one that
+misses its day comes back as overdue. Every change to a component's settings, decisions and plans is
+logged, and the task list ends with the latest of them.
 
 Before an upgrade, the proposal lists every version between the running one and the target, each linked to
 its release notes — reading those for breaking changes is the slow part of every update.

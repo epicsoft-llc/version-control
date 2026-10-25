@@ -310,7 +310,7 @@ public class TaskListFacade {
     if (DecisionState.BLOCKED.equals(decision.getState())) {
       return TaskSection.BLOCKED;
     }
-    // Planned and skipped are answers that come back with a newer version; held does not come back.
+    // Planned and skipped are answers that come back with a newer version; held and auto-update do not.
     return null;
   }
 

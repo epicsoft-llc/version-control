@@ -94,9 +94,15 @@
 
               <td class="border-start">
                 @if (heldOf(row.componentId); as hold) {
-                  <span class="badge text-bg-dark me-1" [title]="hold.note ?? ''">
-                    <i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}
-                  </span>
+                  @if (hold.state === 'AUTO_UPDATE') {
+                    <span class="badge text-bg-primary me-1" [title]="hold.note ?? ''">
+                      <i class="bi bi-arrow-repeat me-1"></i>{{ 'decisionState.AUTO_UPDATE' | translate }}
+                    </span>
+                  } @else {
+                    <span class="badge text-bg-dark me-1" [title]="hold.note ?? ''">
+                      <i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}
+                    </span>
+                  }
                 }
                 @if (checkOf(row.componentId); as check) {
                   @switch (check.checkState) {

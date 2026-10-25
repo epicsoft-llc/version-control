@@ -470,6 +470,23 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void keepsAComponentThatUpdatesItselfOffTheListWhateverComesOut() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "1.104.1");
+    this.recordCheck(component, "1.104.2", CheckState.OK, Instant.now());
+    final UpdateDecisionRequest request = new UpdateDecisionRequest();
+    request.setComponentId(component.getId());
+    request.setState(DecisionState.AUTO_UPDATE);
+    // Without a note: what it means is in the state itself.
+    this.updateDecisionFacade.decide(request);
+
+    assertFalse(this.updateDecisionFacade.reopenIfNewerVersion(component.getId(), "1.106.0"));
+    assertEquals(DecisionState.AUTO_UPDATE, this.updateDecisionService.findByComponent(component.getId()).orElseThrow().getState());
+    assertTrue(this.sections(this.taskListFacade.getByProject(projectId)).stream()
+                   .noneMatch(section -> TaskSection.UPDATE_OPEN.equals(section.getSection())));
+  }
+
+  @Test
   void announcesAPlannedRolloutInsteadOfAnOpenUpdate() {
     final UUID projectId = this.project();
     final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "Component " + UUID.randomUUID()));

@@ -1,8 +1,11 @@
 /** BLOCKED is derived from the dependency check and never set by hand. */
-export type DecisionState = 'OPEN' | 'PLANNED' | 'POSTPONED' | 'SKIPPED' | 'HELD' | 'BLOCKED';
+export type DecisionState = 'OPEN' | 'PLANNED' | 'POSTPONED' | 'SKIPPED' | 'HELD' | 'AUTO_UPDATE' | 'BLOCKED';
 
 /** The states somebody can choose; BLOCKED is not among them on purpose. */
-export const DECISION_STATES: DecisionState[] = ['OPEN', 'PLANNED', 'POSTPONED', 'SKIPPED', 'HELD'];
+export const DECISION_STATES: DecisionState[] = ['OPEN', 'PLANNED', 'POSTPONED', 'SKIPPED', 'HELD', 'AUTO_UPDATE'];
+
+/** Decisions about the component rather than about one version: no newer version reopens them. */
+export const PERMANENT_STATES: DecisionState[] = ['HELD', 'AUTO_UPDATE'];
 
 export class UpdateDecisionDto {
 
