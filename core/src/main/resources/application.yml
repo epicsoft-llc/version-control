@@ -76,6 +76,13 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+springdoc:
+  api-docs:
+    #### Under /api, so the dashboard container forwards it like every other call.
+    path: /api/v1/openapi.json
+    version: openapi_3_1
+  paths-to-match: /api/v1/**
+
 server:
   port: 8080
 

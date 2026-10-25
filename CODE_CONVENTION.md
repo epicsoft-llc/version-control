@@ -146,6 +146,19 @@ a constructor over all `@Nonnull` fields and MapStruct would build through it, p
 ignored field. Request DTOs carry Jakarta Validation annotations — `@Nonnull` is static analysis only
 and enforces nothing at runtime.
 
+### API description
+
+The OpenAPI document at `/api/v1/openapi.json` is generated from the code. What the code cannot say is written
+next to it, and `OpenApiIntegrationTest` holds every operation and every enum to that:
+
+- Every controller carries `@Tag`, every endpoint `@Operation` with a `summary`, and a `description` wherever a rule
+  is not visible in the signature — what a replacement clears, which parameter is required, what is refused.
+- Every enum that crosses the HTTP boundary carries `@Schema(enumAsRef = true, description = …)` with one line per
+  value. A new constant without its line fails the test.
+- A field gets `@Schema(description = …)` when its meaning is not its name: a default, a format, what `null` or an
+  empty list does. A Javadoc that only says the same thing is replaced by it, not kept beside it.
+- The error answer is declared once, on the catch-all of `AppExceptionHandler`.
+
 ### Exceptions
 
 One class per domain concept, extending `AppException`, with a private constructor and static factories

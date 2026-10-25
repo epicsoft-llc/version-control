@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +36,15 @@ import static java.util.Objects.nonNull;
                 consumes = MediaType.APPLICATION_JSON_VALUE,
                 produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Update checks", description = "What the last check against the update source found, and asking for a check now.")
 public class UpdateCheckController {
 
   public static final String PATH_PREFIX = "api/v1/update-checks";
 
   private final UpdateCheckFacade updateCheckFacade;
 
-  /** A component that was never checked answers with an empty list, not an error. */
+  @Operation(summary = "The last check of a component or of every component of a project",
+             description = "One of `componentId` and `projectId` is required. A component that was never checked answers with an empty list.")
   @GetMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<List<UpdateCheckDto>> find(@RequestParam(required = false) final UUID projectId,
                                                    @RequestParam(required = false) final UUID componentId) {
@@ -54,13 +58,19 @@ public class UpdateCheckController {
     throw AppValidationException.parameterRequired("projectId or componentId");
   }
 
+  @Operation(summary = "Check a component now",
+             description = """
+                 Asks the update source right away — also for a component whose regular check is switched off. Obeys \
+                 the same minimum interval as the scheduler (`vc.check.min-interval`, 48 hours by default); asked \
+                 earlier, it is refused.""")
   @PostMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<UpdateCheckDto> checkNow(@RequestParam final UUID componentId) {
     log.debug("Incoming POST check of component {}", componentId);
     return ResponseEntity.ok(this.updateCheckFacade.checkNow(componentId));
   }
 
-  /** Which tags a rule accepts, and which of them wins — before the rule is saved. */
+  @Operation(summary = "Try a version rule before it is saved",
+             description = "Which tags the rule accepts and which of them wins. Fields not sent fall back to the stored rule of the component.")
   @PostMapping("/preview")
   public ResponseEntity<VersionPreviewDto> preview(@RequestBody @Valid final VersionPreviewRequest request) {
     log.debug("Incoming POST rule preview for component {}", request.getComponentId());

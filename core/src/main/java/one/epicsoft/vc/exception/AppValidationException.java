@@ -32,6 +32,17 @@ public class AppValidationException extends AppException {
     return new AppValidationException("Request is missing '%s'".formatted(parameter), "error.badRequest");
   }
 
+  /**
+   * A patch that is not an object, names a field the resource does not have, or carries a value of the wrong
+   * type. Only the place is logged, never the value: a patch can carry free text.
+   */
+  @Nonnull
+  public static AppValidationException patchNotApplicable(@Nonnull final String type, @Nonnull final UUID id,
+                                                          @Nonnull final String where) {
+    return new AppValidationException("Patch for %s '%s' cannot be applied at %s".formatted(type, id, where),
+                                      "error.badRequest");
+  }
+
   @Nonnull
   public static AppValidationException duplicatePackage(@Nonnull final String name) {
     return new AppValidationException("Package '%s' is listed twice".formatted(name), "error.duplicatePackage");

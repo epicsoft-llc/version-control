@@ -20,6 +20,9 @@ lombokMapstructBinding = "0.2.0"
 #### Comparison, patch/minor/major classification and node-semver ranges.
 #### Deliberately NOT used for Debian versions — see the plan, section 5.
 semver4j = "6.0.0"
+#### https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
+#### The API description under /api/v1/openapi.json; the variant without Swagger UI.
+springdoc = "3.2.0"
 #### https://plugins.gradle.org/plugin/org.owasp.dependencycheck
 dependencyCheck = "13.0.0"
 #### https://mvnrepository.com/artifact/org.testcontainers/postgresql
@@ -31,6 +34,7 @@ lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-bindin
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 semver4j = { module = "org.semver4j:semver4j", version.ref = "semver4j" }
+springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 

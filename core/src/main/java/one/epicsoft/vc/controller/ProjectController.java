@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import java.util.UUID;
                 consumes = MediaType.APPLICATION_JSON_VALUE,
                 produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Projects", description = "A project groups environments and components; its matrix is the version overview.")
 public class ProjectController {
 
   public static final String PATH_PREFIX = "api/v1/projects";
@@ -34,31 +37,36 @@ public class ProjectController {
   private final ProjectFacade projectFacade;
   private final MatrixFacade matrixFacade;
 
+  @Operation(summary = "List all projects")
   @GetMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<List<ProjectDto>> findAll() {
     log.debug("Incoming GET 'api/v1/projects'");
     return ResponseEntity.ok(this.projectFacade.findAll());
   }
 
+  @Operation(summary = "Get a project")
   @GetMapping(path = "/{id}", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<ProjectDto> getById(@PathVariable final UUID id) {
     log.debug("Incoming GET 'api/v1/projects/{}'", id);
     return ResponseEntity.ok(this.projectFacade.getById(id));
   }
 
-  /** The version overview: components as rows, environments as columns. */
+  @Operation(summary = "The version overview of a project",
+             description = "Components as rows, environments as columns, and per cell what it says — see `MatrixCellState`.")
   @GetMapping(path = "/{id}/matrix", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<MatrixDto> getMatrix(@PathVariable final UUID id) {
     log.debug("Incoming GET matrix of project {}", id);
     return ResponseEntity.ok(this.matrixFacade.getByProject(id));
   }
 
+  @Operation(summary = "Create a project")
   @PostMapping
   public ResponseEntity<ProjectDto> create(@RequestBody @Valid final ProjectRequest request) {
     log.debug("Incoming POST 'api/v1/projects' with: {}", request);
     return ResponseEntity.ok(this.projectFacade.create(request));
   }
 
+  @Operation(summary = "Replace a project", description = "Every field is replaced: a field left out is cleared, `sortOrder` falls back to 0.")
   @PutMapping("/{id}")
   public ResponseEntity<ProjectDto> update(@PathVariable final UUID id,
                                            @RequestBody @Valid final ProjectRequest request) {
@@ -66,6 +74,7 @@ public class ProjectController {
     return ResponseEntity.ok(this.projectFacade.update(id, request));
   }
 
+  @Operation(summary = "Delete a project", description = "Its environments and components go with it.")
   @DeleteMapping(path = "/{id}", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<Void> delete(@PathVariable final UUID id) {
     log.debug("Incoming DELETE 'api/v1/projects/{}'", id);

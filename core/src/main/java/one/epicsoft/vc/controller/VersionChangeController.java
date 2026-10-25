@@ -1,5 +1,7 @@
 package one.epicsoft.vc.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,13 +35,15 @@ import static java.util.Objects.nonNull;
                 consumes = MediaType.APPLICATION_JSON_VALUE,
                 produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Version changes", description = "The change history, and the only way to change a recorded version.")
 public class VersionChangeController {
 
   public static final String PATH_PREFIX = "api/v1/version-changes";
 
   private final VersionChangeFacade versionChangeFacade;
 
-  /** The history of one cell, one component or a whole project — newest first. */
+  @Operation(summary = "List the change history",
+             description = "Of one cell, one component or a whole project — one of the three parameters is required. Newest first.")
   @GetMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<List<VersionChangeDto>> find(@RequestParam(required = false) final UUID componentEnvironmentId,
                                                      @RequestParam(required = false) final UUID componentId,
@@ -59,13 +63,18 @@ public class VersionChangeController {
     throw AppValidationException.parameterRequired("componentEnvironmentId, componentId or projectId");
   }
 
+  @Operation(summary = "Get a history entry")
   @GetMapping(path = "/{id}", consumes = MediaType.ALL_VALUE)
   public ResponseEntity<VersionChangeDto> getById(@PathVariable final UUID id) {
     log.debug("Incoming GET version change {}", id);
     return ResponseEntity.ok(this.versionChangeFacade.getById(id));
   }
 
-  /** Saves the new version and the history entry in one step. */
+  @Operation(summary = "Change the version of a cell",
+             description = """
+                 Saves the new version and its history entry in one step — the only way to change a recorded version. \
+                 A component maintained per package sends `packages` instead of `toVersion`. Refused for an inactive \
+                 cell and for a version that is already the recorded one.""")
   @PostMapping
   public ResponseEntity<VersionChangeDto> changeVersion(@RequestBody @Valid final VersionChangeRequest request) {
     // The id, not the body: note, rollback path and backup reference are free

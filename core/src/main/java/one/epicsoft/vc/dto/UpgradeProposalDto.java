@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -32,26 +33,23 @@ public class UpgradeProposalDto {
   @JsonProperty("currentVersion")
   private String currentVersion;
 
-  /** The highest version the step limit allows from here. */
   @Nullable
+  @Schema(description = "The highest version `maxStep` allows from here — the one to act on.")
   @JsonProperty("target")
   private String target;
 
-  /** Available, but past the limit: a note without urgency. */
   @Nullable
+  @Schema(description = "A newer version past the limit: a note without urgency, never a task.")
   @JsonProperty("beyond")
   private String beyond;
 
-  /**
-   * What stands in the way of the target: the components that need this one at a
-   * range the target would leave. Empty means nothing does.
-   */
   @Nonnull
+  @Schema(description = "The components that need this one at a range the target would leave. Empty means nothing does.")
   @JsonProperty("blockedBy")
   private List<DependencyCheckDto> blockedBy;
 
-  /** Versions between here and the target that cannot be skipped. */
   @Nonnull
+  @Schema(description = "Versions between here and the target that cannot be skipped.")
   @JsonProperty("stops")
   private List<UpgradeStopDto> stops;
 

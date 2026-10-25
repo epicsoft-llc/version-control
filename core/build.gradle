@@ -48,6 +48,7 @@ dependencies {
   implementation "org.flywaydb:flyway-core"
   implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
   implementation libs.semver4j
+  implementation libs.springdoc.openapi
 
   // #### TEST ################################################################
   testImplementation "org.springframework.boot:spring-boot-starter-test"

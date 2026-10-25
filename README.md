@@ -84,6 +84,24 @@ backend, so there is a single entry point and the frontend build is environment 
 **Access control is not part of this application.** It is meant to sit behind a reverse proxy or an
 access gateway that handles authentication. Do not expose it directly.
 
+## API
+
+Everything the interface does goes through a REST API under `/api/v1`, and the API describes itself: the
+OpenAPI 3.1 document is at `/api/v1/openapi.json` — <http://localhost:8081/api/v1/openapi.json> with the
+compose file. It names every operation and field, explains every enum value — what `SKIPPED` does to the
+task list, what switching `checkEnabled` off stops — and shows the one shape every error has. Scripts and
+other tools can work from it without reading the code.
+
+A component can be changed field by field. `PATCH /api/v1/components/{id}` takes a JSON merge patch
+(RFC 7386): a field that is sent changes, a field that is left out keeps its value, `null` clears it.
+
+```bash
+curl -X PATCH -H 'Content-Type: application/merge-patch+json' -d '{"checkEnabled": false}' \
+  http://localhost:8081/api/v1/components/<id>
+```
+
+`PUT` remains the way to replace a component as a whole.
+
 ## Developing
 
 Requires Java 25 and Node 24 — `.vfox.toml` pins the versions.
