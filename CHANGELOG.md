@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.6.3] - 2026-10-26
+
+### Fixed
+- The matrix no longer marks a Debian package as deviating when only the distribution it was built for differs:
+  `5:29.9.2-1~ubuntu.24.04~noble` and `5:29.9.2-1~ubuntu.26.04~resolute` are the same version. Another upstream
+  version or package revision is still marked
+
 ## [0.6.2] - 2026-10-26
 
 ### Fixed

@@ -1,5 +1,6 @@
 package one.epicsoft.vc.version;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import one.epicsoft.vc.enums.VersionStrategy;
 import org.semver4j.Semver;
@@ -40,6 +41,18 @@ public final class VersionComparison {
     }
     return VersionStrategy.DEB_VERSION.equals(strategy) ? behindByDebian(current, latest)
                                                         : behindBySemver(current, latest);
+  }
+
+  /**
+   * True when two recorded versions are not the same release. Debian versions ignore the distribution a package
+   * was built for; everything else compares as written.
+   */
+  public static boolean differs(@Nonnull final String first, @Nonnull final String second,
+                                @Nullable final VersionStrategy strategy) {
+    final boolean debian = VersionStrategy.DEB_VERSION.equals(strategy);
+    final DebianVersion left = debian ? DebianVersion.parse(first) : null;
+    final DebianVersion right = debian ? DebianVersion.parse(second) : null;
+    return Objects.nonNull(left) && Objects.nonNull(right) ? !left.isSameRelease(right) : !first.equals(second);
   }
 
   private static boolean behindByDebian(final String current, final String latest) {

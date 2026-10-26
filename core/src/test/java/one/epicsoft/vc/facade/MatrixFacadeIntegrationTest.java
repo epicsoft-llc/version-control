@@ -12,6 +12,7 @@ import one.epicsoft.vc.dto.MatrixRowDto;
 import one.epicsoft.vc.dto.ProjectRequest;
 import one.epicsoft.vc.enums.MatrixCellState;
 import one.epicsoft.vc.enums.SourceType;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.exception.AppNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +120,38 @@ class MatrixFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void readsADebianPackageForAnotherDistributionAsTheSameVersion() {
+    final UUID projectId = this.project();
+    final EnvironmentDto noble = this.environment(projectId, "Noble", 0, true);
+    final EnvironmentDto resolute = this.environment(projectId, "Resolute", 1, false);
+    final ComponentDto component = this.componentFacade.create(this.debianRequest(projectId));
+
+    this.cell(component.getId(), noble.getId(), "5:29.9.2-1~ubuntu.24.04~noble", true);
+    this.cell(component.getId(), resolute.getId(), "5:29.9.2-1~ubuntu.26.04~resolute", true);
+
+    final MatrixRowDto row = this.matrixFacade.getByProject(projectId).getRows().getFirst();
+
+    assertFalse(row.getDeviating());
+    assertFalse(row.getCells().get(1).getDeviating());
+  }
+
+  @Test
+  void stillMarksADebianPackageThatIsAnotherVersion() {
+    final UUID projectId = this.project();
+    final EnvironmentDto noble = this.environment(projectId, "Noble", 0, true);
+    final EnvironmentDto resolute = this.environment(projectId, "Resolute", 1, false);
+    final ComponentDto component = this.componentFacade.create(this.debianRequest(projectId));
+
+    this.cell(component.getId(), noble.getId(), "5:29.9.2-1~ubuntu.24.04~noble", true);
+    this.cell(component.getId(), resolute.getId(), "5:29.9.1-1~ubuntu.26.04~resolute", true);
+
+    final MatrixRowDto row = this.matrixFacade.getByProject(projectId).getRows().getFirst();
+
+    assertTrue(row.getDeviating());
+    assertTrue(row.getCells().get(1).getDeviating());
+  }
+
+  @Test
   void flagsAMovingTag() {
     final UUID projectId = this.project();
     final EnvironmentDto production = this.environment(projectId, "Production", 0, true);
@@ -182,6 +215,12 @@ class MatrixFacadeIntegrationTest extends AbstractIntegrationTest {
     request.setName(name);
     request.setSourceType(SourceType.DOCKER_HUB);
     request.setSourceRef("library/postgres");
+    return request;
+  }
+
+  private ComponentRequest debianRequest(final UUID projectId) {
+    final ComponentRequest request = this.componentRequest(projectId, "Docker");
+    request.setVersionStrategy(VersionStrategy.DEB_VERSION);
     return request;
   }
 }

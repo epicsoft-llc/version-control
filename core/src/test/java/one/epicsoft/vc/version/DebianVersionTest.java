@@ -3,6 +3,7 @@ package one.epicsoft.vc.version;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,6 +60,19 @@ class DebianVersionTest {
   }
 
   @Test
+  void readsABuildForAnotherDistributionAsTheSameRelease() {
+    assertTrue(sameRelease("5:29.9.2-1~ubuntu.24.04~noble", "5:29.9.2-1~ubuntu.26.04~resolute"));
+  }
+
+  @Test
+  void tellsADifferentRevisionOrUpstreamVersionApart() {
+    assertFalse(sameRelease("5:29.9.2-1~ubuntu.24.04~noble", "5:29.9.2-2~ubuntu.26.04~resolute"));
+    assertFalse(sameRelease("5:29.9.2-1~ubuntu.24.04~noble", "5:29.9.3-1~ubuntu.24.04~noble"));
+    // A tilde in the upstream version is a pre-release, not a distribution.
+    assertFalse(sameRelease("1.0~rc1-1", "1.0-1"));
+  }
+
+  @Test
   void splitsAtTheLastHyphen() {
     final DebianVersion version = DebianVersion.parse("2.1-beta-3");
 
@@ -80,5 +94,13 @@ class DebianVersionTest {
     assertNotNull(left);
     assertNotNull(right);
     return left.compareTo(right) > 0;
+  }
+
+  private static boolean sameRelease(final String first, final String second) {
+    final DebianVersion left = DebianVersion.parse(first);
+    final DebianVersion right = DebianVersion.parse(second);
+    assertNotNull(left);
+    assertNotNull(right);
+    return left.isSameRelease(right);
   }
 }
