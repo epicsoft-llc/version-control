@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.6.2] - 2026-10-26
+
+### Fixed
+- Clearing the end-of-life product of a component, or changing its product or cycle, drops the end of support
+  looked up before. A cleared product left the old date on the task list and in the daily notification for good;
+  the leftovers are removed on start
+
 ## [0.6.1] - 2026-10-25
 
 ### Changed

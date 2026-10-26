@@ -25,6 +25,7 @@ import one.epicsoft.vc.mapper.UpgradeStopMapper;
 import one.epicsoft.vc.service.ComponentEnvironmentService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ComponentDependencyService;
+import one.epicsoft.vc.service.EolStatusService;
 import one.epicsoft.vc.service.UpgradeStopService;
 import one.epicsoft.vc.version.ConstraintEvaluator;
 import one.epicsoft.vc.service.ProjectService;
@@ -66,6 +67,7 @@ public class ComponentFacade {
   private final ConstraintEvaluator constraintEvaluator;
   private final UpdateCheckFacade updateCheckFacade;
   private final ComponentChangeFacade componentChangeFacade;
+  private final EolStatusService eolStatusService;
   private final JsonMapper jsonMapper;
   private final Validator validator;
 
@@ -113,6 +115,7 @@ public class ComponentFacade {
       throw AppConflictException.duplicateName("Component", request.getName());
     }
     final List<Object> ruleBefore = ruleOf(entity);
+    final List<Object> eolBefore = eolOf(entity);
     final Map<String, String> before = this.componentChangeFacade.snapshot(entity);
     this.componentMapper.updateEntity(entity, request);
     normalise(entity);
@@ -123,6 +126,10 @@ public class ComponentFacade {
     this.componentChangeFacade.recordDifferences(saved, before, this.componentChangeFacade.snapshot(saved));
     if (nonEquals(ruleBefore, ruleOf(saved))) {
       this.updateCheckFacade.reapplyRule(saved.getId());
+    }
+    if (nonEquals(eolBefore, eolOf(saved))) {
+      // The stored answer belongs to the old question; without a product nobody asks again, and it stayed for good.
+      this.eolStatusService.deleteByComponent(saved.getId());
     }
     return this.toDtos(List.of(saved)).getFirst();
   }
@@ -188,6 +195,12 @@ public class ComponentFacade {
   private static List<Object> ruleOf(@Nonnull final ComponentEntity component) {
     return Arrays.asList(component.getTagPattern(), component.getMajorConstraint(), component.isAllowPrerelease(),
                          component.getVersionStrategy());
+  }
+
+  /** What the end-of-life lookup asks about; a change here drops the answer to the old question. */
+  @Nonnull
+  private static List<Object> eolOf(@Nonnull final ComponentEntity component) {
+    return Arrays.asList(component.getEolProduct(), component.getEolCycle());
   }
 
   /** Takes the version records with it; the package rows stay until the component is removed for good. */

@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.6.1.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.6.2.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 

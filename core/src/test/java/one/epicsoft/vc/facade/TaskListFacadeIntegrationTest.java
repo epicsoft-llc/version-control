@@ -388,6 +388,40 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void dropsAnEndedSupportOnceTheProductIsCleared() {
+    final UUID projectId = this.project();
+    final ComponentRequest request = this.componentRequest(projectId, "MariaDB " + UUID.randomUUID());
+    request.setEolProduct("mariadb");
+    request.setEolCycle("10.1");
+    final ComponentDto component = this.componentFacade.create(request);
+    this.recordEol(component, LocalDate.now().minusYears(6), true);
+
+    request.setEolProduct(null);
+    request.setEolCycle(null);
+    this.componentFacade.update(component.getId(), request);
+
+    // No product means the question does not apply; nothing asks again, so the old answer would stay for good.
+    assertTrue(this.eolStatusService.findByComponent(component.getId()).isEmpty());
+    assertTrue(this.sections(this.taskListFacade.getByProject(projectId)).stream()
+                   .noneMatch(section -> TaskSection.EOL_EXCEEDED.equals(section.getSection())));
+  }
+
+  @Test
+  void keepsTheEndOfSupportWhenSomethingElseChanges() {
+    final UUID projectId = this.project();
+    final ComponentRequest request = this.componentRequest(projectId, "MariaDB " + UUID.randomUUID());
+    request.setEolProduct("mariadb");
+    final ComponentDto component = this.componentFacade.create(request);
+    this.recordEol(component, LocalDate.now().minusYears(6), true);
+
+    request.setName("MariaDB " + UUID.randomUUID());
+    this.componentFacade.update(component.getId(), request);
+
+    assertEquals(1, this.section(this.taskListFacade.getByProject(projectId), TaskSection.EOL_EXCEEDED)
+                        .getEntries().size());
+  }
+
+  @Test
   void filesABlockedUpdateAsBlockedRatherThanAsSomethingToDo() {
     final UUID projectId = this.project();
     // Major steps allowed, so 18.0 is actually proposed — and then blocked.
