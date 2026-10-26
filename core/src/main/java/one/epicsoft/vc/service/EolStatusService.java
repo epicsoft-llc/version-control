@@ -39,4 +39,8 @@ public class EolStatusService {
   public EolStatusEntity save(@Nonnull final EolStatusEntity entity) {
     return this.eolStatusRepository.save(entity);
   }
+
+  public void deleteByComponent(@Nonnull final UUID componentId) {
+    this.eolStatusRepository.deleteByComponentId(componentId);
+  }
 }

@@ -17,6 +17,8 @@ public interface EolStatusRepository extends JpaRepository<EolStatusEntity, UUID
 
   Optional<EolStatusEntity> findByComponentId(@Nonnull UUID componentId);
 
+  void deleteByComponentId(@Nonnull UUID componentId);
+
   @Query("""
       SELECT es FROM EolStatusEntity es
       WHERE es.component.projectId = :projectId
