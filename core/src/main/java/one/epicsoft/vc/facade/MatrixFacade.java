@@ -8,6 +8,7 @@ import one.epicsoft.vc.dto.MatrixCellDto;
 import one.epicsoft.vc.dto.MatrixDto;
 import one.epicsoft.vc.dto.MatrixRowDto;
 import one.epicsoft.vc.enums.MatrixCellState;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
 import one.epicsoft.vc.jpa.entity.EnvironmentEntity;
@@ -17,14 +18,13 @@ import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.EnvironmentService;
 import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.util.VcUtil;
+import one.epicsoft.vc.version.VersionComparison;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
-import static one.epicsoft.vc.util.VcUtil.nonEquals;
 
 /**
  * Builds the version overview of one project.
@@ -80,14 +79,15 @@ public class MatrixFacade {
   private MatrixRowDto toRow(@Nonnull final ComponentEntity component,
                              @Nonnull final List<EnvironmentEntity> environments,
                              @Nonnull final Map<UUID, ComponentEnvironmentEntity> cellsByEnvironment) {
-    final Set<String> versions = new HashSet<>();
-    for (final ComponentEnvironmentEntity cell : cellsByEnvironment.values()) {
-      if (cell.isActive() && nonBlank(cell.getCurrentVersion())) {
-        versions.add(cell.getCurrentVersion());
-      }
-    }
-    // One version everywhere is the normal case; two are the reason this view exists.
-    final boolean deviating = versions.size() > 1;
+    final VersionStrategy strategy = component.getVersionStrategy();
+    final List<String> versions = cellsByEnvironment.values().stream()
+                                                    .filter(ComponentEnvironmentEntity::isActive)
+                                                    .map(ComponentEnvironmentEntity::getCurrentVersion)
+                                                    .filter(VcUtil::nonBlank)
+                                                    .toList();
+    // One version everywhere is the normal case; two are the reason this view exists. A Debian package built for
+    // another distribution is the same version.
+    final boolean deviating = versions.stream().anyMatch(version -> VersionComparison.differs(versions.getFirst(), version, strategy));
     final String reference = deviating ? this.referenceVersion(environments, cellsByEnvironment) : null;
 
     final MatrixRowDto row = new MatrixRowDto();
@@ -97,7 +97,7 @@ public class MatrixFacade {
     row.setDeviating(deviating);
     row.setCells(environments.stream()
                              .map(environment -> this.toCell(environment, cellsByEnvironment.get(environment.getId()),
-                                                             reference))
+                                                             reference, strategy))
                              .toList());
     return row;
   }
@@ -124,7 +124,8 @@ public class MatrixFacade {
   @Nonnull
   private MatrixCellDto toCell(@Nonnull final EnvironmentEntity environment,
                                @Nullable final ComponentEnvironmentEntity cell,
-                               @Nullable final String reference) {
+                               @Nullable final String reference,
+                               @Nullable final VersionStrategy strategy) {
     final MatrixCellDto dto = new MatrixCellDto();
     dto.setEnvironmentId(environment.getId());
     dto.setMovingTag(false);
@@ -148,7 +149,7 @@ public class MatrixFacade {
     dto.setPlannedFor(cell.getPlannedFor());
     dto.setMovingTag(cell.isMovingTag());
     dto.setDeviating(nonNull(reference) && nonBlank(cell.getCurrentVersion())
-                     && nonEquals(reference, cell.getCurrentVersion()));
+                     && VersionComparison.differs(reference, cell.getCurrentVersion(), strategy));
     return dto;
   }
 

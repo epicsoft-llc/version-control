@@ -101,6 +101,22 @@ public final class DebianVersion implements Comparable<DebianVersion> {
     return upstreamOrder != 0 ? upstreamOrder : comparePart(this.revision, other.revision);
   }
 
+  /**
+   * Same epoch, upstream version and package revision. A tilde in the revision starts the distribution a package
+   * was built for, so {@code -1~ubuntu.24.04~noble} and {@code -1~ubuntu.26.04~resolute} are one release.
+   */
+  public boolean isSameRelease(@Nonnull final DebianVersion other) {
+    return this.epoch == other.epoch
+           && comparePart(this.upstream, other.upstream) == 0
+           && comparePart(packageRevision(this.revision), packageRevision(other.revision)) == 0;
+  }
+
+  @Nonnull
+  private static String packageRevision(@Nonnull final String revision) {
+    final int tilde = revision.indexOf('~');
+    return tilde < 0 ? revision : revision.substring(0, tilde);
+  }
+
   // No equals and no hashCode on purpose. Ordering here is not equality: 1.007
   // and 1.7 are the same version and would have to share a hash, while the
   // strings they came from do not. Comparison goes through compareTo, which is
