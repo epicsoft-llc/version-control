@@ -86,8 +86,19 @@ describe('TasksComponent', () => {
       'taskSection.ROLLOUT_PLANNED': 'Rollout planned',
       'plan.field.date': 'Planned for',
       'tasks.since': 'Since',
-      'tasks.recentChanges': 'Latest changes'
+      'tasks.recentChanges': 'Latest changes',
+      'taskSection.VULNERABLE': 'Known vulnerability'
     });
+  });
+
+  it('names the CVEs of a vulnerable environment and offers no decision for them', async () => {
+    await render(list(['VULNERABLE', [entry('PostgreSQL', {environmentName: 'Production',
+                                                           vulnerabilities: ['CVE-2026-1002', 'CVE-2026-1001']})]]));
+
+    const row = rows()[0].textContent ?? '';
+    expect(row).toContain('CVE-2026-1002');
+    expect(row).toContain('CVE-2026-1001');
+    expect(decideButtons().length).toBe(0);
   });
 
   it('offers a decision where one can be made, and only there', async () => {

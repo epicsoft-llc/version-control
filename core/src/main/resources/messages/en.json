@@ -21,6 +21,7 @@
   "error.validation": "Please check the highlighted fields.",
   "error.versionNeedsHistory": "This version can only be adjusted via the change version dialog.",
   "error.versionUnchanged": "This version is already recorded.",
+  "error.vulnerabilitiesNotConfigured": "Known vulnerabilities are not set up on this installation.",
   "notification.title": "New since last notification",
   "taskSection.BLOCKED": "Blocked",
   "taskSection.CHECK_ERROR": "Update check failed",
@@ -31,5 +32,6 @@
   "taskSection.ROLLOUT_OVERDUE": "Rollout overdue",
   "taskSection.ROLLOUT_PLANNED": "Rollout planned",
   "taskSection.SNOOZE_EXPIRED": "Follow-up date due",
-  "taskSection.UPDATE_OPEN": "Update open"
+  "taskSection.UPDATE_OPEN": "Update open",
+  "taskSection.VULNERABLE": "Known vulnerability"
 }

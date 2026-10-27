@@ -21,6 +21,7 @@
   "error.validation": "Bitte die markierten Felder prüfen.",
   "error.versionNeedsHistory": "Diese Version lässt sich nur über den Dialog zum Ändern der Version anpassen.",
   "error.versionUnchanged": "Diese Version ist bereits eingetragen.",
+  "error.vulnerabilitiesNotConfigured": "Bekannte Schwachstellen sind in dieser Installation nicht eingerichtet.",
   "notification.title": "Neu seit der letzten Meldung",
   "taskSection.BLOCKED": "Blockiert",
   "taskSection.CHECK_ERROR": "Prüfung fehlgeschlagen",
@@ -31,5 +32,6 @@
   "taskSection.ROLLOUT_OVERDUE": "Rollout überfällig",
   "taskSection.ROLLOUT_PLANNED": "Rollout geplant",
   "taskSection.SNOOZE_EXPIRED": "Wiedervorlage fällig",
-  "taskSection.UPDATE_OPEN": "Update offen"
+  "taskSection.UPDATE_OPEN": "Update offen",
+  "taskSection.VULNERABLE": "Bekannte Schwachstelle"
 }

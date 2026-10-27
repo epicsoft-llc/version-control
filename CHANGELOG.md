@@ -4,6 +4,19 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.8.0] - 2026-10-27
+
+### Added
+- Known vulnerabilities, optional: with a Dependency-Check database on H2, MariaDB, MySQL or PostgreSQL
+  (`VC_VULNERABILITIES_DB_URL`, `_USERNAME`, `_PASSWORD`, and `_DRIVER` for the JAR of its JDBC driver, mounted from
+  outside — only PostgreSQL's is built in), a component that names its CPE vendor and product is looked up once a
+  day and after every new version. The component page lists the CVEs per environment, the matrix marks the cell,
+  and a CVE that is exploited or reaches `vc.vulnerabilities.task-min-score` (9.0) is a task and goes into the daily
+  notification.
+  Setting it up, with ready-made databases from https://nvd.epicsoft.one/: `docs/vulnerabilities.md`
+- `GET` and `POST /api/v1/vulnerabilities` read and run the lookup; `GET /api/v1/settings` says whether a database
+  is configured
+
 ## [0.7.0] - 2026-10-27
 
 ### Changed

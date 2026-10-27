@@ -27,6 +27,8 @@ import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ComponentDependencyService;
 import one.epicsoft.vc.service.EolStatusService;
 import one.epicsoft.vc.service.UpgradeStopService;
+import one.epicsoft.vc.service.VulnerabilityCheckService;
+import one.epicsoft.vc.service.VulnerabilityFindingService;
 import one.epicsoft.vc.version.ConstraintEvaluator;
 import one.epicsoft.vc.service.ProjectService;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -68,6 +71,8 @@ public class ComponentFacade {
   private final UpdateCheckFacade updateCheckFacade;
   private final ComponentChangeFacade componentChangeFacade;
   private final EolStatusService eolStatusService;
+  private final VulnerabilityCheckService vulnerabilityCheckService;
+  private final VulnerabilityFindingService vulnerabilityFindingService;
   private final JsonMapper jsonMapper;
   private final Validator validator;
 
@@ -116,6 +121,7 @@ public class ComponentFacade {
     }
     final List<Object> ruleBefore = ruleOf(entity);
     final List<Object> eolBefore = eolOf(entity);
+    final List<Object> cpeBefore = cpeOf(entity);
     final Map<String, String> before = this.componentChangeFacade.snapshot(entity);
     this.componentMapper.updateEntity(entity, request);
     normalise(entity);
@@ -130,6 +136,11 @@ public class ComponentFacade {
     if (nonEquals(eolBefore, eolOf(saved))) {
       // The stored answer belongs to the old question; without a product nobody asks again, and it stayed for good.
       this.eolStatusService.deleteByComponent(saved.getId());
+    }
+    if (nonEquals(cpeBefore, cpeOf(saved))) {
+      // Findings of another product; without the lookup row the next tick asks about the new one first.
+      this.vulnerabilityFindingService.deleteAllByComponent(saved.getId());
+      this.vulnerabilityCheckService.deleteByComponent(saved.getId());
     }
     return this.toDtos(List.of(saved)).getFirst();
   }
@@ -201,6 +212,11 @@ public class ComponentFacade {
   @Nonnull
   private static List<Object> eolOf(@Nonnull final ComponentEntity component) {
     return Arrays.asList(component.getEolProduct(), component.getEolCycle());
+  }
+
+  @Nonnull
+  private static List<Object> cpeOf(@Nonnull final ComponentEntity component) {
+    return Arrays.asList(component.getCpeVendor(), component.getCpeProduct());
   }
 
   /** Takes the version records with it; the package rows stay until the component is removed for good. */
@@ -296,6 +312,9 @@ public class ComponentFacade {
     if (!nonBlank(component.getEolCycle())) {
       component.setEolCycle(null);
     }
+    // The CPE dictionary writes both in lower case, and PostgreSQL compares case-sensitively.
+    component.setCpeVendor(nonBlank(component.getCpeVendor()) ? component.getCpeVendor().trim().toLowerCase(Locale.ROOT) : null);
+    component.setCpeProduct(nonBlank(component.getCpeProduct()) ? component.getCpeProduct().trim().toLowerCase(Locale.ROOT) : null);
   }
 
   /**

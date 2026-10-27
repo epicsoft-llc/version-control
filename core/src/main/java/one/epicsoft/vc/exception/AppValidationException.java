@@ -119,6 +119,12 @@ public class AppValidationException extends AppException {
                                       "error.checkTooSoon");
   }
 
+  /** A lookup somebody asked for, on an installation without a Dependency-Check database. */
+  @Nonnull
+  public static AppValidationException vulnerabilitiesNotConfigured() {
+    return new AppValidationException("No Dependency-Check database is configured", "error.vulnerabilitiesNotConfigured");
+  }
+
   /** BLOCKED comes from the dependency check; by hand it would never clear. */
   @Nonnull
   public static AppValidationException decisionNotSettable(@Nonnull final UUID componentId) {

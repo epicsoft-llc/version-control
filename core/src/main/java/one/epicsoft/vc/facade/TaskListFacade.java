@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.config.CheckProperties;
 import one.epicsoft.vc.config.EolProperties;
+import one.epicsoft.vc.config.VulnerabilityProperties;
 import one.epicsoft.vc.dto.DependencyCheckDto;
 import one.epicsoft.vc.dto.TaskEntryDto;
 import one.epicsoft.vc.dto.TaskListDto;
@@ -19,12 +20,14 @@ import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
 import one.epicsoft.vc.jpa.entity.EolStatusEntity;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import one.epicsoft.vc.jpa.entity.UpdateDecisionEntity;
+import one.epicsoft.vc.jpa.entity.VulnerabilityFindingEntity;
 import one.epicsoft.vc.service.ComponentEnvironmentService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.EolStatusService;
 import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.service.UpdateCheckService;
 import one.epicsoft.vc.service.UpdateDecisionService;
+import one.epicsoft.vc.service.VulnerabilityFindingService;
 import one.epicsoft.vc.version.AllowedCandidates;
 import one.epicsoft.vc.version.UpgradePathCalculator;
 import one.epicsoft.vc.version.UpgradeTarget;
@@ -81,6 +84,9 @@ public class TaskListFacade {
   private final UpgradePathCalculator upgradePathCalculator;
   private final AllowedCandidates allowedCandidates;
   private final DependencyFacade dependencyFacade;
+  private final VulnerabilityFindingService vulnerabilityFindingService;
+  private final VulnerabilityFacade vulnerabilityFacade;
+  private final VulnerabilityProperties vulnerabilityProperties;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
@@ -116,6 +122,12 @@ public class TaskListFacade {
     final Map<UUID, List<ComponentEnvironmentEntity>> cells =
         this.componentEnvironmentService.findAllByProject(projectId).stream()
             .collect(Collectors.groupingBy(ComponentEnvironmentEntity::getComponentId));
+    // Findings outlive a database that was configured and then removed; without one, they are not reported.
+    final Map<UUID, List<VulnerabilityFindingEntity>> findings =
+        this.vulnerabilityProperties.isEnabled()
+            ? this.vulnerabilityFindingService.findAllByProject(projectId).stream()
+                  .collect(Collectors.groupingBy(VulnerabilityFindingEntity::getComponentEnvironmentId))
+            : Map.of();
 
     final Map<TaskSection, List<TaskEntryDto>> entries = new EnumMap<>(TaskSection.class);
     for (final ComponentEntity component : components) {
@@ -124,6 +136,7 @@ public class TaskListFacade {
       final List<ComponentEnvironmentEntity> componentCells = cells.getOrDefault(component.getId(), List.of());
 
       this.addEolTask(entries, component, eolStatuses.get(component.getId()));
+      this.addVulnerabilities(entries, component, decision, componentCells, findings);
       this.addViolatedDependencies(entries, component, violations);
       addRolloutPlans(entries, component, componentCells);
       this.addUpdateTask(entries, component, check, decision, componentCells, index);
@@ -172,6 +185,32 @@ public class TaskListFacade {
     final TaskEntryDto entry = entry(component, null, null, null);
     entry.setDetail(nonNull(end) ? end.toString() : null);
     add(entries, over || escalate ? TaskSection.EOL_EXCEEDED : TaskSection.EOL_WARNING, entry);
+  }
+
+  /** Below the threshold a finding stays on the component page; a component that updates itself runs no recorded version. */
+  private void addVulnerabilities(@Nonnull final Map<TaskSection, List<TaskEntryDto>> entries,
+                                  @Nonnull final ComponentEntity component,
+                                  @Nullable final UpdateDecisionEntity decision,
+                                  @Nonnull final List<ComponentEnvironmentEntity> componentCells,
+                                  @Nonnull final Map<UUID, List<VulnerabilityFindingEntity>> findings) {
+    if (nonNull(decision) && DecisionState.AUTO_UPDATE == decision.getState()) {
+      return;
+    }
+    componentCells.stream()
+                  .filter(ComponentEnvironmentEntity::isActive)
+                  .forEach(cell -> {
+                    final List<String> cves = findings.getOrDefault(cell.getId(), List.of()).stream()
+                                                      .filter(finding -> VulnerabilityFacade.isCurrent(finding, cell))
+                                                      .filter(this.vulnerabilityFacade::isTask)
+                                                      .sorted(VulnerabilityFacade.READING_ORDER)
+                                                      .map(VulnerabilityFindingEntity::getCve)
+                                                      .toList();
+                    if (!cves.isEmpty()) {
+                      final TaskEntryDto entry = entry(component, cell.getEnvironment().getName(), cell.getCurrentVersion(), null);
+                      entry.setVulnerabilities(cves);
+                      add(entries, TaskSection.VULNERABLE, entry);
+                    }
+                  });
   }
 
   /**
@@ -366,6 +405,7 @@ public class TaskListFacade {
     entry.setCurrentVersion(currentVersion);
     entry.setLatestVersion(latestVersion);
     entry.setConstraints(List.of());
+    entry.setVulnerabilities(List.of());
     return entry;
   }
 

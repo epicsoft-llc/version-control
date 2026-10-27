@@ -73,6 +73,13 @@
                           <i class="bi bi-exclamation-triangle text-warning ms-1"
                              [title]="'matrix.movingTag' | translate"></i>
                         }
+                        @if (vulnerabilitiesOf(row.componentId, cell.environmentId); as findings) {
+                          <a class="text-decoration-none text-nowrap ms-1"
+                             [routerLink]="['/components', row.componentId]"
+                             [class.text-danger]="severe(findings)"
+                             [class.text-warning]="!severe(findings)"
+                             [title]="('vulnerability.section' | translate) + ': ' + cves(findings)"><i class="bi bi-shield-exclamation"></i><small class="ms-1">{{ findings.length }}</small></a>
+                        }
                         @if (cell.plannedVersion) {
                           <i class="bi bi-calendar-event text-primary ms-1"
                              [title]="('decisionState.PLANNED' | translate) + ': ' + (cell.plannedVersion | versionLabel) + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>

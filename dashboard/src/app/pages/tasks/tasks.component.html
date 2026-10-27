@@ -70,6 +70,13 @@
                     </span>
                   </div>
                 }
+                @if (entry.vulnerabilities.length > 0) {
+                  <div class="d-flex flex-wrap gap-1">
+                    @for (cve of entry.vulnerabilities; track cve) {
+                      <code>{{ cve }}</code>
+                    }
+                  </div>
+                }
                 {{ entry.detail }}
                 @if (entry.since) {
                   <div>

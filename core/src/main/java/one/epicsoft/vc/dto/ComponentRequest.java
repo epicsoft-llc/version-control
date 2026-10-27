@@ -136,6 +136,18 @@ public class ComponentRequest {
   private String eolCycle;
 
   @Nullable
+  @Size(max = 100)
+  @Schema(description = "The vendor in the CPE dictionary, such as `postgresql`; with `cpeProduct` how known vulnerabilities are looked up.")
+  @JsonProperty("cpeVendor")
+  private String cpeVendor;
+
+  @Nullable
+  @Size(max = 100)
+  @Schema(description = "The product in the CPE dictionary, such as `postgresql`. Without vendor and product there is no lookup.")
+  @JsonProperty("cpeProduct")
+  private String cpeProduct;
+
+  @Nullable
   @Schema(description = """
       Whether the scheduler checks this component; left out means true. Off stops the regular check only: a check \
       asked for by hand still runs, and an update that is already known stays on the task list until a decision \

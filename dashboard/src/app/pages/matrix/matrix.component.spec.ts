@@ -14,7 +14,11 @@ import {MatrixCellState} from '../../repositories/dto/enums.dto';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
+import {SettingsDto} from '../../repositories/dto/settings.dto';
+import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
+import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
+import {SettingsService} from '../../services/settings/settings.service';
 import {MatrixComponent} from './matrix.component';
 
 /**
@@ -30,6 +34,7 @@ describe('MatrixComponent', () => {
   let findChecks: ReturnType<typeof vi.fn>;
   let findProjects: ReturnType<typeof vi.fn>;
   let findDecisions: ReturnType<typeof vi.fn>;
+  let findVulnerabilities: ReturnType<typeof vi.fn>;
 
   const cells = (): HTMLTableCellElement[] =>
     [...fixture.nativeElement.querySelectorAll('tbody tr:first-child td')] as HTMLTableCellElement[];
@@ -74,6 +79,7 @@ describe('MatrixComponent', () => {
     findChecks = vi.fn();
     findProjects = vi.fn().mockReturnValue(of([new ProjectDto({id: 'project-1', name: 'Platform'})]));
     findDecisions = vi.fn().mockReturnValue(of([]));
+    findVulnerabilities = vi.fn().mockReturnValue(of([]));
     // The chosen project outlives a page; without this one test would choose for the next.
     localStorage.clear();
 
@@ -85,7 +91,8 @@ describe('MatrixComponent', () => {
         provideTranslateService({fallbackLang: 'en'}),
         {provide: ProjectRepo, useValue: {findAll: findProjects, getMatrix}},
         {provide: UpdateCheckRepo, useValue: {findAllByProject: findChecks}},
-        {provide: TaskRepo, useValue: {findDecisionsByProject: findDecisions}}
+        {provide: TaskRepo, useValue: {findDecisionsByProject: findDecisions}},
+        {provide: VulnerabilityRepo, useValue: {findAllByProject: findVulnerabilities}}
       ]
     }).compileComponents();
 
@@ -99,8 +106,33 @@ describe('MatrixComponent', () => {
       'check.state.ERROR': 'Error',
       'decisionState.HELD': 'Held',
       'decisionState.AUTO_UPDATE': 'Auto-update',
-      'decisionState.PLANNED': 'Planned'
+      'decisionState.PLANNED': 'Planned',
+      'vulnerability.section': 'Known vulnerabilities'
     });
+  });
+
+  it('marks the cell whose version has a known vulnerability, in red when it is exploited', async () => {
+    TestBed.inject(SettingsService).load(of(new SettingsDto({debianVersions: 'SHORT', vulnerabilities: true}))).subscribe();
+    findVulnerabilities.mockReturnValue(of([new VulnerabilityReportDto({
+      componentId: 'component-1', checkedAt: '2026-10-27T05:00:00Z', checkState: 'OK', uncomparableEnvironmentIds: [],
+      findings: [new VulnerabilityFindingDto({environmentId: 'production', version: '17.2', cve: 'CVE-2026-1002',
+                                              score: 8.8, severity: 'HIGH', knownExploited: true})]
+    })]));
+
+    await render(matrix(cell('development', 'RECORDED', {currentVersion: '17.6'}),
+                        cell('production', 'RECORDED', {currentVersion: '17.2'})));
+
+    const [development, production] = cells();
+    expect(development.querySelector('.bi-shield-exclamation')).toBeNull();
+    const marker = production.querySelector('a.text-danger');
+    expect(marker?.getAttribute('title')).toBe('Known vulnerabilities: CVE-2026-1002');
+    expect(marker?.textContent).toContain('1');
+  });
+
+  it('asks for no vulnerabilities without a Dependency-Check database', async () => {
+    await render(matrix(cell('production', 'RECORDED', {currentVersion: '17.2'})));
+
+    expect(findVulnerabilities).not.toHaveBeenCalled();
   });
 
   it('tells the four cell states apart', async () => {

@@ -15,6 +15,7 @@ import {DependencyCheckDto} from '../../repositories/dto/dependency.dto';
 import {VersionChangeDto} from '../../repositories/dto/version-change.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
+import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
 import {EnvironmentRepo} from '../../repositories/api/environment.repo';
@@ -22,12 +23,14 @@ import {EolStatusRepo} from '../../repositories/api/eol-status.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {VersionChangeRepo} from '../../repositories/api/version-change.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
+import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
 import {VersionChangeDialogComponent} from '../../components/version-change-dialog/version-change-dialog.component';
 import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
 import {PlanDialogComponent} from '../../components/plan-dialog/plan-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
+import {SettingsService} from '../../services/settings/settings.service';
 import {isDefined, nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
 
 /** One environment of this component, with whatever is known about it. */
@@ -37,6 +40,17 @@ export class EnvironmentRow {
   public cell?: ComponentEnvironmentDto;
 
   constructor(init?: Partial<EnvironmentRow>) {
+    Object.assign(this, init);
+  }
+}
+
+/** One CVE with every environment whose version it affects; score and exploitation belong to the CVE. */
+export class VulnerabilityRow {
+
+  public finding!: VulnerabilityFindingDto;
+  public findings: VulnerabilityFindingDto[] = [];
+
+  constructor(init?: Partial<VulnerabilityRow>) {
     Object.assign(this, init);
   }
 }
@@ -67,7 +81,9 @@ export class ComponentDetailComponent implements OnDestroy {
   private readonly updateCheckRepo: UpdateCheckRepo = inject(UpdateCheckRepo);
   private readonly eolStatusRepo: EolStatusRepo = inject(EolStatusRepo);
   private readonly taskRepo: TaskRepo = inject(TaskRepo);
+  private readonly vulnerabilityRepo: VulnerabilityRepo = inject(VulnerabilityRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
+  private readonly settings: SettingsService = inject(SettingsService);
   private readonly modal: NgbModal = inject(NgbModal);
   private readonly subs: Subscription[] = [];
 
@@ -90,8 +106,12 @@ export class ComponentDetailComponent implements OnDestroy {
   protected decision?: UpdateDecisionDto;
   /** Master data, decisions and rollout plans, newest first. */
   protected changes: ComponentChangeDto[] = [];
+  protected vulnerabilities?: VulnerabilityReportDto;
+  /** Its findings by CVE, in the order the server sends them: exploited first, then by score. */
+  protected vulnerabilityRows: VulnerabilityRow[] = [];
   protected checking = false;
   protected checkingEol = false;
+  protected checkingVulnerabilities = false;
   protected loading = true;
   protected errorMessage?: string;
 
@@ -128,6 +148,10 @@ export class ComponentDetailComponent implements OnDestroy {
 
   protected autoUpdating(): boolean {
     return this.decision?.state === 'AUTO_UPDATE';
+  }
+
+  protected looksUpVulnerabilities(): boolean {
+    return this.settings.hasVulnerabilities() && nonBlank(this.component?.cpeVendor) && nonBlank(this.component?.cpeProduct);
   }
 
   /**
@@ -244,6 +268,25 @@ export class ComponentDetailComponent implements OnDestroy {
     }));
   }
 
+  /** No minimum interval, unlike the other checks: the database belongs to this installation. */
+  protected checkVulnerabilitiesNow(): void {
+    if (!isDefined(this.component) || this.checkingVulnerabilities) {
+      return;
+    }
+    this.checkingVulnerabilities = true;
+    this.errorMessage = undefined;
+    this.subs.push(this.vulnerabilityRepo.checkNow(this.component.id).subscribe({
+      next: (reports) => {
+        this.showVulnerabilities(reports.at(0));
+        this.checkingVulnerabilities = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.checkingVulnerabilities = false;
+        this.showError(error);
+      }
+    }));
+  }
+
   private load(): void {
     if (!isDefined(this.componentId)) {
       return;
@@ -273,7 +316,10 @@ export class ComponentDetailComponent implements OnDestroy {
       requires: this.componentRepo.getDependencies(component.id, false).pipe(catchError(() => of([]))),
       requiredBy: this.componentRepo.getDependencies(component.id, true).pipe(catchError(() => of([]))),
       decisions: this.taskRepo.findDecisionsByComponent(component.id).pipe(catchError(() => of([]))),
-      changes: this.componentRepo.getChanges(component.id).pipe(catchError(() => of([])))
+      changes: this.componentRepo.getChanges(component.id).pipe(catchError(() => of([]))),
+      vulnerabilities: this.settings.hasVulnerabilities()
+        ? this.vulnerabilityRepo.findAllByComponent(component.id).pipe(catchError(() => of([])))
+        : of([])
     }).subscribe({
       next: (loaded) => {
         // Never checked is an empty list, not an error: it is the state every
@@ -285,6 +331,7 @@ export class ComponentDetailComponent implements OnDestroy {
         this.requiredBy = loaded.requiredBy;
         this.decision = loaded.decisions.at(0);
         this.changes = loaded.changes;
+        this.showVulnerabilities(loaded.vulnerabilities.at(0));
         this.rows = loaded.environments.map((environment) => new EnvironmentRow({
           environment: environment,
           cell: loaded.cells.find((cell) => cell.environmentId === environment.id)
@@ -311,8 +358,23 @@ export class ComponentDetailComponent implements OnDestroy {
     this.requiredBy = [];
     this.decision = undefined;
     this.changes = [];
+    this.showVulnerabilities(undefined);
     this.loading = false;
     this.showError(error);
+  }
+
+  private showVulnerabilities(report?: VulnerabilityReportDto): void {
+    const rows: VulnerabilityRow[] = [];
+    for (const finding of report?.findings ?? []) {
+      const row = rows.find((candidate) => candidate.finding.cve === finding.cve);
+      if (isDefined(row)) {
+        row.findings.push(finding);
+      } else {
+        rows.push(new VulnerabilityRow({finding: finding, findings: [finding]}));
+      }
+    }
+    this.vulnerabilities = report;
+    this.vulnerabilityRows = rows;
   }
 
   private showError(error: HttpErrorResponse): void {

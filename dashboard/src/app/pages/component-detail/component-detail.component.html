@@ -154,6 +154,91 @@
     </section>
   }
 
+  @if (looksUpVulnerabilities()) {
+    <section class="card card-body mb-4">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <h2 class="vc-eyebrow mb-0">{{ 'vulnerability.section' | translate }}</h2>
+        <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="checkingVulnerabilities"
+                (click)="checkVulnerabilitiesNow()">
+          {{ 'check.action.checkNow' | translate }}
+        </button>
+      </div>
+      @if (vulnerabilities) {
+        @if (vulnerabilities.checkState === 'ERROR') {
+          <p class="small mb-2"><span class="text-danger-emphasis">{{ vulnerabilities.errorMessage }}</span></p>
+        }
+        @if (autoUpdating()) {
+          <p class="small text-secondary mb-2"><i class="bi bi-arrow-repeat me-1"></i>{{ 'vulnerability.autoUpdate' | translate }}</p>
+        }
+        @if (vulnerabilityRows.length === 0) {
+          <p class="small text-secondary mb-2">{{ 'vulnerability.none' | translate }}</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+              <tr>
+                <th scope="col">{{ 'vulnerability.column.cve' | translate }}</th>
+                <th scope="col">{{ 'vulnerability.column.score' | translate }}</th>
+                <th scope="col">{{ 'component.column.environment' | translate }}</th>
+                <th scope="col">{{ 'vulnerability.column.summary' | translate }}</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (row of vulnerabilityRows; track row.finding.cve) {
+                  <tr>
+                    <td class="text-nowrap">
+                      <code>{{ row.finding.cve }}</code>
+                      <vc-copy-value [value]="row.finding.cve" />
+                      @if (row.finding.knownExploited) {
+                        <span class="badge text-bg-danger ms-1" [title]="'vulnerability.knownExploitedHint' | translate">
+                          {{ 'vulnerability.knownExploited' | translate }}
+                        </span>
+                      }
+                    </td>
+                    <td class="text-nowrap">
+                      @if (row.finding.severity) {
+                        <span class="badge"
+                              [class.text-bg-danger]="row.finding.severity === 'CRITICAL'"
+                              [class.text-bg-warning]="row.finding.severity === 'HIGH'"
+                              [class.text-bg-secondary]="row.finding.severity !== 'CRITICAL' && row.finding.severity !== 'HIGH'">
+                          {{ row.finding.score }} {{ 'severity.' + row.finding.severity | translate }}
+                        </span>
+                      } @else {
+                        <span class="text-secondary">{{ dash }}</span>
+                      }
+                    </td>
+                    <td class="small">
+                      @for (finding of row.findings; track finding.environmentId) {
+                        <div>{{ environmentName(finding.environmentId) }} <span class="text-secondary"><vc-version [value]="finding.version" /></span></div>
+                      }
+                    </td>
+                    <td class="small text-secondary">{{ row.finding.summary }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        @if (vulnerabilities.uncomparableEnvironmentIds.length > 0) {
+          <p class="small text-secondary mb-2">
+            {{ 'vulnerability.uncomparable' | translate }}:
+            @for (environmentId of vulnerabilities.uncomparableEnvironmentIds; track environmentId) {
+              <span class="ms-1">{{ environmentName(environmentId) }}</span>
+            }
+          </p>
+        }
+        <p class="small text-secondary mb-0">
+          {{ 'check.field.checkedAt' | translate }}: {{ vulnerabilities.checkedAt | localDate: 'medium' }}
+          @if (vulnerabilities.dataAsOf) {
+            &middot; {{ 'vulnerability.dataAsOf' | translate }}: {{ vulnerabilities.dataAsOf | localDate: 'medium' }}
+          }
+        </p>
+      } @else {
+        <p class="text-secondary mb-0">{{ 'check.never' | translate }}</p>
+      }
+    </section>
+  }
+
   @if (proposals.length > 0 && !autoUpdating()) {
     <section class="card card-body mb-4">
       <h2 class="vc-eyebrow">{{ 'proposal.section' | translate }}</h2>

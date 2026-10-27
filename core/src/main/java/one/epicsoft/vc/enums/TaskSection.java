@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
     The sections of the task list, in the order they are shown.
 
     - `EOL_EXCEEDED`: out of support, or past the escalation threshold.
+    - `VULNERABLE`: what an environment runs has a known vulnerability that is exploited or reaches the score threshold.
     - `DEPENDENCY_VIOLATED`: a dependency that is violated right now.
     - `ROLLOUT_OVERDUE`: a rollout planned for one environment, and its day has passed.
     - `UPDATE_OPEN`: a newer version is available and nothing is decided.
@@ -29,6 +30,9 @@ public enum TaskSection {
 
   /** Out of support, or below the escalation threshold. */
   EOL_EXCEEDED,
+
+  /** A known vulnerability in what runs, exploited or at the score threshold. */
+  VULNERABLE,
 
   /** A dependency that is violated right now. */
   DEPENDENCY_VIOLATED,

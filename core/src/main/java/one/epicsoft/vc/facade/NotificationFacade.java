@@ -52,6 +52,7 @@ public class NotificationFacade {
 
   /** Sections worth a message; the rest is visible on the screen anyway. */
   private static final Set<TaskSection> REPORTED = Set.of(TaskSection.EOL_EXCEEDED,
+                                                          TaskSection.VULNERABLE,
                                                           TaskSection.DEPENDENCY_VIOLATED,
                                                           TaskSection.ROLLOUT_OVERDUE,
                                                           TaskSection.UPDATE_OPEN,
@@ -164,8 +165,12 @@ public class NotificationFacade {
                             ? " " + (nonBlank(entry.getCurrentVersion()) ? this.label(entry.getCurrentVersion()) + " → " : "")
                               + this.label(entry.getLatestVersion())
                             : "";
+    final String vulnerabilities = entry.getVulnerabilities().isEmpty()
+                                   ? ""
+                                   : " %s%s".formatted(nonBlank(entry.getCurrentVersion()) ? "%s: ".formatted(this.label(entry.getCurrentVersion())) : "",
+                                                      String.join(", ", entry.getVulnerabilities()));
     return "• " + this.translationService.get("taskSection." + section.name()) + ": "
-           + entry.getComponentName() + where + versions;
+           + entry.getComponentName() + where + versions + vulnerabilities;
   }
 
   /** Written for the reader; the key below keeps the version as it was recorded. */
@@ -190,10 +195,14 @@ public class NotificationFacade {
                                     .map(UUID::toString)
                                     .sorted()
                                     .collect(Collectors.joining(","));
+    // Only where there are any, so the keys written before vulnerabilities existed stay the same keys.
+    final String vulnerabilities = entry.getVulnerabilities().isEmpty()
+                                   ? ""
+                                   : "/%s".formatted(entry.getVulnerabilities().stream().sorted().collect(Collectors.joining(",")));
     return section.name() + "/" + entry.getComponentId() + "/"
            + (nonBlank(entry.getEnvironmentName()) ? entry.getEnvironmentName() : "-") + "/"
            + (nonBlank(entry.getLatestVersion()) ? entry.getLatestVersion() : "-") + "/"
-           + (constraints.isEmpty() ? "-" : constraints);
+           + (constraints.isEmpty() ? "-" : constraints) + vulnerabilities;
   }
 
   /** The lines of one project, and the keys to remember once they have gone out. */

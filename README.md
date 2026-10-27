@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.7.0.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.8.0.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
@@ -72,6 +72,12 @@ logged, and the task list ends with the latest of them.
 
 Before an upgrade, the proposal lists every version between the running one and the target, each linked to
 its release notes — reading those for breaking changes is the slow part of every update.
+
+With a database that OWASP Dependency-Check keeps current, it also looks up the known vulnerabilities of the
+recorded versions — optional, set up as in
+[`docs/vulnerabilities.md`](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/docs/vulnerabilities.md).
+Ready-made databases come from <https://nvd.epicsoft.one/>, the project nvd-mirror on
+[GitLab](https://gitlab.com/epicsoft-networks/nvd-mirror) and [GitHub](https://github.com/epicsoft-llc/nvd-mirror).
 
 Once a day it reports what is new — to a Telegram chat, by mail through any SMTP server, or both,
 whichever is configured. On a day without news it sends nothing.
@@ -196,6 +202,7 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `VC_MAIL_HOST` / `_PORT` / `_SECURITY` | no | the daily summary by mail, through any SMTP server. `_SECURITY` is `starttls` (default, port 587), `tls` (465) or `none` (25, login in clear text); `_PORT` only for a different port |
 | `VC_MAIL_USERNAME` / `_PASSWORD` | no | the login at the mail server; without a username none is attempted |
 | `VC_MAIL_FROM` / `VC_MAIL_TO` | no | the sender (`Version Control <vc@example.com>` works) and comma separated recipients; without host, sender and recipient no mail is sent |
+| `VC_VULNERABILITIES_DB_URL` / `_USERNAME` / `_PASSWORD` / `_DRIVER` | no | a Dependency-Check database for known vulnerabilities — H2, MariaDB, MySQL or PostgreSQL; `_DRIVER` is the JAR of its JDBC driver, mounted from outside, except for PostgreSQL. Without a URL nothing is looked up — see [`docs/vulnerabilities.md`](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/docs/vulnerabilities.md) |
 | `VC_DISPLAY_DEBIAN_VERSIONS` | no (short) | how Debian package versions are written on the pages and in the daily summary: `short` (`29.9.2-1`) or `full` (`5:29.9.2-1~ubuntu.24.04~noble`); what is stored, compared and copied stays complete |
 
 **Application settings** — `application.yml`, overridable per environment:
@@ -212,6 +219,8 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `vc.check.error-grace-days` | 3 | how long a failing check is tolerated before it becomes a task |
 | `vc.eol.check-interval` | 7d | how often end-of-life dates are refreshed |
 | `vc.eol.warn-months` / `escalate-months` | 6 / 3 | end-of-life thresholds |
+| `vc.vulnerabilities.check-interval` | 1d | how often the known vulnerabilities of a component are looked up |
+| `vc.vulnerabilities.task-min-score` | 9.0 | the CVSS score from which a known vulnerability is a task; an exploited one always is |
 | `vc.notification.daily-time` | 08:00 | when the daily summary is sent |
 
 The two ports are fixed inside the images: 8080 serves the API, 8090 serves the actuator and stays

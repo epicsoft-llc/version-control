@@ -95,6 +95,14 @@ public class ComponentDto {
   @JsonProperty("eolCycle")
   private String eolCycle;
 
+  @Nullable
+  @JsonProperty("cpeVendor")
+  private String cpeVendor;
+
+  @Nullable
+  @JsonProperty("cpeProduct")
+  private String cpeProduct;
+
   @Nonnull
   @JsonProperty("checkEnabled")
   private Boolean checkEnabled;

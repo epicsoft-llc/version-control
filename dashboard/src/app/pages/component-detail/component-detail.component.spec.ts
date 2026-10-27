@@ -12,6 +12,7 @@ import {EolStatusRepo} from '../../repositories/api/eol-status.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {VersionChangeRepo} from '../../repositories/api/version-change.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
+import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
 import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {ComponentDto} from '../../repositories/dto/component.dto';
 import {ComponentEnvironmentDto} from '../../repositories/dto/component-environment.dto';
@@ -20,6 +21,9 @@ import {EnvironmentDto} from '../../repositories/dto/environment.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ReleaseLinkDto, UpgradeProposalDto} from '../../repositories/dto/upgrade.dto';
+import {SettingsDto} from '../../repositories/dto/settings.dto';
+import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
+import {SettingsService} from '../../services/settings/settings.service';
 import {ComponentDetailComponent} from './component-detail.component';
 
 /**
@@ -63,7 +67,8 @@ describe('ComponentDetailComponent', () => {
       getProposals: vi.fn().mockReturnValue(of([])),
       getDependencies: vi.fn().mockReturnValue(of([])),
       getChanges: vi.fn().mockReturnValue(of([])),
-      findDecisions: vi.fn().mockReturnValue(of([]))
+      findDecisions: vi.fn().mockReturnValue(of([])),
+      findVulnerabilities: vi.fn().mockReturnValue(of([]))
     };
 
     await TestBed.configureTestingModule({
@@ -83,7 +88,8 @@ describe('ComponentDetailComponent', () => {
         {provide: TaskRepo, useValue: {findDecisionsByComponent: repos['findDecisions']}},
         {provide: VersionChangeRepo, useValue: {findAllByComponent: repos['findHistory']}},
         {provide: UpdateCheckRepo, useValue: {findAllByComponent: repos['findChecks'], checkNow: vi.fn()}},
-        {provide: EolStatusRepo, useValue: {findAllByComponent: repos['findEol'], checkNow: vi.fn()}}
+        {provide: EolStatusRepo, useValue: {findAllByComponent: repos['findEol'], checkNow: vi.fn()}},
+        {provide: VulnerabilityRepo, useValue: {findAllByComponent: repos['findVulnerabilities'], checkNow: vi.fn()}}
       ]
     }).compileComponents();
 
@@ -104,8 +110,49 @@ describe('ComponentDetailComponent', () => {
       'matrix.cell.autoUpdate': 'Updates itself',
       'component.action.changeVersion': 'Change version',
       'decisionState.PLANNED': 'Planned',
-      'proposal.releases': 'Versions on the way'
+      'proposal.releases': 'Versions on the way',
+      'vulnerability.section': 'Known vulnerabilities',
+      'vulnerability.knownExploited': 'Exploited',
+      'vulnerability.uncomparable': 'Not comparable',
+      'severity.CRITICAL': 'Critical',
+      'severity.HIGH': 'High'
     });
+  });
+
+  it('lists a CVE once with every environment it affects, exploited first', async () => {
+    TestBed.inject(SettingsService).load(of(new SettingsDto({debianVersions: 'SHORT', vulnerabilities: true}))).subscribe();
+    repos['getById'].mockReturnValue(of(new ComponentDto({...component, cpeVendor: 'postgresql', cpeProduct: 'postgresql'})));
+    const finding = (environmentId: string, cve: string, init: Partial<VulnerabilityFindingDto> = {}): VulnerabilityFindingDto =>
+      new VulnerabilityFindingDto({environmentId, version: '17.2', cve, knownExploited: false, ...init});
+    repos['findVulnerabilities'].mockReturnValue(of([new VulnerabilityReportDto({
+      componentId: 'component-1', checkedAt: '2026-10-27T05:00:00Z', checkState: 'OK',
+      uncomparableEnvironmentIds: ['environment-2'],
+      findings: [finding('environment-1', 'CVE-2026-1002', {score: 8.8, severity: 'HIGH', knownExploited: true}),
+                 finding('environment-2', 'CVE-2026-1002', {score: 8.8, severity: 'HIGH', knownExploited: true}),
+                 finding('environment-1', 'CVE-2026-1001', {score: 9.8, severity: 'CRITICAL'})]
+    })]));
+
+    await render();
+
+    const section = ([...fixture.nativeElement.querySelectorAll('section')] as HTMLElement[])
+      .find((candidate) => candidate.textContent?.includes('Known vulnerabilities'));
+    const rows = [...(section?.querySelectorAll('tbody tr') ?? [])] as HTMLTableRowElement[];
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('CVE-2026-1002');
+    expect(rows[0].textContent).toContain('Exploited');
+    expect(rows[0].textContent).toContain('Production');
+    expect(rows[0].textContent).toContain('Staging');
+    expect(rows[1].textContent).toContain('9.8 Critical');
+    expect(section?.textContent).toContain('Not comparable');
+  });
+
+  it('leaves the vulnerabilities out without a Dependency-Check database', async () => {
+    repos['getById'].mockReturnValue(of(new ComponentDto({...component, cpeVendor: 'postgresql', cpeProduct: 'postgresql'})));
+
+    await render();
+
+    expect(repos['findVulnerabilities']).not.toHaveBeenCalled();
+    expect(text()).not.toContain('Known vulnerabilities');
   });
 
   it('shows every environment, with and without a recorded version', async () => {

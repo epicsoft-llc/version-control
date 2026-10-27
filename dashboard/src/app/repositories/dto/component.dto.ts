@@ -39,6 +39,8 @@ export class ComponentDto {
   public needsMaintenanceWindow!: boolean;
   public eolProduct?: string;
   public eolCycle?: string;
+  public cpeVendor?: string;
+  public cpeProduct?: string;
   public checkEnabled!: boolean;
   public packages: ComponentPackageDto[] = [];
   /** Versions that cannot be skipped on the way up. */
@@ -83,6 +85,8 @@ export class ComponentRequest {
   public needsMaintenanceWindow?: boolean;
   public eolProduct?: string;
   public eolCycle?: string;
+  public cpeVendor?: string;
+  public cpeProduct?: string;
   public checkEnabled?: boolean;
   /** Omitted leaves the stored packages alone; an empty list clears them. */
   public packages?: ComponentPackageRequest[];

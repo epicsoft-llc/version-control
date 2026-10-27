@@ -16,6 +16,7 @@ import {EnvironmentRepo} from '../../repositories/api/environment.repo';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
+import {SettingsService} from '../../services/settings/settings.service';
 import {isDefined, nonBlank, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
 
 /** One row of the dependency editor: what is needed, in which range, and why. */
@@ -79,6 +80,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
   private readonly updateCheckRepo: UpdateCheckRepo = inject(UpdateCheckRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
   private readonly translate: TranslateService = inject(TranslateService);
+  private readonly settings: SettingsService = inject(SettingsService);
   private readonly subs: Subscription[] = [];
 
   /**
@@ -277,6 +279,8 @@ export class MasterDataComponent implements OnInit, OnDestroy {
       needsMaintenanceWindow: component.needsMaintenanceWindow,
       eolProduct: component.eolProduct,
       eolCycle: component.eolCycle,
+      cpeVendor: component.cpeVendor,
+      cpeProduct: component.cpeProduct,
       checkEnabled: component.checkEnabled
     });
     this.packageRows = component.packages.map((entry) => new PackageRow({
@@ -436,6 +440,10 @@ export class MasterDataComponent implements OnInit, OnDestroy {
 
   protected usesPackages(): boolean {
     return this.componentForm?.sourceType === 'APT_REPOSITORY';
+  }
+
+  protected vulnerabilitiesEnabled(): boolean {
+    return this.settings.hasVulnerabilities();
   }
 
   protected closeForms(): void {

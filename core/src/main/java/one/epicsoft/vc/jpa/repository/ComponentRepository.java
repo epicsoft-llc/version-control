@@ -54,4 +54,15 @@ public interface ComponentRepository extends JpaRepository<ComponentEntity, UUID
       ORDER BY c.name ASC
       """)
   List<ComponentEntity> findWithoutEolStatus(@Nonnull Pageable pageable);
+
+  /** The first lookup starts here: until then a component has no check row that could be due. */
+  @Query("""
+      SELECT c FROM ComponentEntity c
+      WHERE c.deleted IS NULL
+        AND c.cpeVendor IS NOT NULL
+        AND c.cpeProduct IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM VulnerabilityCheckEntity vc WHERE vc.componentId = c.id)
+      ORDER BY c.name ASC
+      """)
+  List<ComponentEntity> findWithoutVulnerabilityCheck(@Nonnull Pageable pageable);
 }

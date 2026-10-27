@@ -57,6 +57,17 @@ vc:
     #### short (29.9.2-1) or full (5:29.9.2-1~ubuntu.24.04~noble). Only how a Debian package version is written,
     #### never what is stored, compared or copied.
     debian-versions: ${VC_DISPLAY_DEBIAN_VERSIONS:short}
+  vulnerabilities:
+    #### Optional, see docs/vulnerabilities.md; without a URL nothing is looked up.
+    db:
+      url: USE_ENV
+      username: USE_ENV
+      password: USE_ENV
+      #### The JAR of the JDBC driver, mounted from outside; not needed for PostgreSQL.
+      driver: USE_ENV
+    check-interval: 1d
+    #### From this CVSS score on a finding is a task; one known to be exploited always is.
+    task-min-score: 9.0
 
 spring:
   application:

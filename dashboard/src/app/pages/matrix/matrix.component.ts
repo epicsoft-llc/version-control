@@ -11,15 +11,18 @@ import {ProjectDto} from '../../repositories/dto/project.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {PERMANENT_STATES, UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
+import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
+import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
 import {VersionChangeDialogComponent} from '../../components/version-change-dialog/version-change-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
+import {SettingsService} from '../../services/settings/settings.service';
 import {isDefined, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
 
 /**
@@ -49,7 +52,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
   private readonly componentEnvironmentRepo: ComponentEnvironmentRepo = inject(ComponentEnvironmentRepo);
   private readonly updateCheckRepo: UpdateCheckRepo = inject(UpdateCheckRepo);
   private readonly taskRepo: TaskRepo = inject(TaskRepo);
+  private readonly vulnerabilityRepo: VulnerabilityRepo = inject(VulnerabilityRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
+  private readonly settings: SettingsService = inject(SettingsService);
   private readonly modal: NgbModal = inject(NgbModal);
   private readonly subs: Subscription[] = [];
 
@@ -66,6 +71,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   protected checks = new Map<string, UpdateCheckDto>();
   /** Held components by id: they stay on their version on purpose, so the row must not call for an update. */
   protected holds = new Map<string, UpdateDecisionDto>();
+  /** Keyed by component and environment. */
+  protected vulnerabilities = new Map<string, VulnerabilityFindingDto[]>();
   protected loading = true;
   protected errorMessage?: string;
 
@@ -84,7 +91,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
         // The available column is auxiliary. A failure there must not take the
         // matrix with it — that is the screen people came for.
         checks: this.updateCheckRepo.findAllByProject(projectId).pipe(catchError(() => of([]))),
-        decisions: this.taskRepo.findDecisionsByProject(projectId).pipe(catchError(() => of([])))
+        decisions: this.taskRepo.findDecisionsByProject(projectId).pipe(catchError(() => of([]))),
+        vulnerabilities: this.settings.hasVulnerabilities()
+          ? this.vulnerabilityRepo.findAllByProject(projectId).pipe(catchError(() => of([])))
+          : of([])
       }).pipe(catchError((error) => {
         this.showError(error);
         return of(undefined);
@@ -94,6 +104,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.checks = new Map((loaded?.checks ?? []).map((check) => [check.componentId, check]));
       this.holds = new Map((loaded?.decisions ?? []).filter((decision) => PERMANENT_STATES.includes(decision.state))
                                                      .map((decision) => [decision.componentId, decision]));
+      this.vulnerabilities = MatrixComponent.findingsByCell(loaded?.vulnerabilities ?? []);
       this.loading = false;
     }));
 
@@ -132,6 +143,19 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   protected autoUpdating(componentId: string): boolean {
     return this.heldOf(componentId)?.state === 'AUTO_UPDATE';
+  }
+
+  /** Undefined where nothing was found, so the template asks once and has the list. */
+  protected vulnerabilitiesOf(componentId: string, environmentId: string): VulnerabilityFindingDto[] | undefined {
+    return this.vulnerabilities.get(MatrixComponent.cellKey(componentId, environmentId));
+  }
+
+  protected severe(findings: VulnerabilityFindingDto[]): boolean {
+    return findings.some((finding) => finding.knownExploited || finding.severity === 'CRITICAL');
+  }
+
+  protected cves(findings: VulnerabilityFindingDto[]): string {
+    return findings.map((finding) => finding.cve).join(', ');
   }
 
   /**
@@ -178,6 +202,21 @@ export class MatrixComponent implements OnInit, OnDestroy {
       // Without this the click does nothing at all and nothing says why.
       error: (error: HttpErrorResponse) => this.showError(error)
     }));
+  }
+
+  private static findingsByCell(reports: VulnerabilityReportDto[]): Map<string, VulnerabilityFindingDto[]> {
+    const byCell = new Map<string, VulnerabilityFindingDto[]>();
+    for (const report of reports) {
+      for (const finding of report.findings) {
+        const key = MatrixComponent.cellKey(report.componentId, finding.environmentId);
+        byCell.set(key, [...(byCell.get(key) ?? []), finding]);
+      }
+    }
+    return byCell;
+  }
+
+  private static cellKey(componentId: string, environmentId: string): string {
+    return `${componentId}/${environmentId}`;
   }
 
   private reload(): void {
