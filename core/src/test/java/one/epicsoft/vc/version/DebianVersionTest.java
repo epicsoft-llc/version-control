@@ -73,6 +73,14 @@ class DebianVersionTest {
   }
 
   @Test
+  void shortensToTheVersionAndThePackageRevision() {
+    assertEquals("29.9.2-1", shortForm("5:29.9.2-1~ubuntu.24.04~noble"));
+    // A tilde in the upstream version is a pre-release and stays; only the distribution goes.
+    assertEquals("1.0~rc1-1", shortForm("1.0~rc1-1~deb12u1"));
+    assertEquals("17.6", shortForm("17.6"));
+  }
+
+  @Test
   void splitsAtTheLastHyphen() {
     final DebianVersion version = DebianVersion.parse("2.1-beta-3");
 
@@ -94,6 +102,12 @@ class DebianVersionTest {
     assertNotNull(left);
     assertNotNull(right);
     return left.compareTo(right) > 0;
+  }
+
+  private static String shortForm(final String value) {
+    final DebianVersion version = DebianVersion.parse(value);
+    assertNotNull(version);
+    return version.shortForm();
   }
 
   private static boolean sameRelease(final String first, final String second) {

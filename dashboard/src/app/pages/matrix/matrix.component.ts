@@ -6,6 +6,7 @@ import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
 import {catchError, forkJoin, of, Subject, Subscription, switchMap, tap} from 'rxjs';
 import {LocalDatePipe} from '../../libs/pipes/local-date.pipe';
+import {VersionLabelPipe} from '../../libs/pipes/version-label.pipe';
 import {ProjectDto} from '../../repositories/dto/project.dto';
 import {MatrixCellDto, MatrixDto, MatrixRowDto} from '../../repositories/dto/matrix.dto';
 import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
@@ -17,6 +18,7 @@ import {ComponentEnvironmentRepo} from '../../repositories/api/component-environ
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {VersionChangeDialogComponent} from '../../components/version-change-dialog/version-change-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
+import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {isDefined, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
 
@@ -37,7 +39,7 @@ import {isDefined, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-matrix',
-  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe, VersionComponent, VersionLabelPipe],
   templateUrl: './matrix.component.html'
 })
 export class MatrixComponent implements OnInit, OnDestroy {

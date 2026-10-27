@@ -3,6 +3,7 @@ import {FormsModule} from '@angular/forms';
 import {HttpErrorResponse} from '@angular/common/http';
 import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
+import {VersionComponent} from '../version/version.component';
 import {Subscription} from 'rxjs';
 import {DECISION_STATES, DecisionState, UpdateDecisionRequest} from '../../repositories/dto/update-decision.dto';
 import {TaskRepo} from '../../repositories/api/task.repo';
@@ -24,7 +25,7 @@ import {nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-decision-dialog',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, VersionComponent],
   templateUrl: './decision-dialog.component.html'
 })
 export class DecisionDialogComponent implements OnDestroy {

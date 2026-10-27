@@ -14,6 +14,7 @@ import {TaskRepo} from '../../repositories/api/task.repo';
 import {ComponentChangeRepo} from '../../repositories/api/component-change.repo';
 import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
+import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {isDefined, unsubscribe} from '../../libs/utils/vc.utils';
 
@@ -34,7 +35,7 @@ import {isDefined, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-tasks',
-  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, FormsModule, LocalDatePipe, RouterLink, TranslatePipe, VersionComponent],
   templateUrl: './tasks.component.html'
 })
 export class TasksComponent implements OnInit, OnDestroy {

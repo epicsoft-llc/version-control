@@ -4,6 +4,17 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.7.0] - 2026-10-27
+
+### Changed
+- Debian package versions are written short, `29.9.2-1` instead of `5:29.9.2-1~ubuntu.24.04~noble`, on every page and
+  in the daily notification. Hovering shows the version as it was recorded; copy buttons, inputs and the API keep it
+  complete. Image tags, release tags and digests are written as before
+
+### Added
+- `VC_DISPLAY_DEBIAN_VERSIONS=full` writes Debian package versions in full again; `GET /api/v1/settings` tells a client
+  which form the installation uses
+
 ## [0.6.3] - 2026-10-26
 
 ### Fixed

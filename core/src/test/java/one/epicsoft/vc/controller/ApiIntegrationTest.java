@@ -38,6 +38,13 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void answersWithTheShortFormAsTheDefault() throws Exception {
+    this.mockMvc.perform(get("/api/v1/settings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.debianVersions").value("SHORT"));
+  }
+
+  @Test
   void answersBadRequestForAMissingParameter() throws Exception {
     this.mockMvc.perform(get("/api/v1/components"))
                 .andExpect(status().isBadRequest());

@@ -7,7 +7,7 @@
   <p class="text-secondary small mb-3">
     {{ componentName }}
     @if (latestVersion) {
-      &middot; {{ 'check.field.latestVersion' | translate }}: {{ latestVersion }}
+      &middot; {{ 'check.field.latestVersion' | translate }}: <vc-version [value]="latestVersion" />
     }
   </p>
 

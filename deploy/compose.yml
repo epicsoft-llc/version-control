@@ -35,7 +35,7 @@ services:
     # build:
     #   context: ../core
     #   args:
-    #     JAR_FILE: build/libs/vc-core-0.6.3.jar
+    #     JAR_FILE: build/libs/vc-core-0.7.0.jar
     restart: unless-stopped
     depends_on:
       postgres:
@@ -57,6 +57,8 @@ services:
       VC_MAIL_PASSWORD: ${VC_MAIL_PASSWORD:-}
       VC_MAIL_FROM: ${VC_MAIL_FROM:-}
       VC_MAIL_TO: ${VC_MAIL_TO:-}
+      # How Debian package versions are written: short (29.9.2-1) or full.
+      VC_DISPLAY_DEBIAN_VERSIONS: ${VC_DISPLAY_DEBIAN_VERSIONS:-short}
     healthcheck:
       # The actuator port stays inside this network.
       test: [ "CMD-SHELL", "wget -q -O - http://127.0.0.1:8090/actuator/health | grep '\"status\":\"UP\"'" ]

@@ -53,6 +53,10 @@ vc:
     escalate-months: 3
   notification:
     daily-time: "08:00"
+  display:
+    #### short (29.9.2-1) or full (5:29.9.2-1~ubuntu.24.04~noble). Only how a Debian package version is written,
+    #### never what is stored, compared or copied.
+    debian-versions: ${VC_DISPLAY_DEBIAN_VERSIONS:short}
 
 spring:
   application:

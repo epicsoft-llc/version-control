@@ -26,6 +26,7 @@ import {VersionChangeDialogComponent} from '../../components/version-change-dial
 import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
 import {PlanDialogComponent} from '../../components/plan-dialog/plan-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
+import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {isDefined, nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
 
@@ -54,7 +55,7 @@ export class EnvironmentRow {
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-component-detail',
-  imports: [CopyValueComponent, LocalDatePipe, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, LocalDatePipe, RouterLink, TranslatePipe, VersionComponent],
   templateUrl: './component-detail.component.html'
 })
 export class ComponentDetailComponent implements OnDestroy {
