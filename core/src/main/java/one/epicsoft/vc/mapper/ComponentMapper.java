@@ -48,6 +48,8 @@ public interface ComponentMapper {
   @Mapping(target = "needsMaintenanceWindow", source = "needsMaintenanceWindow", defaultValue = "false")
   @Mapping(target = "eolProduct", source = "eolProduct")
   @Mapping(target = "eolCycle", source = "eolCycle")
+  @Mapping(target = "cpeVendor", source = "cpeVendor")
+  @Mapping(target = "cpeProduct", source = "cpeProduct")
   @Mapping(target = "checkEnabled", source = "checkEnabled", defaultValue = "true")
   void updateEntity(@MappingTarget final ComponentEntity entity, final ComponentRequest request);
 }

@@ -12,12 +12,16 @@ import {shortDebianVersion} from '../../libs/utils/debian-version';
 @Injectable({providedIn: 'root'})
 export class SettingsService {
 
-  // The server's own default, so a failed request leaves the dashboard as it would be anyway.
+  // The server's own defaults, so a failed request leaves the dashboard as it would be anyway.
   private debianVersions: DebianVersionDisplay = 'SHORT';
+  private vulnerabilities = false;
 
   public load(settings: Observable<SettingsDto>): Observable<void> {
     return settings.pipe(
-      tap((received) => this.debianVersions = received.debianVersions),
+      tap((received) => {
+        this.debianVersions = received.debianVersions;
+        this.vulnerabilities = received.vulnerabilities;
+      }),
       map(() => undefined),
       // Without its settings the dashboard still works, in the defaults; a blank page would not.
       catchError(() => of(undefined))
@@ -27,5 +31,9 @@ export class SettingsService {
   /** How a version is written for the reader. Copy buttons, inputs and requests keep it as it was recorded. */
   public label(version: string): string {
     return this.debianVersions === 'SHORT' ? shortDebianVersion(version) : version;
+  }
+
+  public hasVulnerabilities(): boolean {
+    return this.vulnerabilities;
   }
 }

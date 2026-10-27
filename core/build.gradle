@@ -28,6 +28,7 @@ configurations {
   compileOnly {
     extendsFrom annotationProcessor
   }
+  testDrivers
 }
 
 dependencies {
@@ -55,6 +56,8 @@ dependencies {
   testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
   testImplementation libs.testcontainers.postgresql
   testImplementation libs.testcontainers.junit
+  //// Loaded from outside, the way an installation mounts a driver; on the class path it would prove nothing.
+  testDrivers "com.h2database:h2"
   testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
   // #### Lombok and MapStruct ################################################
@@ -69,6 +72,11 @@ dependencies {
 
   // #### DEV #################################################################
   developmentOnly "org.springframework.boot:spring-boot-devtools"
+}
+
+tasks.named("test") {
+  inputs.files(configurations.testDrivers).withPropertyName("testDrivers")
+  systemProperty "vc.test.h2-driver", configurations.testDrivers.singleFile.absolutePath
 }
 
 // ###########################################################

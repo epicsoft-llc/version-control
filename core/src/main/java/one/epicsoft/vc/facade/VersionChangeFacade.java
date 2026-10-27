@@ -17,6 +17,7 @@ import one.epicsoft.vc.service.ComponentEnvironmentService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.service.VersionChangeService;
+import one.epicsoft.vc.service.VulnerabilityCheckService;
 import one.epicsoft.vc.util.VcUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +61,7 @@ public class VersionChangeFacade {
   private final ProjectService projectService;
   private final VersionChangeMapper versionChangeMapper;
   private final ComponentEnvironmentFacade componentEnvironmentFacade;
+  private final VulnerabilityCheckService vulnerabilityCheckService;
 
   /**
    * The three list methods read what they filter by first. An unknown or deleted
@@ -151,6 +153,7 @@ public class VersionChangeFacade {
     entity.setIssues(request.getIssues());
 
     final VersionChangeEntity saved = this.versionChangeService.save(entity);
+    this.vulnerabilityCheckService.markDue(cell.getComponentId());
     log.info("Recorded version change of component environment {}", cell.getId());
     return this.versionChangeMapper.toDto(saved);
   }

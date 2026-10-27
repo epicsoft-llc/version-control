@@ -4,6 +4,7 @@ import {DebianVersionDisplay} from './enums.dto';
 export class SettingsDto {
 
   public debianVersions!: DebianVersionDisplay;
+  public vulnerabilities!: boolean;
 
   constructor(init?: Partial<SettingsDto>) {
     Object.assign(this, init);

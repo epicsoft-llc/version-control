@@ -119,6 +119,15 @@ public class ComponentEntity extends AbstractDeletableEntity {
   @Column(name = "eol_cycle", length = 50)
   private String eolCycle;
 
+  /** Vendor and product as the CPE dictionary writes them; without both, nothing is looked up. */
+  @Nullable
+  @Column(name = "cpe_vendor", length = 100)
+  private String cpeVendor;
+
+  @Nullable
+  @Column(name = "cpe_product", length = 100)
+  private String cpeProduct;
+
   // #### Check scheduling
   @Nonnull
   @Getter(AccessLevel.NONE)

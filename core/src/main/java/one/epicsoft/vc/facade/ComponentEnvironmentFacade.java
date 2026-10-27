@@ -16,6 +16,7 @@ import one.epicsoft.vc.mapper.ComponentEnvironmentMapper;
 import one.epicsoft.vc.service.ComponentEnvironmentService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.EnvironmentService;
+import one.epicsoft.vc.service.VulnerabilityCheckService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -40,6 +41,7 @@ public class ComponentEnvironmentFacade {
   private final EnvironmentService environmentService;
   private final ComponentEnvironmentMapper componentEnvironmentMapper;
   private final ComponentChangeFacade componentChangeFacade;
+  private final VulnerabilityCheckService vulnerabilityCheckService;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
@@ -96,7 +98,9 @@ public class ComponentEnvironmentFacade {
     if (nonBlank(request.getCurrentVersion())) {
       this.recordFirstVersion(entity, request.getCurrentVersion());
     }
-    return this.toDtos(List.of(this.componentEnvironmentService.save(entity))).getFirst();
+    final ComponentEnvironmentEntity saved = this.componentEnvironmentService.save(entity);
+    this.vulnerabilityCheckService.markDue(component.getId());
+    return this.toDtos(List.of(saved)).getFirst();
   }
 
   @Transactional(rollbackFor = Throwable.class)

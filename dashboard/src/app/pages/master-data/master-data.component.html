@@ -248,6 +248,20 @@
             <input type="text" class="form-control" id="componentEolProduct" name="componentEolProduct"
                    [(ngModel)]="componentForm.eolProduct">
           </div>
+          @if (vulnerabilitiesEnabled()) {
+            <!-- Hidden without a Dependency-Check database; the values still travel with every save. -->
+            <div class="col-md-3 mb-2">
+              <label class="form-label" for="componentCpeVendor">{{ 'component.field.cpeVendor' | translate }}</label>
+              <input type="text" class="form-control" id="componentCpeVendor" name="componentCpeVendor"
+                     [(ngModel)]="componentForm.cpeVendor">
+            </div>
+            <div class="col-md-3 mb-2">
+              <label class="form-label" for="componentCpeProduct">{{ 'component.field.cpeProduct' | translate }}</label>
+              <input type="text" class="form-control" id="componentCpeProduct" name="componentCpeProduct"
+                     [(ngModel)]="componentForm.cpeProduct">
+            </div>
+            <div class="col-12 form-text mb-2">{{ 'masterData.cpe.hint' | translate }}</div>
+          }
           <div class="col-12 mb-2">
             <label class="form-label" for="componentReleaseNotesUrl">{{ 'component.field.releaseNotesUrl' | translate }}</label>
             <input type="url" class="form-control" id="componentReleaseNotesUrl" name="componentReleaseNotesUrl"

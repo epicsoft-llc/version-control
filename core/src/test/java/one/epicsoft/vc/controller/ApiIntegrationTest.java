@@ -38,10 +38,18 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void answersWithTheShortFormAsTheDefault() throws Exception {
+  void answersWithTheDefaultsOfAnInstallationThatSetsNothing() throws Exception {
     this.mockMvc.perform(get("/api/v1/settings"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.debianVersions").value("SHORT"));
+                .andExpect(jsonPath("$.debianVersions").value("SHORT"))
+                .andExpect(jsonPath("$.vulnerabilities").value(false));
+  }
+
+  @Test
+  void refusesALookupWithoutADependencyCheckDatabase() throws Exception {
+    this.mockMvc.perform(post("/api/v1/vulnerabilities").param("componentId", UUID.randomUUID().toString()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(Matchers.not(Matchers.startsWith("error."))));
   }
 
   @Test

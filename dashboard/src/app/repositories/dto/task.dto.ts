@@ -3,6 +3,7 @@ import {DependencyCheckDto} from './dependency.dto';
 /** The sections of the task list, in the order they are read. */
 export type TaskSection =
   'EOL_EXCEEDED'
+  | 'VULNERABLE'
   | 'DEPENDENCY_VIOLATED'
   | 'ROLLOUT_OVERDUE'
   | 'UPDATE_OPEN'
@@ -29,6 +30,8 @@ export class TaskEntryDto {
    * here, in the reader's language, rather than in the backend.
    */
   public constraints: DependencyCheckDto[] = [];
+  /** The CVE identifiers behind a `VULNERABLE` entry, exploited first. */
+  public vulnerabilities: string[] = [];
   public since?: string;
 
   constructor(init?: Partial<TaskEntryDto>) {

@@ -16,4 +16,9 @@ public class SettingsDto {
   @JsonProperty("debianVersions")
   @Schema(description = "How Debian package versions are written; set with `VC_DISPLAY_DEBIAN_VERSIONS`.")
   private DebianVersionDisplay debianVersions;
+
+  @Nonnull
+  @JsonProperty("vulnerabilities")
+  @Schema(description = "Whether a Dependency-Check database is configured (`VC_VULNERABILITIES_DB_URL`); without one there are no known vulnerabilities to show.")
+  private Boolean vulnerabilities;
 }
