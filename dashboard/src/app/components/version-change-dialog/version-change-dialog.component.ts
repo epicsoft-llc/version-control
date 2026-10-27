@@ -3,6 +3,7 @@ import {FormsModule} from '@angular/forms';
 import {HttpErrorResponse} from '@angular/common/http';
 import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
+import {VersionComponent} from '../version/version.component';
 import {Subscription} from 'rxjs';
 import {ComponentDto} from '../../repositories/dto/component.dto';
 import {ComponentEnvironmentDto} from '../../repositories/dto/component-environment.dto';
@@ -38,7 +39,7 @@ export class PackageField {
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-version-change-dialog',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, VersionComponent],
   templateUrl: './version-change-dialog.component.html'
 })
 export class VersionChangeDialogComponent implements OnInit, OnDestroy {

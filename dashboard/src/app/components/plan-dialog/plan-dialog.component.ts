@@ -3,6 +3,7 @@ import {FormsModule} from '@angular/forms';
 import {HttpErrorResponse} from '@angular/common/http';
 import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 import {TranslatePipe} from '@ngx-translate/core';
+import {VersionComponent} from '../version/version.component';
 import {Subscription} from 'rxjs';
 import {ComponentEnvironmentDto, RolloutPlanRequest} from '../../repositories/dto/component-environment.dto';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
@@ -23,7 +24,7 @@ import {nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-plan-dialog',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, VersionComponent],
   templateUrl: './plan-dialog.component.html'
 })
 export class PlanDialogComponent implements OnInit, OnDestroy {

@@ -40,14 +40,14 @@
               </th>
               <td>
                 @if (entry.currentVersion) {
-                  <span class="text-secondary">{{ entry.currentVersion }}</span>
+                  <span class="text-secondary"><vc-version [value]="entry.currentVersion" /></span>
                   <vc-copy-value [value]="entry.currentVersion" />
                 }
                 @if (entry.currentVersion && entry.latestVersion) {
                   <i class="bi bi-arrow-right mx-1"></i>
                 }
                 @if (entry.latestVersion) {
-                  <span class="fw-semibold">{{ entry.latestVersion }}</span>
+                  <span class="fw-semibold"><vc-version [value]="entry.latestVersion" /></span>
                   <vc-copy-value [value]="entry.latestVersion" />
                 }
               </td>
@@ -61,7 +61,7 @@
                       <!-- Behind the prerequisite, never behind the dependent: the version
                            belongs to what is required, and in front it reads as the
                            version of the component that needs it. -->
-                      <span class="ms-1">({{ constraint.actualVersion }})</span>
+                      <span class="ms-1">(<vc-version [value]="constraint.actualVersion" />)</span>
                     }
                     <span class="badge ms-1"
                           [class.text-bg-danger]="constraint.state === 'VIOLATED'"

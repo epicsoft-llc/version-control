@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.6.3.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.7.0.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
@@ -196,6 +196,7 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `VC_MAIL_HOST` / `_PORT` / `_SECURITY` | no | the daily summary by mail, through any SMTP server. `_SECURITY` is `starttls` (default, port 587), `tls` (465) or `none` (25, login in clear text); `_PORT` only for a different port |
 | `VC_MAIL_USERNAME` / `_PASSWORD` | no | the login at the mail server; without a username none is attempted |
 | `VC_MAIL_FROM` / `VC_MAIL_TO` | no | the sender (`Version Control <vc@example.com>` works) and comma separated recipients; without host, sender and recipient no mail is sent |
+| `VC_DISPLAY_DEBIAN_VERSIONS` | no (short) | how Debian package versions are written on the pages and in the daily summary: `short` (`29.9.2-1`) or `full` (`5:29.9.2-1~ubuntu.24.04~noble`); what is stored, compared and copied stays complete |
 
 **Application settings** — `application.yml`, overridable per environment:
 

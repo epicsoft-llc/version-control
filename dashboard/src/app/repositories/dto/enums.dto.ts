@@ -6,6 +6,8 @@ export type VersionStrategy = 'LATEST_BY_DATE' | 'SEMVER' | 'DIGEST' | 'DEB_VERS
 
 export type MaxStep = 'PATCH' | 'MINOR' | 'MAJOR' | 'NONE';
 
+export type DebianVersionDisplay = 'SHORT' | 'FULL';
+
 /**
  * What a cell of the matrix says. `INACTIVE` is "deliberately not present here"
  * and `UNKNOWN` is "runs here, but nobody wrote the version down" — the two must

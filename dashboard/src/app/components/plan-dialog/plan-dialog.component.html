@@ -7,7 +7,7 @@
   <p class="text-secondary small mb-3">
     {{ componentName }} &middot; {{ environmentName }}
     @if (cell.currentVersion) {
-      &middot; {{ 'versionChange.currentVersion' | translate }}: {{ cell.currentVersion }}
+      &middot; {{ 'versionChange.currentVersion' | translate }}: <vc-version [value]="cell.currentVersion" />
     }
   </p>
 

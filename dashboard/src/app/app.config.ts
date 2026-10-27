@@ -6,6 +6,8 @@ import {provideTranslateHttpLoader} from '@ngx-translate/http-loader';
 import {routes} from './app.routes';
 import {environment} from '../environments/environment';
 import {I18nService} from './services/i18n/i18n.service';
+import {SettingsRepo} from './repositories/api/settings.repo';
+import {SettingsService} from './services/settings/settings.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,6 +24,7 @@ export const appConfig: ApplicationConfig = {
       fallbackLang: environment.i18n.defaultLang,
       loader: provideTranslateHttpLoader({prefix: './assets/i18n/', suffix: '.json'})
     }),
-    provideAppInitializer(() => inject(I18nService).init())
+    provideAppInitializer(() => inject(I18nService).init()),
+    provideAppInitializer(() => inject(SettingsService).load(inject(SettingsRepo).get()))
   ]
 };

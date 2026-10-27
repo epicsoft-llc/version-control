@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.adapter.NotificationChannel;
+import one.epicsoft.vc.config.DisplayProperties;
 import one.epicsoft.vc.data.NotificationDraft;
 import one.epicsoft.vc.data.NotificationMessage;
 import one.epicsoft.vc.dto.DependencyCheckDto;
@@ -17,6 +18,7 @@ import one.epicsoft.vc.jpa.entity.NotificationEntryEntity;
 import one.epicsoft.vc.jpa.entity.ProjectEntity;
 import one.epicsoft.vc.service.NotificationEntryService;
 import one.epicsoft.vc.service.ProjectService;
+import one.epicsoft.vc.version.VersionLabel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -62,6 +64,7 @@ public class NotificationFacade {
   private final TaskListFacade taskListFacade;
   private final NotificationEntryService notificationEntryService;
   private final TranslationService translationService;
+  private final DisplayProperties displayProperties;
   private final List<NotificationChannel> notificationChannels;
 
   /**
@@ -158,11 +161,17 @@ public class NotificationFacade {
   private String line(@Nonnull final TaskSection section, @Nonnull final TaskEntryDto entry) {
     final String where = nonBlank(entry.getEnvironmentName()) ? " (" + entry.getEnvironmentName() + ")" : "";
     final String versions = nonBlank(entry.getLatestVersion())
-                            ? " " + (nonBlank(entry.getCurrentVersion()) ? entry.getCurrentVersion() + " → " : "")
-                              + entry.getLatestVersion()
+                            ? " " + (nonBlank(entry.getCurrentVersion()) ? this.label(entry.getCurrentVersion()) + " → " : "")
+                              + this.label(entry.getLatestVersion())
                             : "";
     return "• " + this.translationService.get("taskSection." + section.name()) + ": "
            + entry.getComponentName() + where + versions;
+  }
+
+  /** Written for the reader; the key below keeps the version as it was recorded. */
+  @Nonnull
+  private String label(@Nonnull final String version) {
+    return VersionLabel.of(version, this.displayProperties.getDebianVersions());
   }
 
   /**

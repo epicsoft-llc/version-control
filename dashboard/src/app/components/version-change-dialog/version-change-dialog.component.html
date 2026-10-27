@@ -23,7 +23,7 @@
                [placeholder]="field.currentVersion ?? ''">
         <div class="form-text">
           {{ 'versionChange.currentVersion' | translate }}:
-          {{ field.currentVersion ?? ('versionChange.noVersionYet' | translate) }}
+          <vc-version [value]="field.currentVersion" [fallback]="'versionChange.noVersionYet' | translate" />
         </div>
       </div>
     }
@@ -33,7 +33,7 @@
       <input type="text" class="form-control" id="toVersion" name="toVersion" [(ngModel)]="toVersion">
       <div class="form-text">
         {{ 'versionChange.currentVersion' | translate }}:
-        {{ cell.currentVersion ?? ('versionChange.noVersionYet' | translate) }}
+        <vc-version [value]="cell.currentVersion" [fallback]="'versionChange.noVersionYet' | translate" />
       </div>
     </div>
   }

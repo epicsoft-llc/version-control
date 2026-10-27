@@ -60,11 +60,11 @@
                           <button type="button"
                                   class="btn btn-sm vc-version"
                                   [title]="('matrix.lastChanged' | translate) + ': ' + (cell.lastChangedAt | localDate: 'medium')"
-                                  (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                                  (click)="openVersionChange(row.componentId, cell)"><vc-version [value]="cell.currentVersion" /></button>
                         } @else {
                           <button type="button"
                                   class="btn btn-sm vc-version"
-                                  (click)="openVersionChange(row.componentId, cell)">{{ cell.currentVersion }}</button>
+                                  (click)="openVersionChange(row.componentId, cell)"><vc-version [value]="cell.currentVersion" /></button>
                         }
                         @if (cell.currentVersion) {
                           <vc-copy-value [value]="cell.currentVersion" />
@@ -75,7 +75,7 @@
                         }
                         @if (cell.plannedVersion) {
                           <i class="bi bi-calendar-event text-primary ms-1"
-                             [title]="('decisionState.PLANNED' | translate) + ': ' + cell.plannedVersion + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>
+                             [title]="('decisionState.PLANNED' | translate) + ': ' + (cell.plannedVersion | versionLabel) + ' · ' + (cell.plannedFor | localDate: 'mediumDate')"></i>
                         }
                       }
                       @case ('UNKNOWN') {
@@ -113,7 +113,7 @@
                   @switch (check.checkState) {
                     @case ('OK') {
                       @if (check.latestVersion) {
-                        <span [class.fw-semibold]="updateAvailable(row)">{{ check.latestVersion }}</span>
+                        <span [class.fw-semibold]="updateAvailable(row)"><vc-version [value]="check.latestVersion" /></span>
                         <vc-copy-value [value]="check.latestVersion" />
                         @if (updateAvailable(row)) {
                           <i class="bi bi-arrow-up-circle text-primary ms-1"

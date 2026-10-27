@@ -84,7 +84,7 @@
 
         <dt class="col-sm-3">{{ 'check.field.latestVersion' | translate }}</dt>
         <dd class="col-sm-9">
-          {{ check.latestVersion || dash }}
+          <vc-version [value]="check.latestVersion" [fallback]="dash" />
           @if (check.latestVersion) {
             <vc-copy-value [value]="check.latestVersion" />
           }
@@ -98,7 +98,7 @@
           <dd class="col-sm-9">
             @for (entry of check.packages; track entry.packageName) {
               <div>
-                <code>{{ entry.packageName }}</code> {{ entry.latestVersion }}
+                <code>{{ entry.packageName }}</code> <vc-version [value]="entry.latestVersion" />
                 @if (entry.latestVersion) {
                   <vc-copy-value [value]="entry.latestVersion" />
                 }
@@ -171,14 +171,14 @@
             <tr>
               <th scope="row" class="fw-normal">{{ proposal.environmentName }}</th>
               <td class="text-secondary">
-                {{ proposal.currentVersion || dash }}
+                <vc-version [value]="proposal.currentVersion" [fallback]="dash" />
                 @if (proposal.currentVersion) {
                   <vc-copy-value [value]="proposal.currentVersion" />
                 }
               </td>
               <td>
                 @if (proposal.target) {
-                  <span class="fw-semibold">{{ proposal.target }}</span>
+                  <span class="fw-semibold"><vc-version [value]="proposal.target" /></span>
                   <vc-copy-value [value]="proposal.target" />
                   @if (proposal.needsMaintenanceWindow) {
                     <i class="bi bi-clock-history text-secondary ms-1"
@@ -204,7 +204,7 @@
                   </div>
                 }
                 @if (proposal.beyond) {
-                  {{ proposal.beyond }}
+                  <vc-version [value]="proposal.beyond" />
                   <div>{{ 'proposal.beyondHint' | translate }}</div>
                 }
               </td>
@@ -220,9 +220,9 @@
                       <div class="d-flex flex-wrap gap-1 mt-1">
                         @for (release of proposal.releases; track release.version) {
                           @if (release.url) {
-                            <a [href]="release.url" target="_blank" rel="noopener"><code>{{ release.version }}</code></a>
+                            <a [href]="release.url" target="_blank" rel="noopener"><code><vc-version [value]="release.version" /></code></a>
                           } @else {
-                            <code>{{ release.version }}</code>
+                            <code><vc-version [value]="release.version" /></code>
                           }
                         }
                       </div>
@@ -232,7 +232,7 @@
                     <div class="d-flex flex-wrap align-items-baseline gap-1">
                       <span class="text-secondary text-nowrap">{{ 'proposal.stops' | translate }}:</span>
                       @for (stop of proposal.stops; track stop.id) {
-                        <span><code>{{ stop.version }}</code>
+                        <span><code><vc-version [value]="stop.version" /></code>
                           @if (stop.note) {
                             <span class="text-secondary ms-1">({{ stop.note }})</span>
                           }
@@ -276,7 +276,7 @@
               <td class="text-secondary small">{{ 'dependency.requires' | translate }}</td>
               <td>{{ checkEnvironmentName(check) }}</td>
               <td>{{ check.dependsOnName }} <code>{{ check.versionRange }}</code></td>
-              <td>{{ check.actualVersion || dash }}</td>
+              <td><vc-version [value]="check.actualVersion" [fallback]="dash" /></td>
               <td>
                 <span class="badge"
                       [class.text-bg-success]="check.state === 'SATISFIED'"
@@ -295,7 +295,7 @@
               <td class="text-secondary small">{{ 'dependency.requiredBy' | translate }}</td>
               <td>{{ checkEnvironmentName(check) }}</td>
               <td>{{ check.componentName }} <code>{{ check.versionRange }}</code></td>
-              <td>{{ check.actualVersion || dash }}</td>
+              <td><vc-version [value]="check.actualVersion" [fallback]="dash" /></td>
               <td>
                 <span class="badge"
                       [class.text-bg-success]="check.state === 'SATISFIED'"
@@ -331,7 +331,7 @@
                 <span class="text-secondary"><i class="bi bi-arrow-repeat me-1"></i>{{ 'matrix.cell.autoUpdate' | translate }}</span>
               } @else if (row.cell && row.cell.active) {
                 @if (row.cell.currentVersion) {
-                  {{ row.cell.currentVersion }}
+                  <vc-version [value]="row.cell.currentVersion" />
                   <vc-copy-value [value]="row.cell.currentVersion" />
                   @if (row.cell.movingTag) {
                     <i class="bi bi-exclamation-triangle text-warning ms-1"
@@ -343,7 +343,7 @@
                 @if (row.cell.plannedVersion) {
                   <div class="small text-secondary">
                     <i class="bi bi-calendar-event me-1"></i>{{ 'decisionState.PLANNED' | translate }}:
-                    {{ row.cell.plannedVersion }} &middot; {{ row.cell.plannedFor | localDate: 'mediumDate' }}
+                    <vc-version [value]="row.cell.plannedVersion" /> &middot; {{ row.cell.plannedFor | localDate: 'mediumDate' }}
                     @if (row.cell.plannedNote) {
                       &middot; {{ row.cell.plannedNote }}
                     }
@@ -410,11 +410,11 @@
                 <td>{{ environmentName(entry.environmentId) }}</td>
                 <td class="text-nowrap">
                   @if (entry.fromVersion) {
-                    <span class="text-secondary">{{ entry.fromVersion }}</span>
+                    <span class="text-secondary"><vc-version [value]="entry.fromVersion" /></span>
                     <vc-copy-value [value]="entry.fromVersion" />
                     <i class="bi bi-arrow-right mx-1"></i>
                   }
-                  {{ entry.toVersion }}
+                  <vc-version [value]="entry.toVersion" />
                   @if (entry.toVersion) {
                     <vc-copy-value [value]="entry.toVersion" />
                   }

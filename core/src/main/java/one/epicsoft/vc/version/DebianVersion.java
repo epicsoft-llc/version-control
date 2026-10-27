@@ -92,6 +92,16 @@ public final class DebianVersion implements Comparable<DebianVersion> {
     return this.full;
   }
 
+  /**
+   * What a reader needs from a package version: {@code 29.7.2-1} out of {@code 5:29.7.2-1~ubuntu.24.04~noble}. The
+   * epoch only orders, and the distribution names the build, not the release.
+   */
+  @Nonnull
+  public String shortForm() {
+    final String packageRevision = packageRevision(this.revision);
+    return packageRevision.isEmpty() ? this.upstream : "%s-%s".formatted(this.upstream, packageRevision);
+  }
+
   @Override
   public int compareTo(@Nonnull final DebianVersion other) {
     if (this.epoch != other.epoch) {
