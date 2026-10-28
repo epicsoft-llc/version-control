@@ -74,7 +74,8 @@ Before an upgrade, the proposal lists every version between the running one and 
 its release notes — reading those for breaking changes is the slow part of every update.
 
 With a database that OWASP Dependency-Check keeps current, it also looks up the known vulnerabilities of the
-recorded versions — optional, set up as in
+recorded versions, and a CVE that does not matter for a component can be ignored there, with the reason — optional,
+set up as in
 [`docs/vulnerabilities.md`](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/docs/vulnerabilities.md).
 Ready-made databases come from <https://nvd.epicsoft.one/>, the project nvd-mirror on
 [GitLab](https://gitlab.com/epicsoft-networks/nvd-mirror) and [GitHub](https://github.com/epicsoft-llc/nvd-mirror).

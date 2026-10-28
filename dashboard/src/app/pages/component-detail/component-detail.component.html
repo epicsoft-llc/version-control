@@ -181,6 +181,7 @@
                 <th scope="col">{{ 'vulnerability.column.score' | translate }}</th>
                 <th scope="col">{{ 'component.column.environment' | translate }}</th>
                 <th scope="col">{{ 'vulnerability.column.summary' | translate }}</th>
+                <th scope="col" class="text-end">{{ 'component.column.actions' | translate }}</th>
               </tr>
               </thead>
               <tbody>
@@ -213,11 +214,31 @@
                       }
                     </td>
                     <td class="small text-secondary">{{ row.finding.summary }}</td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openIgnore(row)">
+                        {{ 'vulnerability.action.ignore' | translate }}
+                      </button>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
+        }
+        @if (vulnerabilities.ignored.length > 0) {
+          <details class="small mb-2">
+            <summary class="text-secondary">{{ 'vulnerability.ignored' | translate }} ({{ vulnerabilities.ignored.length }})</summary>
+            @for (ignore of vulnerabilities.ignored; track ignore.cve) {
+              <div class="d-flex align-items-baseline gap-2 mt-1">
+                <code>{{ ignore.cve }}</code>
+                <span class="text-secondary flex-grow-1">{{ ignore.note }} &middot; {{ ignore.ignoredAt | localDate: 'mediumDate' }}</span>
+                <button type="button" class="btn btn-sm btn-link p-0" [disabled]="showingAgain === ignore.cve"
+                        (click)="showAgain(ignore.cve)">
+                  {{ 'vulnerability.action.showAgain' | translate }}
+                </button>
+              </div>
+            }
+          </details>
         }
         @if (vulnerabilities.uncomparableEnvironmentIds.length > 0) {
           <p class="small text-secondary mb-2">

@@ -9,6 +9,7 @@
   "error.duplicatePackage": "Ein Paket ist mehrfach aufgeführt.",
   "error.duplicateUpgradeStop": "Dieser Zwischenschritt ist bereits eingetragen.",
   "error.holdReasonRequired": "Das Festhalten braucht einen Grund. Tragen Sie ihn als Notiz ein.",
+  "error.ignoreReasonRequired": "Das Ignorieren einer Schwachstelle braucht einen Grund. Tragen Sie ihn als Notiz ein.",
   "error.inactiveCell": "Die Komponente ist in dieser Umgebung als nicht vorhanden markiert.",
   "error.invalidVersionRange": "Der Versionsbereich lässt sich nicht lesen. Erwartet wird die npm-Schreibweise, zum Beispiel >=14 <18.",
   "error.methodNotAllowed": "Diese Aktion ist hier nicht erlaubt.",

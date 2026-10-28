@@ -4,6 +4,15 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## 2026-10-28
+
+### Added
+- A known vulnerability can be ignored per component, with the reason required: it is no task any more, leaves the
+  daily notification and the matrix, and the component page keeps it folded under *Ignored* with its reason and
+  *Show again*. Lookups do not bring it back; a new CVE of the component still shows up
+- `PUT` and `DELETE /api/v1/vulnerabilities/ignores` ignore a CVE and take it back; the report lists the ignored ones
+  under `ignored`
+
 ## [0.8.0] - 2026-10-27
 
 ### Added

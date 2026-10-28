@@ -27,6 +27,7 @@ import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
 import {VersionChangeDialogComponent} from '../../components/version-change-dialog/version-change-dialog.component';
 import {DecisionDialogComponent} from '../../components/decision-dialog/decision-dialog.component';
 import {PlanDialogComponent} from '../../components/plan-dialog/plan-dialog.component';
+import {VulnerabilityIgnoreDialogComponent} from '../../components/vulnerability-ignore-dialog/vulnerability-ignore-dialog.component';
 import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
@@ -112,6 +113,8 @@ export class ComponentDetailComponent implements OnDestroy {
   protected checking = false;
   protected checkingEol = false;
   protected checkingVulnerabilities = false;
+  /** The ignored CVE being shown again, so its button cannot send twice. */
+  protected showingAgain?: string;
   protected loading = true;
   protected errorMessage?: string;
 
@@ -263,6 +266,36 @@ export class ComponentDetailComponent implements OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.checkingEol = false;
+        this.showError(error);
+      }
+    }));
+  }
+
+  /** The dialog answers with the report, the CVE already moved from the findings to the ignored ones. */
+  protected openIgnore(row: VulnerabilityRow): void {
+    if (!isDefined(this.component)) {
+      return;
+    }
+    const reference = this.modal.open(VulnerabilityIgnoreDialogComponent);
+    reference.componentInstance.componentId = this.component.id;
+    reference.componentInstance.componentName = this.component.name;
+    reference.componentInstance.cve = row.finding.cve;
+    reference.result.then((reports: VulnerabilityReportDto[]) => this.showVulnerabilities(reports.at(0)), () => undefined);
+  }
+
+  protected showAgain(cve: string): void {
+    if (!isDefined(this.component) || isDefined(this.showingAgain)) {
+      return;
+    }
+    this.showingAgain = cve;
+    this.errorMessage = undefined;
+    this.subs.push(this.vulnerabilityRepo.showAgain(this.component.id, cve).subscribe({
+      next: (reports) => {
+        this.showVulnerabilities(reports.at(0));
+        this.showingAgain = undefined;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.showingAgain = undefined;
         this.showError(error);
       }
     }));

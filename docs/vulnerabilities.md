@@ -8,7 +8,12 @@ nothing of it appears.
   severity, the mark of the CISA catalogue of known exploited vulnerabilities and the date of the data.
 - The matrix marks a cell whose version has one, in red when one of them is exploited or critical.
 - A CVE that is exploited or reaches `vc.vulnerabilities.task-min-score` (9.0) is a task, and the daily summary reports it.
-  A component that updates itself gets no such task: its recorded version is not what runs.
+  A component that updates itself gets no such task: its recorded version is not what runs. One held on its version
+  does: holding is about updates, and a CVE found later still has to reach somebody.
+- A CVE that does not matter for a component — the vulnerable part is not used, the component runs out — can be
+  ignored on its page, with the reason required. It is no task any more, leaves the daily summary and the matrix, and
+  waits folded under *Ignored* with its reason, where *Show again* takes the ignore back. Lookups do not bring it
+  back; a new CVE of the same component still shows up.
 
 Each component is looked up once a day and at the next scheduler tick after a new version is recorded; *Check now*
 on the component page looks it up at once. When the database cannot be read, the findings of the last lookup stay.
