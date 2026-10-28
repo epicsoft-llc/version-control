@@ -18,6 +18,10 @@ All notable changes to this project are documented here, grouped as in
   only and compact object headers (`JAVA_MEMORY`, empty for the JVM's defaults), measured 277 instead of 341 MiB.
   It keeps at most four database connections instead of ten, which saves PostgreSQL a process each
 
+### Security
+- The dashboard is built with ngx-translate 18.1.0, whose HTTP loader encodes the language in the request URL and
+  refuses dot segments — the dashboard only loads the languages it ships and was not affected
+
 ## [0.8.0] - 2026-10-27
 
 ### Added
