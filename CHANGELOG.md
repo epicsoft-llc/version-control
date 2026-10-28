@@ -13,6 +13,11 @@ All notable changes to this project are documented here, grouped as in
 - `PUT` and `DELETE /api/v1/vulnerabilities/ignores` ignore a CVE and take it back; the report lists the ignored ones
   under `ignored`
 
+### Changed
+- The backend needs about a fifth less memory: the image starts the JVM with the serial collector, the C1 compiler
+  only and compact object headers (`JAVA_MEMORY`, empty for the JVM's defaults), measured 277 instead of 341 MiB.
+  It keeps at most four database connections instead of ten, which saves PostgreSQL a process each
+
 ## [0.8.0] - 2026-10-27
 
 ### Added
