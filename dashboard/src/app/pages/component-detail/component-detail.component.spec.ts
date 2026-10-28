@@ -22,7 +22,7 @@ import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ReleaseLinkDto, UpgradeProposalDto} from '../../repositories/dto/upgrade.dto';
 import {SettingsDto} from '../../repositories/dto/settings.dto';
-import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
+import {VulnerabilityFindingDto, VulnerabilityIgnoreDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
 import {SettingsService} from '../../services/settings/settings.service';
 import {ComponentDetailComponent} from './component-detail.component';
 
@@ -68,7 +68,8 @@ describe('ComponentDetailComponent', () => {
       getDependencies: vi.fn().mockReturnValue(of([])),
       getChanges: vi.fn().mockReturnValue(of([])),
       findDecisions: vi.fn().mockReturnValue(of([])),
-      findVulnerabilities: vi.fn().mockReturnValue(of([]))
+      findVulnerabilities: vi.fn().mockReturnValue(of([])),
+      showVulnerabilityAgain: vi.fn().mockReturnValue(of([]))
     };
 
     await TestBed.configureTestingModule({
@@ -89,7 +90,8 @@ describe('ComponentDetailComponent', () => {
         {provide: VersionChangeRepo, useValue: {findAllByComponent: repos['findHistory']}},
         {provide: UpdateCheckRepo, useValue: {findAllByComponent: repos['findChecks'], checkNow: vi.fn()}},
         {provide: EolStatusRepo, useValue: {findAllByComponent: repos['findEol'], checkNow: vi.fn()}},
-        {provide: VulnerabilityRepo, useValue: {findAllByComponent: repos['findVulnerabilities'], checkNow: vi.fn()}}
+        {provide: VulnerabilityRepo, useValue: {findAllByComponent: repos['findVulnerabilities'], checkNow: vi.fn(),
+                                                showAgain: repos['showVulnerabilityAgain']}}
       ]
     }).compileComponents();
 
@@ -112,6 +114,8 @@ describe('ComponentDetailComponent', () => {
       'decisionState.PLANNED': 'Planned',
       'proposal.releases': 'Versions on the way',
       'vulnerability.section': 'Known vulnerabilities',
+      'vulnerability.ignored': 'Ignored',
+      'vulnerability.action.showAgain': 'Show again',
       'vulnerability.knownExploited': 'Exploited',
       'vulnerability.uncomparable': 'Not comparable',
       'severity.CRITICAL': 'Critical',
@@ -144,6 +148,37 @@ describe('ComponentDetailComponent', () => {
     expect(rows[0].textContent).toContain('Staging');
     expect(rows[1].textContent).toContain('9.8 Critical');
     expect(section?.textContent).toContain('Not comparable');
+  });
+
+  it('lists an ignored CVE apart from the findings, with its reason, and shows it again on request', async () => {
+    TestBed.inject(SettingsService).load(of(new SettingsDto({debianVersions: 'SHORT', vulnerabilities: true}))).subscribe();
+    repos['getById'].mockReturnValue(of(new ComponentDto({...component, cpeVendor: 'mariadb', cpeProduct: 'mariadb'})));
+    const finding = (cve: string): VulnerabilityFindingDto =>
+      new VulnerabilityFindingDto({environmentId: 'environment-1', version: '17.2', cve, knownExploited: false});
+    const report = (findings: VulnerabilityFindingDto[], ignored: VulnerabilityIgnoreDto[]): VulnerabilityReportDto =>
+      new VulnerabilityReportDto({componentId: 'component-1', checkedAt: '2026-10-28T05:00:00Z', checkState: 'OK', findings, ignored});
+    repos['findVulnerabilities'].mockReturnValue(of([report([finding('CVE-2026-1001')], [
+      new VulnerabilityIgnoreDto({cve: 'CVE-2020-15180', note: 'Galera is not used', ignoredAt: '2026-10-28T09:00:00Z'})
+    ])]));
+    repos['showVulnerabilityAgain'].mockReturnValue(of([report([finding('CVE-2026-1001'), finding('CVE-2020-15180')], [])]));
+
+    await render();
+
+    const section = (): HTMLElement | undefined => ([...fixture.nativeElement.querySelectorAll('section')] as HTMLElement[])
+      .find((candidate) => candidate.textContent?.includes('Known vulnerabilities'));
+    // Ignored is not gone: the reason stays in view for whoever wonders later whether it still holds.
+    expect(section()?.querySelectorAll('tbody tr').length).toBe(1);
+    expect(section()?.textContent).toContain('Galera is not used');
+
+    const showAgain = ([...(section()?.querySelectorAll('button') ?? [])] as HTMLButtonElement[])
+      .find((button) => button.textContent?.includes('Show again'));
+    showAgain?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(repos['showVulnerabilityAgain']).toHaveBeenCalledWith('component-1', 'CVE-2020-15180');
+    expect(section()?.querySelectorAll('tbody tr').length).toBe(2);
+    expect(section()?.textContent).not.toContain('Galera is not used');
   });
 
   it('leaves the vulnerabilities out without a Dependency-Check database', async () => {

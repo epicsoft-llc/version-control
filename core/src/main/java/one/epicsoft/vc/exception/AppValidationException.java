@@ -150,6 +150,13 @@ public class AppValidationException extends AppException {
                                       "error.holdReasonRequired");
   }
 
+  /** An ignored CVE disappears from every list, so it has to say why — otherwise nobody can tell whether it still holds. */
+  @Nonnull
+  public static AppValidationException ignoreReasonRequired(@Nonnull final UUID componentId, @Nonnull final String cve) {
+    return new AppValidationException("Ignoring %s for component '%s' needs a reason in the note".formatted(cve, componentId),
+                                      "error.ignoreReasonRequired");
+  }
+
   /** A cell marked as deliberately absent cannot carry a deployed version. */
   @Nonnull
   public static AppValidationException inactiveCell(@Nonnull final UUID componentEnvironmentId) {

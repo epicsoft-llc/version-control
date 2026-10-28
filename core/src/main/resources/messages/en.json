@@ -9,6 +9,7 @@
   "error.duplicatePackage": "A package is listed multiple times.",
   "error.duplicateUpgradeStop": "This intermediate version is already recorded.",
   "error.holdReasonRequired": "Holding requires a reason. Enter it as a note.",
+  "error.ignoreReasonRequired": "Ignoring a vulnerability requires a reason. Enter it as a note.",
   "error.inactiveCell": "The component is marked as not present in this environment.",
   "error.invalidVersionRange": "The version range cannot be read. npm syntax is expected, for example >=14 <18.",
   "error.methodNotAllowed": "This action is not allowed here.",

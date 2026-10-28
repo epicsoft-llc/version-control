@@ -21,6 +21,7 @@ import one.epicsoft.vc.jpa.entity.EolStatusEntity;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import one.epicsoft.vc.jpa.entity.UpdateDecisionEntity;
 import one.epicsoft.vc.jpa.entity.VulnerabilityFindingEntity;
+import one.epicsoft.vc.jpa.entity.VulnerabilityIgnoreEntity;
 import one.epicsoft.vc.service.ComponentEnvironmentService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.EolStatusService;
@@ -28,6 +29,7 @@ import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.service.UpdateCheckService;
 import one.epicsoft.vc.service.UpdateDecisionService;
 import one.epicsoft.vc.service.VulnerabilityFindingService;
+import one.epicsoft.vc.service.VulnerabilityIgnoreService;
 import one.epicsoft.vc.version.AllowedCandidates;
 import one.epicsoft.vc.version.UpgradePathCalculator;
 import one.epicsoft.vc.version.UpgradeTarget;
@@ -45,6 +47,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -85,6 +88,7 @@ public class TaskListFacade {
   private final AllowedCandidates allowedCandidates;
   private final DependencyFacade dependencyFacade;
   private final VulnerabilityFindingService vulnerabilityFindingService;
+  private final VulnerabilityIgnoreService vulnerabilityIgnoreService;
   private final VulnerabilityFacade vulnerabilityFacade;
   private final VulnerabilityProperties vulnerabilityProperties;
 
@@ -128,6 +132,10 @@ public class TaskListFacade {
             ? this.vulnerabilityFindingService.findAllByProject(projectId).stream()
                   .collect(Collectors.groupingBy(VulnerabilityFindingEntity::getComponentEnvironmentId))
             : Map.of();
+    final Map<UUID, Set<String>> ignored =
+        this.vulnerabilityIgnoreService.findAllByProject(projectId).stream()
+            .collect(Collectors.groupingBy(VulnerabilityIgnoreEntity::getComponentId,
+                                           Collectors.mapping(VulnerabilityIgnoreEntity::getCve, Collectors.toSet())));
 
     final Map<TaskSection, List<TaskEntryDto>> entries = new EnumMap<>(TaskSection.class);
     for (final ComponentEntity component : components) {
@@ -136,7 +144,7 @@ public class TaskListFacade {
       final List<ComponentEnvironmentEntity> componentCells = cells.getOrDefault(component.getId(), List.of());
 
       this.addEolTask(entries, component, eolStatuses.get(component.getId()));
-      this.addVulnerabilities(entries, component, decision, componentCells, findings);
+      this.addVulnerabilities(entries, component, decision, componentCells, findings, ignored.getOrDefault(component.getId(), Set.of()));
       this.addViolatedDependencies(entries, component, violations);
       addRolloutPlans(entries, component, componentCells);
       this.addUpdateTask(entries, component, check, decision, componentCells, index);
@@ -187,12 +195,13 @@ public class TaskListFacade {
     add(entries, over || escalate ? TaskSection.EOL_EXCEEDED : TaskSection.EOL_WARNING, entry);
   }
 
-  /** Below the threshold a finding stays on the component page; a component that updates itself runs no recorded version. */
+  /** Below the threshold a finding stays on the component page; a component that updates itself runs no recorded version, and an ignored CVE is settled. */
   private void addVulnerabilities(@Nonnull final Map<TaskSection, List<TaskEntryDto>> entries,
                                   @Nonnull final ComponentEntity component,
                                   @Nullable final UpdateDecisionEntity decision,
                                   @Nonnull final List<ComponentEnvironmentEntity> componentCells,
-                                  @Nonnull final Map<UUID, List<VulnerabilityFindingEntity>> findings) {
+                                  @Nonnull final Map<UUID, List<VulnerabilityFindingEntity>> findings,
+                                  @Nonnull final Set<String> ignoredCves) {
     if (nonNull(decision) && DecisionState.AUTO_UPDATE == decision.getState()) {
       return;
     }
@@ -201,6 +210,7 @@ public class TaskListFacade {
                   .forEach(cell -> {
                     final List<String> cves = findings.getOrDefault(cell.getId(), List.of()).stream()
                                                       .filter(finding -> VulnerabilityFacade.isCurrent(finding, cell))
+                                                      .filter(finding -> !ignoredCves.contains(finding.getCve()))
                                                       .filter(this.vulnerabilityFacade::isTask)
                                                       .sorted(VulnerabilityFacade.READING_ORDER)
                                                       .map(VulnerabilityFindingEntity::getCve)
