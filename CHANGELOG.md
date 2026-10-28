@@ -4,7 +4,7 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
-## 2026-10-28
+## [0.9.0] - 2026-10-28
 
 ### Added
 - A known vulnerability can be ignored per component, with the reason required: it is no task any more, leaves the
@@ -17,6 +17,10 @@ All notable changes to this project are documented here, grouped as in
 - The backend needs about a fifth less memory: the image starts the JVM with the serial collector, the C1 compiler
   only and compact object headers (`JAVA_MEMORY`, empty for the JVM's defaults), measured 277 instead of 341 MiB.
   It keeps at most four database connections instead of ten, which saves PostgreSQL a process each
+
+### Security
+- The dashboard is built with ngx-translate 18.1.0, whose HTTP loader encodes the language in the request URL and
+  refuses dot segments — the dashboard only loads the languages it ships and was not affected
 
 ## [0.8.0] - 2026-10-27
 
