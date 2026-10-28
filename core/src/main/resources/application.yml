@@ -76,6 +76,10 @@ spring:
     url: jdbc:postgresql://${VC_DATABASE_HOST:localhost}:${VC_DATABASE_PORT:5432}/${VC_DATABASE_NAME:versioncontrol}
     username: ${VC_DATABASE_USERNAME:USE_ENV}
     password: ${VC_DATABASE_PASSWORD:USE_ENV}
+    hikari:
+      #### A few requests a minute and one scheduler; every idle connection is a PostgreSQL process of its own.
+      maximum-pool-size: 4
+      minimum-idle: 1
   jpa:
     hibernate:
       #### The schema belongs to Flyway, never to Hibernate.

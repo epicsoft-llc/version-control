@@ -17,8 +17,11 @@ LABEL org.opencontainers.image.title="Version Control Core" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://gitlab.com/epicsoft-networks/version-control"
 
+# JAVA_MEMORY trades peak speed for footprint: a few requests a minute need neither C2 nor a parallel collector
+# (measured 341 -> 277 MiB); set it empty for the JVM's defaults.
 ENV JAVA_SERVER="-server" \
     JAVA_DOCKER="-XX:+UseContainerSupport -XX:MaxRAMPercentage=90" \
+    JAVA_MEMORY="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:+UseCompactObjectHeaders" \
     JAVA_ENCODING="-Dfile.encoding=UTF-8" \
     JAVA_TIMEZONE="-Duser.timezone=UTC" \
     JAVA_ERROR="-XX:+ExitOnOutOfMemoryError" \
@@ -33,4 +36,4 @@ COPY ${JAR_FILE} /app.jar
 # Numeric: a JVM needs no passwd entry, and this works on any base image.
 USER 10001:10001
 
-ENTRYPOINT [ "sh", "-c", "java $JAVA_SERVER $JAVA_DOCKER $JAVA_ENCODING $JAVA_TIMEZONE $JAVA_ERROR $JAVA_OPTS -jar /app.jar" ]
+ENTRYPOINT [ "sh", "-c", "java $JAVA_SERVER $JAVA_DOCKER $JAVA_MEMORY $JAVA_ENCODING $JAVA_TIMEZONE $JAVA_ERROR $JAVA_OPTS -jar /app.jar" ]
