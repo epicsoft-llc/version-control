@@ -175,4 +175,11 @@ public class ComponentRequest {
       clears it, any other list replaces it.""")
   @JsonProperty("dependencies")
   private List<@Valid ComponentDependencyRequest> dependencies;
+
+  @Nullable
+  @Schema(description = """
+      Links kept by hand, for what the link search does not find. Left out keeps the stored list, an empty list clears \
+      it, any other list replaces it; each an http or https address, none twice.""")
+  @JsonProperty("links")
+  private List<@Valid ComponentLinkRequest> links;
 }

@@ -72,6 +72,11 @@ public class ComponentService {
   }
 
   @Nonnull
+  public List<ComponentEntity> findWithoutLinkSearch(final int limit) {
+    return this.componentRepository.findWithoutLinkSearch(PageRequest.of(0, limit));
+  }
+
+  @Nonnull
   public List<ComponentPackageEntity> findPackages(@Nonnull final UUID componentId) {
     return this.componentPackageRepository.findAllByComponentIdOrderBySortOrderAscNameAsc(componentId);
   }

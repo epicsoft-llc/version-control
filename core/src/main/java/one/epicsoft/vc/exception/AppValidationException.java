@@ -48,6 +48,17 @@ public class AppValidationException extends AppException {
     return new AppValidationException("Package '%s' is listed twice".formatted(name), "error.duplicatePackage");
   }
 
+  /** Stored, it would be a link that opens nothing — or one that runs something. */
+  @Nonnull
+  public static AppValidationException invalidLink(@Nonnull final String url) {
+    return new AppValidationException("Link '%s' is not an http or https address".formatted(url), "error.invalidLink");
+  }
+
+  @Nonnull
+  public static AppValidationException duplicateLink(@Nonnull final String url) {
+    return new AppValidationException("Link '%s' is listed twice".formatted(url), "error.duplicateLink");
+  }
+
   /**
    * A prerequisite from another project would be evaluated against environments
    * that do not exist on the other side.

@@ -11,12 +11,14 @@ import {MAX_STEPS, SOURCE_TYPES, VERSION_STRATEGIES} from '../../repositories/dt
 import {VersionPreviewDto, VersionPreviewRequest} from '../../repositories/dto/update-check.dto';
 import {UpgradeStopRequest} from '../../repositories/dto/upgrade.dto';
 import {ComponentDependencyRequest} from '../../repositories/dto/dependency.dto';
+import {ComponentLinkRequest} from '../../repositories/dto/component-link.dto';
 import {ProjectRepo} from '../../repositories/api/project.repo';
 import {EnvironmentRepo} from '../../repositories/api/environment.repo';
 import {ComponentRepo} from '../../repositories/api/component.repo';
 import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {SettingsService} from '../../services/settings/settings.service';
+import {CopyValueComponent} from '../../components/copy-value/copy-value.component';
 import {isDefined, nonBlank, notDefined, unsubscribe} from '../../libs/utils/vc.utils';
 
 /** One row of the dependency editor: what is needed, in which range, and why. */
@@ -38,6 +40,15 @@ export class StopRow {
   public note = '';
 
   constructor(init?: Partial<StopRow>) {
+    Object.assign(this, init);
+  }
+}
+
+export class LinkRow {
+
+  public url = '';
+
+  constructor(init?: Partial<LinkRow>) {
     Object.assign(this, init);
   }
 }
@@ -69,7 +80,7 @@ export class PackageRow {
   // signals, the strategy has to say what the code assumes.
   changeDetection: ChangeDetectionStrategy.Default,
   selector: 'vc-master-data',
-  imports: [FormsModule, RouterLink, TranslatePipe],
+  imports: [CopyValueComponent, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './master-data.component.html'
 })
 export class MasterDataComponent implements OnInit, OnDestroy {
@@ -111,6 +122,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
   protected packageRows: PackageRow[] = [];
   protected stopRows: StopRow[] = [];
   protected dependencyRows: DependencyRow[] = [];
+  protected linkRows: LinkRow[] = [];
   protected prerequisites: ComponentDto[] = [];
   protected preview?: VersionPreviewDto;
   protected previewing = false;
@@ -253,6 +265,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
     this.packageRows = [];
     this.stopRows = [];
     this.dependencyRows = [];
+    this.linkRows = [];
     this.updatePrerequisites();
   }
 
@@ -296,6 +309,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
       versionRange: entry.versionRange,
       note: entry.note ?? ''
     }));
+    this.linkRows = component.links.map((entry) => new LinkRow({url: entry.url}));
     this.updatePrerequisites();
   }
 
@@ -339,6 +353,10 @@ export class MasterDataComponent implements OnInit, OnDestroy {
                                  versionRange: row.versionRange.trim(),
                                  note: nonBlank(row.note) ? row.note.trim() : undefined
                                }));
+    // Always sent, so removing the last link actually removes it.
+    request.links = this.linkRows
+                        .filter((row) => nonBlank(row.url))
+                        .map((row) => new ComponentLinkRequest({url: row.url.trim()}));
     const call: Observable<ComponentDto> = isDefined(this.componentFormId)
                                            ? this.componentRepo.update(this.componentFormId, request)
                                            : this.componentRepo.create(request);
@@ -415,6 +433,14 @@ export class MasterDataComponent implements OnInit, OnDestroy {
     this.stopRows.push(new StopRow());
   }
 
+  protected addLinkRow(): void {
+    this.linkRows.push(new LinkRow());
+  }
+
+  protected removeLinkRow(index: number): void {
+    this.linkRows.splice(index, 1);
+  }
+
   protected removeStopRow(index: number): void {
     this.stopRows.splice(index, 1);
   }
@@ -456,6 +482,7 @@ export class MasterDataComponent implements OnInit, OnDestroy {
     this.packageRows = [];
     this.stopRows = [];
     this.dependencyRows = [];
+    this.linkRows = [];
     this.preview = undefined;
     this.errorMessage = undefined;
   }

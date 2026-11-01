@@ -17,12 +17,14 @@ public interface ComponentMapper {
   @Mapping(target = "packages", ignore = true)
   @Mapping(target = "upgradeStops", ignore = true)
   @Mapping(target = "dependencies", ignore = true)
+  @Mapping(target = "links", ignore = true)
   ComponentDto toDto(final ComponentEntity entity);
 
   /** The stored state as a full replacement, which a patch then changes; null lists leave the stored ones alone. */
   @Mapping(target = "packages", ignore = true)
   @Mapping(target = "upgradeStops", ignore = true)
   @Mapping(target = "dependencies", ignore = true)
+  @Mapping(target = "links", ignore = true)
   ComponentRequest toRequest(final ComponentEntity entity);
 
   ComponentPackageDto toPackageDto(final ComponentPackageEntity entity);

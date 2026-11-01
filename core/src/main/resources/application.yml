@@ -51,6 +51,8 @@ vc:
     check-interval: 7d
     warn-months: 6
     escalate-months: 3
+  links:
+    check-interval: 7d
   notification:
     daily-time: "08:00"
   display:

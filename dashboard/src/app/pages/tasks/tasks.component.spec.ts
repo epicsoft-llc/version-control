@@ -32,8 +32,9 @@ describe('TasksComponent', () => {
   const rows = (): HTMLTableRowElement[] =>
     [...fixture.nativeElement.querySelectorAll('tbody tr')] as HTMLTableRowElement[];
 
+  // The copy buttons behind names and versions are buttons too, and decide nothing.
   const decideButtons = (): HTMLButtonElement[] =>
-    [...fixture.nativeElement.querySelectorAll('tbody .btn')] as HTMLButtonElement[];
+    [...fixture.nativeElement.querySelectorAll('tbody .btn:not(.vc-copy)')] as HTMLButtonElement[];
 
   function entry(name: string, init: Partial<TaskEntryDto> = {}): TaskEntryDto {
     return new TaskEntryDto({componentId: 'component-' + name, componentName: name, ...init});
@@ -111,8 +112,9 @@ describe('TasksComponent', () => {
     // decide, the date is what it is.
     expect(decideButtons().length).toBe(1);
     expect(rows()[0].textContent).toContain('PostgreSQL');
-    expect(rows()[0].querySelector('.btn')).not.toBeNull();
-    expect(rows()[1].querySelector('.btn')).toBeNull();
+    expect(rows()[0].querySelector('.btn:not(.vc-copy)')).not.toBeNull();
+    expect(rows()[1].querySelector('.btn:not(.vc-copy)')).toBeNull();
+    expect(rows().every((row) => row.querySelector('th vc-copy-value') !== null)).toBe(true);
   });
 
   it('spells a violated dependency out', async () => {

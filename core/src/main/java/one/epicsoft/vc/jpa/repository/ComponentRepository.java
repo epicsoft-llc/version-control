@@ -65,4 +65,13 @@ public interface ComponentRepository extends JpaRepository<ComponentEntity, UUID
       ORDER BY c.name ASC
       """)
   List<ComponentEntity> findWithoutVulnerabilityCheck(@Nonnull Pageable pageable);
+
+  /** Every component gets a first link search; one with nothing to ask writes its row without a request. */
+  @Query("""
+      SELECT c FROM ComponentEntity c
+      WHERE c.deleted IS NULL
+        AND NOT EXISTS (SELECT 1 FROM LinkSearchEntity ls WHERE ls.componentId = c.id)
+      ORDER BY c.name ASC
+      """)
+  List<ComponentEntity> findWithoutLinkSearch(@Nonnull Pageable pageable);
 }

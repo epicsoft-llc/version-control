@@ -21,3 +21,8 @@ export const SOURCE_TYPES: SourceType[] =
 export const VERSION_STRATEGIES: VersionStrategy[] = ['LATEST_BY_DATE', 'SEMVER', 'DIGEST', 'DEB_VERSION'];
 
 export const MAX_STEPS: MaxStep[] = ['PATCH', 'MINOR', 'MAJOR', 'NONE'];
+
+/** The server sends links grouped in this order. */
+export type LinkKind = 'REPOSITORY' | 'IMAGE' | 'PACKAGE' | 'HOMEPAGE' | 'DOCUMENTATION' | 'RELEASE_POLICY' | 'END_OF_LIFE' | 'OTHER';
+
+export type LinkOrigin = 'MANUAL' | 'SOURCE' | 'END_OF_LIFE' | 'GITHUB' | 'DOCKER_HUB';
