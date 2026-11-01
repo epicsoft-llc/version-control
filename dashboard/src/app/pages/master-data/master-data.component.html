@@ -142,9 +142,14 @@
       <tbody>
         @for (component of components; track component.id) {
           <tr>
-            <td><a [routerLink]="['/components', component.id]">{{ component.name }}</a></td>
+            <td><a [routerLink]="['/components', component.id]">{{ component.name }}</a><vc-copy-value [value]="component.name" /></td>
             <td class="text-secondary small">{{ 'sourceType.' + component.sourceType | translate }}</td>
-            <td class="text-secondary small"><code>{{ component.sourceRef }}</code></td>
+            <td class="text-secondary small">
+              <code>{{ component.sourceRef }}</code>
+              @if (component.sourceRef) {
+                <vc-copy-value [value]="component.sourceRef" />
+              }
+            </td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-outline-secondary me-1"
                       (click)="editComponent(component)">{{ 'common.edit' | translate }}
@@ -363,6 +368,25 @@
               <input type="text" class="form-control form-control-sm" [name]="'dependencyNote' + $index"
                      [(ngModel)]="row.note" [placeholder]="'masterData.stops.note' | translate">
               <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeDependencyRow($index)">
+                {{ 'common.remove' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="mb-2">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="form-label mb-0">{{ 'component.field.links' | translate }}</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLinkRow()">
+              {{ 'masterData.links.add' | translate }}
+            </button>
+          </div>
+          <p class="form-text mt-0">{{ 'masterData.links.hint' | translate }}</p>
+          @for (row of linkRows; track $index) {
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <input type="url" class="form-control form-control-sm" [name]="'link' + $index"
+                     [(ngModel)]="row.url" placeholder="https://">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeLinkRow($index)">
                 {{ 'common.remove' | translate }}
               </button>
             </div>

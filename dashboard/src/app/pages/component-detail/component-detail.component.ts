@@ -16,7 +16,9 @@ import {VersionChangeDto} from '../../repositories/dto/version-change.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {VulnerabilityFindingDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
+import {ComponentLinkDto, LinkSearchDto} from '../../repositories/dto/component-link.dto';
 import {ComponentRepo} from '../../repositories/api/component.repo';
+import {LinkSearchRepo} from '../../repositories/api/link-search.repo';
 import {ComponentEnvironmentRepo} from '../../repositories/api/component-environment.repo';
 import {EnvironmentRepo} from '../../repositories/api/environment.repo';
 import {EolStatusRepo} from '../../repositories/api/eol-status.repo';
@@ -33,6 +35,7 @@ import {VersionComponent} from '../../components/version/version.component';
 import {ProjectSelectionService} from '../../services/project-selection/project-selection.service';
 import {SettingsService} from '../../services/settings/settings.service';
 import {isDefined, nonBlank, unsubscribe} from '../../libs/utils/vc.utils';
+import {linkIcon, linkSite, linkText} from '../../libs/utils/link.utils';
 
 /** One environment of this component, with whatever is known about it. */
 export class EnvironmentRow {
@@ -83,6 +86,7 @@ export class ComponentDetailComponent implements OnDestroy {
   private readonly eolStatusRepo: EolStatusRepo = inject(EolStatusRepo);
   private readonly taskRepo: TaskRepo = inject(TaskRepo);
   private readonly vulnerabilityRepo: VulnerabilityRepo = inject(VulnerabilityRepo);
+  private readonly linkSearchRepo: LinkSearchRepo = inject(LinkSearchRepo);
   private readonly projectSelection: ProjectSelectionService = inject(ProjectSelectionService);
   private readonly settings: SettingsService = inject(SettingsService);
   private readonly modal: NgbModal = inject(NgbModal);
@@ -110,9 +114,11 @@ export class ComponentDetailComponent implements OnDestroy {
   protected vulnerabilities?: VulnerabilityReportDto;
   /** Its findings by CVE, in the order the server sends them: exploited first, then by score. */
   protected vulnerabilityRows: VulnerabilityRow[] = [];
+  protected links?: LinkSearchDto;
   protected checking = false;
   protected checkingEol = false;
   protected checkingVulnerabilities = false;
+  protected searchingLinks = false;
   /** The ignored CVE being shown again, so its button cannot send twice. */
   protected showingAgain?: string;
   protected loading = true;
@@ -151,6 +157,36 @@ export class ComponentDetailComponent implements OnDestroy {
 
   protected autoUpdating(): boolean {
     return this.decision?.state === 'AUTO_UPDATE';
+  }
+
+  protected linkSite(link: ComponentLinkDto): string {
+    return linkSite(link.url);
+  }
+
+  protected linkIcon(link: ComponentLinkDto): string {
+    return linkIcon(link);
+  }
+
+  protected linkText(link: ComponentLinkDto): string | undefined {
+    return linkText(link);
+  }
+
+  protected searchLinksNow(): void {
+    if (!isDefined(this.component) || this.searchingLinks) {
+      return;
+    }
+    this.searchingLinks = true;
+    this.errorMessage = undefined;
+    this.subs.push(this.linkSearchRepo.searchNow(this.component.id).subscribe({
+      next: (links) => {
+        this.links = links;
+        this.searchingLinks = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.searchingLinks = false;
+        this.showError(error);
+      }
+    }));
   }
 
   protected looksUpVulnerabilities(): boolean {
@@ -350,6 +386,7 @@ export class ComponentDetailComponent implements OnDestroy {
       requiredBy: this.componentRepo.getDependencies(component.id, true).pipe(catchError(() => of([]))),
       decisions: this.taskRepo.findDecisionsByComponent(component.id).pipe(catchError(() => of([]))),
       changes: this.componentRepo.getChanges(component.id).pipe(catchError(() => of([]))),
+      links: this.linkSearchRepo.findByComponent(component.id).pipe(catchError(() => of(undefined))),
       vulnerabilities: this.settings.hasVulnerabilities()
         ? this.vulnerabilityRepo.findAllByComponent(component.id).pipe(catchError(() => of([])))
         : of([])
@@ -364,6 +401,7 @@ export class ComponentDetailComponent implements OnDestroy {
         this.requiredBy = loaded.requiredBy;
         this.decision = loaded.decisions.at(0);
         this.changes = loaded.changes;
+        this.links = loaded.links;
         this.showVulnerabilities(loaded.vulnerabilities.at(0));
         this.rows = loaded.environments.map((environment) => new EnvironmentRow({
           environment: environment,
@@ -391,6 +429,7 @@ export class ComponentDetailComponent implements OnDestroy {
     this.requiredBy = [];
     this.decision = undefined;
     this.changes = [];
+    this.links = undefined;
     this.showVulnerabilities(undefined);
     this.loading = false;
     this.showError(error);

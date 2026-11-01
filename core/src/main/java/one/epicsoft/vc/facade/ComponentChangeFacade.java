@@ -6,14 +6,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ComponentChangeDto;
 import one.epicsoft.vc.enums.DecisionState;
+import one.epicsoft.vc.enums.LinkOrigin;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
+import one.epicsoft.vc.jpa.entity.ComponentLinkEntity;
 import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
 import one.epicsoft.vc.jpa.entity.UpgradeStopEntity;
 import one.epicsoft.vc.mapper.ComponentChangeMapper;
 import one.epicsoft.vc.mapper.ComponentMapper;
 import one.epicsoft.vc.service.ComponentChangeService;
 import one.epicsoft.vc.service.ComponentDependencyService;
+import one.epicsoft.vc.service.ComponentLinkService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.service.UpgradeStopService;
@@ -50,6 +53,7 @@ public class ComponentChangeFacade {
   private static final String PACKAGES = "packages";
   private static final String UPGRADE_STOPS = "upgradeStops";
   private static final String DEPENDENCIES = "dependencies";
+  private static final String LINKS = "links";
   /** Cannot change, so it never has anything to say. */
   private static final String PROJECT_ID = "projectId";
 
@@ -60,6 +64,7 @@ public class ComponentChangeFacade {
   private final ComponentMapper componentMapper;
   private final UpgradeStopService upgradeStopService;
   private final ComponentDependencyService componentDependencyService;
+  private final ComponentLinkService componentLinkService;
   private final JsonMapper jsonMapper;
 
   @Nonnull
@@ -93,6 +98,10 @@ public class ComponentChangeFacade {
     values.put(DEPENDENCIES, joined(this.componentDependencyService.findAllByComponent(component.getId()).stream()
                                         .map(entry -> "%s %s".formatted(entry.getDependsOn().getName(), entry.getVersionRange()))
                                         .toList()));
+    // Only the ones kept by hand: what the link search finds is no change anybody made.
+    values.put(LINKS, joined(this.componentLinkService.findAllByComponent(component.getId(), LinkOrigin.MANUAL).stream()
+                                 .map(ComponentLinkEntity::getUrl)
+                                 .toList()));
     return values;
   }
 

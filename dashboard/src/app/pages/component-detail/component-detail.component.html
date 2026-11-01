@@ -4,7 +4,7 @@
 
 @if (component) {
   <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-    <h1 class="h3 mb-0">{{ component.name }}</h1>
+    <h1 class="h3 mb-0">{{ component.name }}<vc-copy-value [value]="component.name" /></h1>
     <span class="badge text-bg-secondary">{{ 'sourceType.' + component.sourceType | translate }}</span>
     @if (held()) {
       <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1"></i>{{ 'decisionState.HELD' | translate }}</span>
@@ -27,7 +27,42 @@
     <h2 class="vc-eyebrow">{{ 'component.section.source' | translate }}</h2>
     <dl class="row mb-0 small">
       <dt class="col-sm-3">{{ 'component.field.sourceRef' | translate }}</dt>
-      <dd class="col-sm-9">{{ component.sourceRef || dash }}</dd>
+      <dd class="col-sm-9">
+        {{ component.sourceRef || dash }}
+        @if (component.sourceRef) {
+          <vc-copy-value [value]="component.sourceRef" />
+        }
+      </dd>
+
+      <dt class="col-sm-3">{{ 'component.field.links' | translate }}</dt>
+      <dd class="col-sm-9">
+        @if (links && links.links.length > 0) {
+          <div class="d-flex flex-wrap gap-1 mb-1">
+            @for (link of links.links; track link.url) {
+              <a class="btn btn-sm btn-outline-secondary" [href]="link.url" target="_blank" rel="noopener noreferrer"
+                 [title]="linkSite(link) + ' · ' + ('linkKind.' + link.kind | translate) + ' · ' + ('linkOrigin.' + link.origin | translate)">
+                <i class="bi {{ linkIcon(link) }}" aria-hidden="true"></i>
+                <span class="ms-1">{{ linkText(link) ?? ('linkKind.' + link.kind | translate) }}</span>
+              </a>
+            }
+          </div>
+        } @else {
+          <div class="mb-1">{{ dash }}</div>
+        }
+        <div class="text-secondary">
+          @if (links?.checkedAt) {
+            {{ 'links.searchedAt' | translate }}: {{ links.checkedAt | localDate: 'medium' }}
+          } @else {
+            {{ 'links.never' | translate }}
+          }
+          <button type="button" class="btn btn-link btn-sm p-0 ms-2 align-baseline" [disabled]="searchingLinks"
+                  (click)="searchLinksNow()">{{ 'links.action.search' | translate }}
+          </button>
+        </div>
+        @if (links?.checkState === 'ERROR') {
+          <div class="text-danger-emphasis">{{ links.errorMessage }}</div>
+        }
+      </dd>
 
       <dt class="col-sm-3">{{ 'component.field.versionStrategy' | translate }}</dt>
       <dd class="col-sm-9">{{ 'versionStrategy.' + component.versionStrategy | translate }}</dd>
@@ -43,7 +78,7 @@
         <dd class="col-sm-9">
           @for (entry of component.packages; track entry.id) {
             <span class="me-2">
-              <code>{{ entry.name }}</code>
+              <code>{{ entry.name }}</code><vc-copy-value [value]="entry.name" />
               @if (entry.leadingPackage) {
                 <i class="bi bi-star-fill text-warning ms-1" [title]="'component.leadingPackage' | translate"></i>
               }

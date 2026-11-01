@@ -4,6 +4,21 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.0] - 2026-11-01
+
+### Added
+- The component page shows under *Source and rule* where a component lives — repositories, images, website, upgrade
+  guide, support policy and end-of-life page —, each with the site's icon and opening in a new tab. Derived from the
+  source and the end-of-life product, and found by a link search of its own: the package URLs of the product on
+  endoflife.date, the repositories an image's description on Docker Hub links to, and the website of every GitHub
+  repository found. Weekly per component (`vc.links.check-interval`), right after its source changes, and on *Search
+  links*; a site that does not answer keeps what it found before
+- Links of one's own per component in the master data, for what the search does not find
+- `GET` and `POST /api/v1/link-searches` read every link of a component and search them now; a component takes the
+  links kept by hand as `links`
+- Copy buttons behind the component names in the task list, the matrix, on the component page and in the master
+  data, and behind the source and the package names
+
 ## [0.9.1] - 2026-11-01
 
 ### Fixed

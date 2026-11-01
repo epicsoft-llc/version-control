@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -121,4 +122,9 @@ public class ComponentDto {
   @Nonnull
   @JsonProperty("dependencies")
   private List<ComponentDependencyDto> dependencies;
+
+  @Nonnull
+  @Schema(description = "The links kept by hand; every link, found ones included, is at `GET /api/v1/link-searches`.")
+  @JsonProperty("links")
+  private List<ComponentLinkDto> links;
 }

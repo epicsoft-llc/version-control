@@ -4,11 +4,7 @@ import {isDefined} from '../../libs/utils/vc.utils';
 
 type CopyState = 'idle' | 'copied' | 'failed';
 
-/**
- * A small button behind a version number that puts exactly that number on the
- * clipboard. Selecting it by hand picks up the whitespace of the cell around it,
- * and a version pasted with padding is a different string.
- */
+/** Copies exactly the value; a selection by hand picks up the whitespace of the cell around it. */
 @Component({
   // Default, explicitly: the state is a plain field written from a promise
   // callback, which OnPush would never render (CODE_CONVENTION.md).

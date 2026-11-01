@@ -34,6 +34,7 @@
             <tr>
               <th scope="row" class="fw-normal">
                 <a [routerLink]="['/components', entry.componentId]">{{ entry.componentName }}</a>
+                <vc-copy-value [value]="entry.componentName" />
                 @if (entry.environmentName) {
                   <span class="text-secondary ms-1">&middot; {{ entry.environmentName }}</span>
                 }
@@ -114,6 +115,7 @@
             <td class="text-nowrap small text-secondary">{{ change.changedAt | localDate: 'short' }}</td>
             <th scope="row" class="fw-normal">
               <a [routerLink]="['/components', change.componentId]">{{ change.componentName }}</a>
+              <vc-copy-value [value]="change.componentName" />
             </th>
             <td><code>{{ change.field }}</code></td>
             <td class="small">

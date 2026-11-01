@@ -43,6 +43,7 @@
             <tr>
               <th scope="row" class="fw-normal">
                 <a [routerLink]="['/components', row.componentId]">{{ row.componentName }}</a>
+                <vc-copy-value [value]="row.componentName" />
                 @if (row.deviating && !autoUpdating(row.componentId)) {
                   <i class="bi bi-arrow-left-right text-warning ms-1" [title]="'matrix.deviating' | translate"></i>
                 }

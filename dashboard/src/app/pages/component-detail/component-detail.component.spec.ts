@@ -13,6 +13,8 @@ import {UpdateCheckRepo} from '../../repositories/api/update-check.repo';
 import {VersionChangeRepo} from '../../repositories/api/version-change.repo';
 import {TaskRepo} from '../../repositories/api/task.repo';
 import {VulnerabilityRepo} from '../../repositories/api/vulnerability.repo';
+import {LinkSearchRepo} from '../../repositories/api/link-search.repo';
+import {ComponentLinkDto, LinkSearchDto} from '../../repositories/dto/component-link.dto';
 import {ComponentChangeDto} from '../../repositories/dto/component-change.dto';
 import {ComponentDto} from '../../repositories/dto/component.dto';
 import {ComponentEnvironmentDto} from '../../repositories/dto/component-environment.dto';
@@ -69,7 +71,9 @@ describe('ComponentDetailComponent', () => {
       getChanges: vi.fn().mockReturnValue(of([])),
       findDecisions: vi.fn().mockReturnValue(of([])),
       findVulnerabilities: vi.fn().mockReturnValue(of([])),
-      showVulnerabilityAgain: vi.fn().mockReturnValue(of([]))
+      showVulnerabilityAgain: vi.fn().mockReturnValue(of([])),
+      findLinks: vi.fn().mockReturnValue(of(new LinkSearchDto({componentId: 'component-1', links: []}))),
+      searchLinks: vi.fn()
     };
 
     await TestBed.configureTestingModule({
@@ -91,7 +95,8 @@ describe('ComponentDetailComponent', () => {
         {provide: UpdateCheckRepo, useValue: {findAllByComponent: repos['findChecks'], checkNow: vi.fn()}},
         {provide: EolStatusRepo, useValue: {findAllByComponent: repos['findEol'], checkNow: vi.fn()}},
         {provide: VulnerabilityRepo, useValue: {findAllByComponent: repos['findVulnerabilities'], checkNow: vi.fn(),
-                                                showAgain: repos['showVulnerabilityAgain']}}
+                                                showAgain: repos['showVulnerabilityAgain']}},
+        {provide: LinkSearchRepo, useValue: {findByComponent: repos['findLinks'], searchNow: repos['searchLinks']}}
       ]
     }).compileComponents();
 
@@ -119,8 +124,68 @@ describe('ComponentDetailComponent', () => {
       'vulnerability.knownExploited': 'Exploited',
       'vulnerability.uncomparable': 'Not comparable',
       'severity.CRITICAL': 'Critical',
-      'severity.HIGH': 'High'
+      'severity.HIGH': 'High',
+      'component.section.source': 'Source and rule',
+      'linkKind.HOMEPAGE': 'Website',
+      'linkKind.RELEASE_POLICY': 'Support policy',
+      'linkOrigin.GITHUB': 'found on GitHub',
+      'links.action.search': 'Search links',
+      'links.never': 'Links not searched yet'
     });
+  });
+
+  const sourceSection = (): HTMLElement | undefined => ([...fixture.nativeElement.querySelectorAll('section')] as HTMLElement[])
+    .find((candidate) => candidate.textContent?.includes('Source and rule'));
+
+  it('shows every link with its icon, opening in a new tab, and the name to copy', async () => {
+    repos['findLinks'].mockReturnValue(of(new LinkSearchDto({componentId: 'component-1', checkedAt: '2026-11-01T08:00:00Z', checkState: 'OK',
+      links: [new ComponentLinkDto({url: 'https://github.com/docker-library/postgres', kind: 'REPOSITORY', origin: 'DOCKER_HUB'}),
+              new ComponentLinkDto({url: 'https://hub.docker.com/_/postgres', kind: 'IMAGE', origin: 'SOURCE'}),
+              new ComponentLinkDto({url: 'https://www.postgresql.org/support/versioning/', kind: 'RELEASE_POLICY', origin: 'END_OF_LIFE'})]})));
+
+    await render();
+
+    const links = [...(sourceSection()?.querySelectorAll('a[href]') ?? [])] as HTMLAnchorElement[];
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['https://github.com/docker-library/postgres',
+                                                                   'https://hub.docker.com/_/postgres',
+                                                                   'https://www.postgresql.org/support/versioning/']);
+    expect(links.every((link) => link.target === '_blank' && link.rel.includes('noopener'))).toBe(true);
+    expect(links[0].querySelector('i.bi-github')).not.toBeNull();
+    expect(links[0].textContent).toContain('docker-library/postgres');
+    expect(links[1].querySelector('i.bi-box-seam')).not.toBeNull();
+    expect(links[1].textContent).toContain('postgres');
+    expect(links[2].textContent).toContain('Support policy');
+    expect(links[2].title).toContain('postgresql.org');
+    expect(fixture.nativeElement.querySelector('h1 vc-copy-value')).not.toBeNull();
+  });
+
+  it('keeps the page when the links cannot be read, and searches them on request', async () => {
+    repos['findLinks'].mockReturnValue(throwError(() => new HttpErrorResponse({status: 500})));
+    repos['searchLinks'].mockReturnValue(of(new LinkSearchDto({componentId: 'component-1', checkedAt: '2026-11-01T08:00:00Z',
+      checkState: 'OK', links: [new ComponentLinkDto({url: 'https://www.postgresql.org', kind: 'HOMEPAGE', origin: 'GITHUB'})]})));
+
+    await render();
+    expect(text()).toContain('PostgreSQL');
+    expect(sourceSection()?.textContent).toContain('Links not searched yet');
+
+    const search = ([...(sourceSection()?.querySelectorAll('button') ?? [])] as HTMLButtonElement[])
+      .find((button) => button.textContent?.includes('Search links'));
+    search?.click();
+    fixture.detectChanges();
+
+    expect(repos['searchLinks']).toHaveBeenCalledWith('component-1');
+    const link = sourceSection()?.querySelector('a[href="https://www.postgresql.org"]') as HTMLAnchorElement | null;
+    expect(link?.textContent).toContain('postgresql.org');
+    expect(link?.title).toContain('found on GitHub');
+  });
+
+  it('names the reason when a site did not answer the link search', async () => {
+    repos['findLinks'].mockReturnValue(of(new LinkSearchDto({componentId: 'component-1', checkedAt: '2026-11-01T08:00:00Z',
+      checkState: 'ERROR', errorMessage: 'GitHub (acme/widget): 403', links: []})));
+
+    await render();
+
+    expect(sourceSection()?.textContent).toContain('GitHub (acme/widget): 403');
   });
 
   it('lists a CVE once with every environment it affects, exploited first', async () => {

@@ -73,6 +73,11 @@ logged, and the task list ends with the latest of them.
 Before an upgrade, the proposal lists every version between the running one and the target, each linked to
 its release notes — reading those for breaking changes is the slow part of every update.
 
+Every component links to where it lives — its repositories, images, website, support policy and end-of-life
+page, each with the site's icon. Most of them it finds by itself: the package URLs of the product on
+endoflife.date, the repositories an image's description on Docker Hub links to, and the website of every GitHub
+repository found; links of one's own complete the list in the master data.
+
 With a database that OWASP Dependency-Check keeps current, it also looks up the known vulnerabilities of the
 recorded versions, and a CVE that does not matter for a component can be ignored there, with the reason — optional,
 set up as in
@@ -220,6 +225,7 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `vc.check.error-grace-days` | 3 | how long a failing check is tolerated before it becomes a task |
 | `vc.eol.check-interval` | 7d | how often end-of-life dates are refreshed |
 | `vc.eol.warn-months` / `escalate-months` | 6 / 3 | end-of-life thresholds |
+| `vc.links.check-interval` | 7d | how often the link search asks endoflife.date, Docker Hub and GitHub where a component lives |
 | `vc.vulnerabilities.check-interval` | 1d | how often the known vulnerabilities of a component are looked up |
 | `vc.vulnerabilities.task-min-score` | 9.0 | the CVSS score from which a known vulnerability is a task; an exploited one always is |
 | `vc.notification.daily-time` | 08:00 | when the daily summary is sent |

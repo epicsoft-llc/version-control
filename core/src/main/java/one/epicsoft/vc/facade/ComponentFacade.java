@@ -8,24 +8,31 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.dto.ComponentDto;
+import one.epicsoft.vc.dto.ComponentLinkRequest;
 import one.epicsoft.vc.dto.ComponentPackageRequest;
 import one.epicsoft.vc.dto.ComponentRequest;
 import one.epicsoft.vc.dto.ComponentDependencyRequest;
 import one.epicsoft.vc.dto.UpgradeStopRequest;
 import one.epicsoft.vc.exception.AppConflictException;
 import one.epicsoft.vc.exception.AppValidationException;
+import one.epicsoft.vc.enums.LinkOrigin;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
+import one.epicsoft.vc.jpa.entity.ComponentLinkEntity;
 import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
 import one.epicsoft.vc.jpa.entity.ComponentDependencyEntity;
 import one.epicsoft.vc.jpa.entity.UpgradeStopEntity;
 import one.epicsoft.vc.jpa.entity.ProjectEntity;
+import one.epicsoft.vc.link.ProjectLinks;
+import one.epicsoft.vc.mapper.ComponentLinkMapper;
 import one.epicsoft.vc.mapper.ComponentMapper;
 import one.epicsoft.vc.mapper.ComponentDependencyMapper;
 import one.epicsoft.vc.mapper.UpgradeStopMapper;
 import one.epicsoft.vc.service.ComponentEnvironmentService;
+import one.epicsoft.vc.service.ComponentLinkService;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ComponentDependencyService;
 import one.epicsoft.vc.service.EolStatusService;
+import one.epicsoft.vc.service.LinkSearchService;
 import one.epicsoft.vc.service.UpgradeStopService;
 import one.epicsoft.vc.service.VulnerabilityCheckService;
 import one.epicsoft.vc.service.VulnerabilityFindingService;
@@ -73,6 +80,9 @@ public class ComponentFacade {
   private final EolStatusService eolStatusService;
   private final VulnerabilityCheckService vulnerabilityCheckService;
   private final VulnerabilityFindingService vulnerabilityFindingService;
+  private final ComponentLinkService componentLinkService;
+  private final ComponentLinkMapper componentLinkMapper;
+  private final LinkSearchService linkSearchService;
   private final JsonMapper jsonMapper;
   private final Validator validator;
 
@@ -103,6 +113,7 @@ public class ComponentFacade {
     this.applyUpgradeStops(saved, request.getUpgradeStops());
     this.applyDependencies(saved, request.getDependencies());
     this.applyPackages(saved, request.getPackages());
+    this.applyLinks(saved, request.getLinks());
     this.componentChangeFacade.recordCreated(saved);
     return this.toDtos(List.of(saved)).getFirst();
   }
@@ -122,6 +133,7 @@ public class ComponentFacade {
     final List<Object> ruleBefore = ruleOf(entity);
     final List<Object> eolBefore = eolOf(entity);
     final List<Object> cpeBefore = cpeOf(entity);
+    final List<Object> linksBefore = linkSearchOf(entity);
     final Map<String, String> before = this.componentChangeFacade.snapshot(entity);
     this.componentMapper.updateEntity(entity, request);
     normalise(entity);
@@ -129,7 +141,13 @@ public class ComponentFacade {
     this.applyUpgradeStops(saved, request.getUpgradeStops());
     this.applyDependencies(saved, request.getDependencies());
     this.applyPackages(saved, request.getPackages());
+    this.applyLinks(saved, request.getLinks());
     this.componentChangeFacade.recordDifferences(saved, before, this.componentChangeFacade.snapshot(saved));
+    if (nonEquals(linksBefore, linkSearchOf(saved))) {
+      // Found for the old source; without the search row the next tick asks about the new one first.
+      this.componentLinkService.replace(saved, ComponentLinkFacade.SEARCHED, List.of());
+      this.linkSearchService.deleteByComponent(saved.getId());
+    }
     if (nonEquals(ruleBefore, ruleOf(saved))) {
       this.updateCheckFacade.reapplyRule(saved.getId());
     }
@@ -195,6 +213,9 @@ public class ComponentFacade {
     if (isNullValue(patch, "dependencies")) {
       request.setDependencies(List.of());
     }
+    if (isNullValue(patch, "links")) {
+      request.setLinks(List.of());
+    }
   }
 
   private static boolean isNullValue(@Nonnull final JsonNode patch, @Nonnull final String field) {
@@ -217,6 +238,11 @@ public class ComponentFacade {
   @Nonnull
   private static List<Object> cpeOf(@Nonnull final ComponentEntity component) {
     return Arrays.asList(component.getCpeVendor(), component.getCpeProduct());
+  }
+
+  @Nonnull
+  private static List<Object> linkSearchOf(@Nonnull final ComponentEntity component) {
+    return Arrays.asList(component.getSourceType(), component.getSourceRef(), component.getEolProduct());
   }
 
   /** Takes the version records with it; the package rows stay until the component is removed for good. */
@@ -258,6 +284,31 @@ public class ComponentFacade {
     }
     this.markLeadingPackage(packages);
     this.componentService.replacePackages(component, packages);
+  }
+
+  /** Null leaves the links kept by hand alone, a list replaces them; what the link search found stays either way. */
+  private void applyLinks(@Nonnull final ComponentEntity component, @Nullable final List<ComponentLinkRequest> requested) {
+    if (isNull(requested)) {
+      return;
+    }
+    final List<ComponentLinkEntity> links = new ArrayList<>();
+    final Set<String> keys = new HashSet<>();
+    for (final ComponentLinkRequest entry : requested) {
+      final String url = entry.getUrl().trim();
+      if (!ProjectLinks.isWebAddress(url)) {
+        throw AppValidationException.invalidLink(url);
+      }
+      if (!keys.add(ProjectLinks.keyOf(url))) {
+        throw AppValidationException.duplicateLink(url);
+      }
+      final ComponentLinkEntity link = new ComponentLinkEntity();
+      link.setUrl(url);
+      link.setKind(ProjectLinks.kindOf(url));
+      link.setOrigin(LinkOrigin.MANUAL);
+      link.setSortOrder(links.size());
+      links.add(link);
+    }
+    this.componentLinkService.replace(component, Set.of(LinkOrigin.MANUAL), links);
   }
 
   /**
@@ -372,12 +423,18 @@ public class ComponentFacade {
             .stream()
             .collect(Collectors.groupingBy(ComponentDependencyEntity::getComponentId));
 
+    final Map<UUID, List<ComponentLinkEntity>> links =
+        this.componentLinkService.findAllByComponents(entities.stream().map(ComponentEntity::getId).toList()).stream()
+            .filter(link -> LinkOrigin.MANUAL.equals(link.getOrigin()))
+            .collect(Collectors.groupingBy(ComponentLinkEntity::getComponentId));
+
     return entities.stream().map(entity -> {
       final ComponentDto dto = this.componentMapper.toDto(entity);
       dto.setPackages(this.componentMapper.toPackageDtos(packages.getOrDefault(entity.getId(), List.of())));
       dto.setUpgradeStops(this.upgradeStopMapper.toDtos(stops.getOrDefault(entity.getId(), List.of())));
       dto.setDependencies(this.componentDependencyMapper.toDtos(
           dependencies.getOrDefault(entity.getId(), List.of())));
+      dto.setLinks(this.componentLinkMapper.toDtos(links.getOrDefault(entity.getId(), List.of())));
       return dto;
     }).toList();
   }
