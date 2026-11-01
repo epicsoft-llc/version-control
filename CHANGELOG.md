@@ -4,6 +4,14 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.9.1] - 2026-11-01
+
+### Fixed
+- A tag with a variant in front of the version, such as `alpine-v19.5.2` or `rest-api-1.6.16`, counts as pinned
+  instead of moving, and a component without a tag rule of its own gets one derived from it, the variant kept
+- A tag that names a channel behind the version, such as `2.4.0-latest`, counts as moving — it follows every
+  release of that line
+
 ## [0.9.0] - 2026-10-28
 
 ### Added

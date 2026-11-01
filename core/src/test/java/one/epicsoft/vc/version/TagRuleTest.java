@@ -90,4 +90,30 @@ class TagRuleTest {
     assertEquals("6", TagRule.majorOf("6.4.1-15"));
     assertNull(TagRule.majorOf("latest"));
   }
+
+  @Test
+  void keepsAVariantInFrontOfTheVersion() {
+    final String pattern = TagRule.derivePattern("alpine-v19.5.2");
+
+    assertNotNull(pattern);
+    assertTrue("alpine-v19.6.0".matches(pattern));
+    assertFalse("ubuntu-v19.6.0".matches(pattern));
+    assertFalse("v19.6.0".matches(pattern));
+    assertEquals("19", TagRule.majorOf("alpine-v19.5.2"));
+    assertEquals("1.6.16", TagRule.versionForComparison("rest-api-1.6.16"));
+  }
+
+  @Test
+  void tellsAPinnedTagFromOneThatMoves() {
+    assertFalse(TagRule.isMovingTag("alpine-v19.5.2"));
+    assertFalse(TagRule.isMovingTag("rest-api-1.6.16"));
+    assertFalse(TagRule.isMovingTag("standalone-chrome-4.1.4"));
+    assertFalse(TagRule.isMovingTag("1.30.6-alpine3.24"));
+    assertFalse(TagRule.isMovingTag("26.10.0.133078-community"));
+    assertTrue(TagRule.isMovingTag("alpine"));
+    assertTrue(TagRule.isMovingTag("clamav-latest"));
+    assertTrue(TagRule.isMovingTag("stable-alpine"));
+    assertTrue(TagRule.isMovingTag("release-11"));
+    assertTrue(TagRule.isMovingTag("2.4.0-latest"));
+  }
 }
