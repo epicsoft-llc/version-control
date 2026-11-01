@@ -12,6 +12,9 @@ All notable changes to this project are documented here, grouped as in
 - A tag that names a channel behind the version, such as `2.4.0-latest`, counts as moving — it follows every
   release of that line
 
+### Changed
+- Angular 22.2.4, Angular CLI and Angular build 22.2.5, tslib 2.9.1; Gradle plugin `one.epicsoft.depcheck` 0.6.0
+
 ## [0.9.0] - 2026-10-28
 
 ### Added
