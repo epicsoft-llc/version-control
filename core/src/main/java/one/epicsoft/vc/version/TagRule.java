@@ -33,12 +33,16 @@ public final class TagRule {
   /**
    * An optional prefix, the version core, then whatever the publisher appends.
    *
-   * <p>The prefix covers the two things that sit in front of a version without
-   * being one: the {@code v} of a GitHub release tag, and the epoch of a Debian
-   * version. Without them here, {@code v2.1.0} yields no rule at all, and the
-   * epoch of {@code 5:29.7.2} would be read as the major.
+   * <p>The prefix covers what sits in front of a version without being one: a
+   * variant such as the {@code alpine-} of {@code alpine-v19.5.2}, the {@code v}
+   * of a GitHub release tag, and the epoch of a Debian version. Without them
+   * here, {@code v2.1.0} yields no rule at all, and the epoch of
+   * {@code 5:29.7.2} would be read as the major.
    */
-  private static final Pattern TAG = Pattern.compile("^([vV]|\\d+:)?(\\d+(?:\\.\\d+)*)(.*)$");
+  private static final Pattern TAG = Pattern.compile("^((?:[A-Za-z][0-9A-Za-z]*-)+)?([vV]|\\d+:)?(\\d+(?:\\.\\d+)*)(.*)$");
+
+  /** A channel names no release: {@code 2.4.0-latest} follows every patch of 2.4.0. */
+  private static final Pattern CHANNEL = Pattern.compile("(?i)(?:^|[-.])(?:latest|stable|edge|nightly|mainline)(?:[-.]|$)");
 
   private static final Pattern DIGITS = Pattern.compile("\\d+");
 
@@ -70,20 +74,22 @@ public final class TagRule {
     if (!matcher.matches()) {
       return null;
     }
-    final int segments = matcher.group(2).split("\\.").length;
+    final int segments = matcher.group(3).split("\\.").length;
     final StringBuilder pattern = new StringBuilder("^");
+    // The variant in front stays literal like the one behind: alpine-v19.6.0 is a candidate, ubuntu-v19.6.0 is not.
+    appendLiteral(pattern, Objects.requireNonNullElse(matcher.group(1), ""));
     // A v stays part of the rule: a repository publishes either v2.1.0 or 2.1.0,
     // and accepting both would call a switch between the two an update.
-    appendLiteral(pattern, prefixLiteral(matcher.group(1)));
+    appendLiteral(pattern, prefixLiteral(matcher.group(2)));
     pattern.append("\\d+");
     pattern.append("(?:\\.\\d+)".repeat(Math.max(0, segments - 1)));
     // Segment count is fixed, not "at least": 17.2 and 17.2.1 are two conventions.
-    pattern.append(suffixPattern(matcher.group(3)));
+    pattern.append(suffixPattern(matcher.group(4)));
     return pattern.append("$").toString();
   }
 
   /**
-   * A tag that is not a fixed version number — latest, stable, 17-alpine.
+   * A tag that is not a fixed version number — latest, stable, 17-alpine, 2.4.0-latest.
    *
    * <p>Such a tag is allowed, but what it points at can change without the
    * recorded value changing with it. Everything that has to reason about the
@@ -94,7 +100,7 @@ public final class TagRule {
    * naming only the major moves with every release of that line — {@code 17},
    * {@code 17-alpine} — while one that also names the minor is what the
    * publisher stopped changing: {@code 17.2}, {@code 17.2-alpine},
-   * {@code v4.2.1}, {@code 5:29.7.2}, {@code 6.4.1-15}. Calling those moving
+   * {@code v4.2.1}, {@code 5:29.7.2}, {@code 6.4.1-15}, {@code alpine-v19.5.2}. Calling those moving
    * puts a component that is pinned exactly as it should be on the task list
    * every day, and a warning that is wrong every day is one nobody reads.
    */
@@ -102,15 +108,18 @@ public final class TagRule {
     if (!nonBlank(tag)) {
       return false;
     }
+    if (CHANNEL.matcher(tag.trim()).find()) {
+      return true;
+    }
     final Matcher matcher = TAG.matcher(tag.trim());
     if (!matcher.matches()) {
-      // latest, stable: no number at all, so nothing pins it.
+      // No number at all, so nothing pins it.
       return true;
     }
-    if (matcher.group(2).split("\\.").length < 2) {
+    if (matcher.group(3).split("\\.").length < 2) {
       return true;
     }
-    final String suffix = matcher.group(3);
+    final String suffix = matcher.group(4);
     return !suffix.isEmpty() && !VARIANT.matcher(suffix).matches();
   }
 
@@ -145,7 +154,7 @@ public final class TagRule {
     if (!matcher.matches()) {
       return null;
     }
-    return isPrerelease(tag) ? matcher.group(2) + matcher.group(3) : matcher.group(2);
+    return isPrerelease(tag) ? matcher.group(3) + matcher.group(4) : matcher.group(3);
   }
 
   /**
@@ -159,9 +168,9 @@ public final class TagRule {
       return null;
     }
     final Matcher matcher = TAG.matcher(tag.trim());
-    // group(2), not group(1): reading the epoch of 5:29.7.2 as the major would
+    // group(3), not group(2): reading the epoch of 5:29.7.2 as the major would
     // leave a component pinned to 29 matching nothing at all.
-    return matcher.matches() ? matcher.group(2).split("\\.")[0] : null;
+    return matcher.matches() ? matcher.group(3).split("\\.")[0] : null;
   }
 
   /** The v belongs to the tag and stays in the rule; the epoch does not. */
