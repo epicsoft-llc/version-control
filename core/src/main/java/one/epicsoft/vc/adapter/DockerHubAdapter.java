@@ -77,9 +77,10 @@ public class DockerHubAdapter implements SourceAdapter {
     }
     final List<VersionCandidate> candidates = new ArrayList<>();
     for (int page = 1; page <= MAX_PAGES; page++) {
-      final List<VersionCandidate> onPage = this.parse(this.sourceClient.get(URL.formatted(repository, page)));
+      final String payload = this.sourceClient.get(URL.formatted(repository, page));
+      final List<VersionCandidate> onPage = this.parse(payload);
       candidates.addAll(onPage);
-      if (onPage.size() < PAGE_SIZE) {
+      if (onPage.size() < PAGE_SIZE || !hasNextPage(payload)) {
         break;
       }
     }
@@ -119,6 +120,15 @@ public class DockerHubAdapter implements SourceAdapter {
     }
     log.debug("Docker Hub page returned {} tags", candidates.size());
     return candidates;
+  }
+
+  /**
+   * Docker Hub answers a page beyond the last one with 404, so a full last page - 200 tags at 100 a page - must not
+   * lead to another request. Without the field the page size alone decides.
+   */
+  private static boolean hasNextPage(@Nonnull final String payload) {
+    final JsonNode next = JSON.readTree(payload).path("next");
+    return next.isMissingNode() || (!next.isNull() && nonBlank(next.asString(null)));
   }
 
   /** A date the API did not send is null, not now — the strategy has to notice. */
