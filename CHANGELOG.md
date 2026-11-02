@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.1] - 2026-11-02
+
+### Fixed
+- A Docker Hub repository whose tags fill their last page exactly — 200 tags at 100 a page — no longer fails its
+  check with 404: the check follows Docker Hub's `next` link and stops where it ends instead of asking for one page
+  more
+
 ## [0.10.0] - 2026-11-01
 
 ### Added

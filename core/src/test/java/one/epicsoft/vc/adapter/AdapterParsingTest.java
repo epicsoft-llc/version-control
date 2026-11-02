@@ -1,10 +1,15 @@
 package one.epicsoft.vc.adapter;
 
+import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.version.VersionCandidate;
 import org.junit.jupiter.api.Test;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.util.Objects.isNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -119,5 +124,67 @@ class AdapterParsingTest {
   @Test
   void reportsAnAptIndexThatHoldsNothing() {
     assertThrows(SourceException.class, () -> this.apt.parse("<html>404</html>"));
+  }
+
+  @Test
+  void stopsAtAFullLastPageInsteadOfAskingForOneMore() {
+    // 200 tags: the second page is full, and Docker Hub answers a third with 404.
+    final RecordedPages pages = new RecordedPages(dockerHubPage(1, 100, true), dockerHubPage(2, 100, false));
+
+    final List<VersionCandidate> candidates = new DockerHubAdapter(pages).fetchCandidates(component("notifuse/notifuse"));
+
+    assertEquals(200, candidates.size());
+    assertEquals(2, pages.requested.size());
+  }
+
+  @Test
+  void followsDockerHubToTheNextPageAndStopsAtAShortOne() {
+    final RecordedPages pages = new RecordedPages(dockerHubPage(1, 100, true), dockerHubPage(2, 30, false));
+
+    final List<VersionCandidate> candidates = new DockerHubAdapter(pages).fetchCandidates(component("library/postgres"));
+
+    assertEquals(130, candidates.size());
+    assertTrue(pages.requested.getLast().endsWith("&page=2"));
+  }
+
+  @Test
+  void keepsReadingFullPagesWhenDockerHubSendsNoNextField() {
+    final RecordedPages pages = new RecordedPages(dockerHubPage(1, 100, null), dockerHubPage(2, 5, null));
+
+    assertEquals(105, new DockerHubAdapter(pages).fetchCandidates(component("library/postgres")).size());
+  }
+
+  private static ComponentEntity component(final String sourceRef) {
+    final ComponentEntity component = new ComponentEntity();
+    component.setSourceRef(sourceRef);
+    return component;
+  }
+
+  /** {@code next}: true names a following page, false sends null, null leaves the field out. */
+  private static String dockerHubPage(final int page, final int tags, final Boolean next) {
+    final String results = IntStream.range(0, tags)
+                                    .mapToObj(i -> "{\"name\": \"%d.%d\", \"last_updated\": \"2026-01-01T00:00:00Z\"}".formatted(page, i))
+                                    .collect(Collectors.joining(","));
+    final String nextField = isNull(next) ? "" : "\"next\": %s, ".formatted(next ? "\"https://hub.docker.com/next\"" : "null");
+    return "{%s\"results\": [%s]}".formatted(nextField, results);
+  }
+
+  /** Answers the pages in order and fails like Docker Hub for any page after them. */
+  private static final class RecordedPages extends SourceClient {
+    private final List<String> answers;
+    private final List<String> requested = new ArrayList<>();
+
+    private RecordedPages(final String... answers) {
+      this.answers = List.of(answers);
+    }
+
+    @Override
+    public String get(final String url) {
+      this.requested.add(url);
+      if (this.requested.size() > this.answers.size()) {
+        throw new SourceException("Request to %s failed: 404 Not Found".formatted(url));
+      }
+      return this.answers.get(this.requested.size() - 1);
+    }
   }
 }
