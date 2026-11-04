@@ -4,6 +4,20 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.2] - 2026-11-03
+
+### Security
+- Both images are built with libexpat `2.10.0`, the Alpine security update of 2026-11-02 for CVE-2026-113351,
+  CVE-2026-115506, CVE-2026-117610 and CVE-2026-118370
+
+### Changed
+- The dependency check uses `one.epicsoft.depcheck` `0.6.1` from the Gradle Plugin Portal, without another repository;
+  the dashboard tests run on vitest `5.1.0`
+
+### Fixed
+- The dashboard lockfile resolves every package from the public npm registry again; the dashboard image could not be
+  built from it
+
 ## [0.10.1] - 2026-11-02
 
 ### Fixed
