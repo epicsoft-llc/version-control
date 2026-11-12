@@ -3,7 +3,6 @@ package one.epicsoft.vc.facade;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import one.epicsoft.vc.config.CheckProperties;
 import one.epicsoft.vc.config.LinkProperties;
 import one.epicsoft.vc.data.FoundLink;
 import one.epicsoft.vc.data.LinkSearchDraft;
@@ -12,7 +11,6 @@ import one.epicsoft.vc.dto.ComponentLinkDto;
 import one.epicsoft.vc.dto.LinkSearchDto;
 import one.epicsoft.vc.enums.CheckState;
 import one.epicsoft.vc.enums.LinkOrigin;
-import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentLinkEntity;
 import one.epicsoft.vc.jpa.entity.LinkSearchEntity;
@@ -33,8 +31,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static java.util.Objects.nonNull;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -47,16 +43,11 @@ public class ComponentLinkFacade {
   private final LinkSearchService linkSearchService;
   private final ComponentLinkMapper componentLinkMapper;
   private final LinkProperties linkProperties;
-  private final CheckProperties checkProperties;
 
   @Nonnull
   @Transactional(readOnly = true, rollbackFor = Throwable.class)
-  public LinkSearchDraft collect(@Nonnull final UUID componentId, final boolean manual) {
-    final ComponentEntity component = this.componentService.getById(componentId);
-    if (manual && this.linkSearchService.findByComponent(componentId).filter(this::tooSoon).isPresent()) {
-      throw AppValidationException.checkTooSoon(componentId, this.checkProperties.getMinInterval().toHours());
-    }
-    return draftOf(component);
+  public LinkSearchDraft collect(@Nonnull final UUID componentId) {
+    return draftOf(this.componentService.getById(componentId));
   }
 
   @Transactional(rollbackFor = Throwable.class)
@@ -127,13 +118,6 @@ public class ComponentLinkFacade {
       dto.setErrorMessage(found.getErrorMessage());
     });
     return dto;
-  }
-
-  /** A failed search is no answer, so it does not hold a retry back — the same rule as the update check. */
-  private boolean tooSoon(@Nonnull final LinkSearchEntity search) {
-    return !CheckState.ERROR.equals(search.getCheckState())
-           && nonNull(search.getCheckedAt())
-           && search.getCheckedAt().isAfter(Instant.now().minus(this.checkProperties.getMinInterval()));
   }
 
   @Nonnull

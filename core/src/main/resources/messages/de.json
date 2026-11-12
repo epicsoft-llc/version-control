@@ -1,6 +1,5 @@
 {
   "error.badRequest": "Die Anfrage ist fehlerhaft.",
-  "error.checkTooSoon": "Die Komponente wurde vor Kurzem geprüft. Warten Sie das Mindestintervall ab.",
   "error.decisionNotSettable": "Der Status „Blockiert“ ergibt sich aus der Abhängigkeitsprüfung und lässt sich nicht von Hand setzen.",
   "error.dependencyAcrossProjects": "Eine Vorbedingung muss zum selben Projekt gehören wie die Komponente.",
   "error.differentProjects": "Komponente und Umgebung gehören zu verschiedenen Projekten.",

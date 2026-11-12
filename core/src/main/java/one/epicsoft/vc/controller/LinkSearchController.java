@@ -41,8 +41,8 @@ public class LinkSearchController {
 
   @Operation(summary = "Search the links of a component now",
              description = """
-                 Asks endoflife.date, Docker Hub and GitHub right away. Refused inside the minimum interval after a search \
-                 that answered; a failed one may be repeated at once.""")
+                 Asks endoflife.date, Docker Hub and GitHub right away, also for a component searched a moment ago. The \
+                 next scheduled search counts from this one.""")
   @PostMapping
   public ResponseEntity<LinkSearchDto> searchNow(@RequestParam final UUID componentId) {
     log.debug("Incoming POST link search for component {}", componentId);

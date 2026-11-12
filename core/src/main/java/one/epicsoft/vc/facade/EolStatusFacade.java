@@ -9,7 +9,6 @@ import one.epicsoft.vc.adapter.SourceException;
 import one.epicsoft.vc.config.EolProperties;
 import one.epicsoft.vc.dto.EolStatusDto;
 import one.epicsoft.vc.enums.CheckState;
-import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
 import one.epicsoft.vc.jpa.entity.EolStatusEntity;
@@ -28,7 +27,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
 
 /**
@@ -61,21 +59,14 @@ public class EolStatusFacade {
    */
   @Nonnull
   @Transactional(rollbackFor = Throwable.class)
-  public Optional<EolStatusEntity> check(@Nonnull final UUID componentId, final boolean manual) {
+  public Optional<EolStatusEntity> check(@Nonnull final UUID componentId) {
     final ComponentEntity component = this.componentService.getById(componentId);
     if (!nonBlank(component.getEolProduct())) {
       return Optional.empty();
     }
-    final Optional<EolStatusEntity> stored = this.eolStatusService.findByComponent(componentId);
-    if (manual && stored.filter(this::tooSoon).isPresent()) {
-      // The same bound the update check applies, for the same reason: a button
-      // that ignores it means the bound only holds while nobody is looking, and
-      // the public database on the other end pays for it.
-      throw AppValidationException.checkTooSoon(componentId, this.eolProperties.getCheckInterval().toHours());
-    }
 
     final Instant now = Instant.now();
-    final EolStatusEntity status = stored.orElseGet(() -> newStatus(component));
+    final EolStatusEntity status = this.eolStatusService.findByComponent(componentId).orElseGet(() -> newStatus(component));
     status.setCheckedAt(now);
     status.setNextCheckDue(now.plus(this.eolProperties.getCheckInterval()));
     try {
@@ -159,13 +150,7 @@ public class EolStatusFacade {
   @Nonnull
   @Transactional(rollbackFor = Throwable.class)
   public List<EolStatusDto> checkAsDto(@Nonnull final UUID componentId) {
-    return this.eolStatusMapper.toDtos(this.check(componentId, true).stream().toList());
-  }
-
-  /** True while the last lookup is young enough that asking again is just traffic. */
-  private boolean tooSoon(@Nonnull final EolStatusEntity status) {
-    return nonNull(status.getCheckedAt())
-           && status.getCheckedAt().isAfter(Instant.now().minus(this.eolProperties.getCheckInterval()));
+    return this.eolStatusMapper.toDtos(this.check(componentId).stream().toList());
   }
 
   @Nonnull

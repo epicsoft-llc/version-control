@@ -8,13 +8,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 
-/**
- * How often a component may be asked about, and how long to wait after a failure.
- *
- * <p>The lower bound is the point of this class. It applies to the scheduler and
- * to a check somebody triggers by hand alike — an exception for the manual case
- * is exactly the path by which the bound stops existing.
- */
+/** How often the scheduler asks about a component, and how long it waits after a failure. */
 @Getter
 @Setter
 @Component
@@ -25,7 +19,7 @@ public class CheckProperties {
   @Nonnull
   private Duration defaultInterval = Duration.ofHours(48);
 
-  /** The hard floor, for the scheduler and for a manual check alike. */
+  /** The floor for the scheduler and the rule preview; Check now is not bound by it. */
   @Nonnull
   private Duration minInterval = Duration.ofHours(48);
 

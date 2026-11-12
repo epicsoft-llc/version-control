@@ -4,11 +4,7 @@ import {Observable} from 'rxjs';
 import {UrlBuilder} from '../item/url.item';
 import {UpdateCheckDto, VersionPreviewDto, VersionPreviewRequest} from '../dto/update-check.dto';
 
-/**
- * What the last check found, and the two ways of asking for more. Both obey the
- * same minimum interval as the scheduler — a button that bypassed it would mean
- * the bound only holds while nobody is looking.
- */
+/** What the last check found, and the two ways of asking for more. */
 @Injectable({providedIn: 'root'})
 export class UpdateCheckRepo {
 

@@ -23,13 +23,7 @@ import java.util.UUID;
 
 import static java.util.Objects.nonNull;
 
-/**
- * What the last check found, and the two ways of asking for more.
- *
- * <p>A check triggered here obeys the same minimum interval as the scheduler.
- * Letting a button bypass it would mean the bound only holds while nobody is
- * looking, which is the opposite of what a bound is for.
- */
+/** What the last check found, and the two ways of asking for more. */
 @Slf4j
 @RestController
 @RequestMapping(value = UpdateCheckController.PATH_PREFIX,
@@ -60,9 +54,8 @@ public class UpdateCheckController {
 
   @Operation(summary = "Check a component now",
              description = """
-                 Asks the update source right away — also for a component whose regular check is switched off. Obeys \
-                 the same minimum interval as the scheduler (`vc.check.min-interval`, 48 hours by default); asked \
-                 earlier, it is refused.""")
+                 Asks the update source right away — also for a component whose regular check is switched off or \
+                 that was checked a moment ago. The next scheduled check counts from this one.""")
   @PostMapping(consumes = MediaType.ALL_VALUE)
   public ResponseEntity<UpdateCheckDto> checkNow(@RequestParam final UUID componentId) {
     log.debug("Incoming POST check of component {}", componentId);

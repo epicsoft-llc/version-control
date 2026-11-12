@@ -1,6 +1,5 @@
 {
   "error.badRequest": "The request is malformed.",
-  "error.checkTooSoon": "The component was checked recently. Wait for the minimum interval.",
   "error.decisionNotSettable": "The \"Blocked\" status is derived from the dependency check and cannot be set manually.",
   "error.dependencyAcrossProjects": "A prerequisite must belong to the same project as the component.",
   "error.differentProjects": "Component and environment belong to different projects.",
