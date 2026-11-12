@@ -263,10 +263,6 @@ export class ComponentDetailComponent implements OnDestroy {
     }));
   }
 
-  /**
-   * Asks the source now. The server applies the same minimum interval as the
-   * scheduler, so a refusal is an answer and gets shown like any other.
-   */
   protected checkNow(): void {
     if (!isDefined(this.component) || this.checking) {
       return;
@@ -285,10 +281,6 @@ export class ComponentDetailComponent implements OnDestroy {
     }));
   }
 
-  /**
-   * Asks the end-of-life database now. Its own cycle and its own bound: the
-   * server refuses a second lookup inside the weekly interval.
-   */
   protected checkEolNow(): void {
     if (!isDefined(this.component) || this.checkingEol) {
       return;
@@ -337,7 +329,6 @@ export class ComponentDetailComponent implements OnDestroy {
     }));
   }
 
-  /** No minimum interval, unlike the other checks: the database belongs to this installation. */
   protected checkVulnerabilitiesNow(): void {
     if (!isDefined(this.component) || this.checkingVulnerabilities) {
       return;

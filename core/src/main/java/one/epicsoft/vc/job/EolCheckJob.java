@@ -38,7 +38,7 @@ public class EolCheckJob {
       return;
     }
     try {
-      this.eolStatusFacade.check(componentId, false);
+      this.eolStatusFacade.check(componentId);
     } catch (final RuntimeException exception) {
       // Its transaction rolled back, and the new due date with it; without moving
       // the row on, this component would be first in the queue on every tick.

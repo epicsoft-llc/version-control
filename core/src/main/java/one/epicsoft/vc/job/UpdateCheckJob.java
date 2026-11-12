@@ -21,8 +21,7 @@ import java.util.List;
  * requests an hour at most.
  *
  * <p>The job holds no logic of its own: due dates, back-off and the minimum
- * interval all live in the facade, which is also what a manual check goes
- * through. Two implementations of "when may I ask again" is one too many.
+ * interval all live in the facade.
  */
 @Slf4j
 @Component
@@ -42,7 +41,7 @@ public class UpdateCheckJob {
     final ComponentEntity component = due.getFirst();
     log.info("Checking component {} ({})", component.getName(), component.getId());
     try {
-      this.updateCheckFacade.check(component.getId(), false);
+      this.updateCheckFacade.check(component.getId());
     } catch (final RuntimeException exception) {
       // The facade turns an unreachable source into a recorded error itself. What
       // reaches this point is a defect, and swallowing it would stop the tick for

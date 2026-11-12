@@ -85,7 +85,7 @@ class LinkSearchIntegrationTest extends AbstractIntegrationTest {
   @Test
   void storesWhatTheSearchFoundAndKeepsTheLinksOfASiteThatFailed() {
     final ComponentDto component = this.create(List.of());
-    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId(), false);
+    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId());
 
     this.componentLinkFacade.remember(draft, new LinkSearchOutcome(Map.of(LinkOrigin.END_OF_LIFE, List.of(REPOSITORY, POLICY),
                                                                           LinkOrigin.GITHUB, List.of(HOMEPAGE)), List.of()));
@@ -108,7 +108,7 @@ class LinkSearchIntegrationTest extends AbstractIntegrationTest {
   @Test
   void dropsWhatWasFoundForASourceThatChanged() {
     final ComponentDto component = this.create(List.of());
-    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId(), false);
+    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId());
     this.componentLinkFacade.remember(draft, new LinkSearchOutcome(Map.of(LinkOrigin.GITHUB, List.of(HOMEPAGE)), List.of()));
 
     final ComponentRequest request = this.request(component.getProjectId(), List.of());
@@ -125,18 +125,12 @@ class LinkSearchIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void refusesASearchByHandInsideTheMinimumIntervalUnlessTheLastOneFailed() {
+  void searchesAgainByHandRightAfterASearchThatAnswered() {
     final ComponentDto component = this.create(List.of());
-    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId(), true);
-
-    this.componentLinkFacade.remember(draft, new LinkSearchOutcome(Map.of(), List.of("Docker Hub (acme/widget): 503")));
-    this.componentLinkFacade.collect(component.getId(), true);
-
+    final LinkSearchDraft draft = this.componentLinkFacade.collect(component.getId());
     this.componentLinkFacade.remember(draft, new LinkSearchOutcome(Map.of(), List.of()));
-    final AppValidationException refused =
-        assertThrows(AppValidationException.class, () -> this.componentLinkFacade.collect(component.getId(), true));
-    assertEquals("error.checkTooSoon", refused.getMessageKey());
-    this.componentLinkFacade.collect(component.getId(), false);
+
+    assertEquals(draft, this.componentLinkFacade.collect(component.getId()));
   }
 
   private ComponentDto create(final List<String> links) {

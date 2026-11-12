@@ -15,7 +15,6 @@ import one.epicsoft.vc.dto.VersionPreviewRequest;
 import one.epicsoft.vc.enums.CheckState;
 import one.epicsoft.vc.enums.SourceType;
 import one.epicsoft.vc.enums.VersionStrategy;
-import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import one.epicsoft.vc.service.ComponentService;
 import org.junit.jupiter.api.Test;
@@ -66,7 +65,7 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
   void treatsAManualSourceAsARegularCaseRatherThanAFault() {
     final ComponentDto component = this.component(SourceType.MANUAL, null);
 
-    final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId(), false);
+    final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId());
 
     // Nobody publishes this component anywhere; that is a decision, not an error.
     assertEquals(CheckState.NOT_APPLICABLE, check.getCheckState());
@@ -75,20 +74,22 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void refusesASecondManualCheckInsideTheMinimumInterval() {
+  void checksAgainByHandInsideTheMinimumInterval() {
     final ComponentDto component = this.component(SourceType.MANUAL, null);
-    this.updateCheckFacade.check(component.getId(), true);
+    final Instant anHourAgo = Instant.now().minusSeconds(3600);
+    this.updateCheckFacade.check(component.getId()).setCheckedAt(anHourAgo);
 
-    // The bound holds for a person with a button as much as for the scheduler;
-    // an exception here is the path by which it stops existing.
-    assertThrows(AppValidationException.class, () -> this.updateCheckFacade.checkNow(component.getId()));
+    final UpdateCheckDto again = this.updateCheckFacade.checkNow(component.getId());
+
+    assertEquals(CheckState.NOT_APPLICABLE, again.getCheckState());
+    assertTrue(again.getCheckedAt().isAfter(anHourAgo), "checked at " + again.getCheckedAt());
   }
 
   @Test
   void schedulesTheNextCheckNoEarlierThanTheMinimumInterval() {
     final ComponentDto component = this.component(SourceType.MANUAL, null);
 
-    this.updateCheckFacade.check(component.getId(), false);
+    this.updateCheckFacade.check(component.getId());
 
     final Instant due = this.componentService.getById(component.getId()).getNextCheckDue();
     assertNotNull(due);
@@ -102,7 +103,7 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
     // path without asking a real source anything.
     final ComponentDto component = this.component(SourceType.APT_REPOSITORY, "http://localhost:1/repository");
 
-    final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId(), false);
+    final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId());
 
     assertEquals(CheckState.ERROR, check.getCheckState());
     assertNotNull(check.getErrorMessage());
@@ -112,16 +113,6 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
     final Instant due = this.componentService.getById(component.getId()).getNextCheckDue();
     assertNotNull(due);
     assertTrue(due.isBefore(Instant.now().plusSeconds(3 * 3600)), "next check due at " + due);
-  }
-
-  @Test
-  void allowsARetryAfterAFailedCheck() {
-    final ComponentDto component = this.component(SourceType.APT_REPOSITORY, "http://localhost:1/repository");
-    assertEquals(CheckState.ERROR, this.updateCheckFacade.check(component.getId(), false).getCheckState());
-
-    // A failed check is not an answer. Counting it against the interval would
-    // leave the person who just fixed the rule waiting two days to find out.
-    assertEquals(CheckState.ERROR, this.updateCheckFacade.checkNow(component.getId()).getCheckState());
   }
 
   @Test
@@ -143,7 +134,7 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
       request.setPackages(List.of(this.aptPackage("docker-ce", 1, true), this.aptPackage("containerd.io", 2, false)));
       final ComponentDto component = this.componentFacade.create(request);
 
-      final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId(), false);
+      final UpdateCheckEntity check = this.updateCheckFacade.check(component.getId());
 
       // No check is stored yet, so this one inserts its row along with the package
       // results, and the database accepts that row only with a state.
@@ -171,7 +162,7 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
     final ComponentDto component;
     try {
       component = this.componentFacade.create(request);
-      assertEquals("18.6-1", this.updateCheckFacade.check(component.getId(), false).getLatestVersion());
+      assertEquals("18.6-1", this.updateCheckFacade.check(component.getId()).getLatestVersion());
     } finally {
       index.stop(0);
     }
@@ -270,7 +261,7 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
 
   @Test
   void refusesToCheckAComponentThatDoesNotExist() {
-    assertThrows(RuntimeException.class, () -> this.updateCheckFacade.check(UUID.randomUUID(), false));
+    assertThrows(RuntimeException.class, () -> this.updateCheckFacade.check(UUID.randomUUID()));
   }
 
   private ComponentDto component(final SourceType sourceType, final String sourceRef) {

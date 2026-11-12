@@ -37,14 +37,14 @@ public class LinkSearchFacade {
   private final ComponentLinkFacade componentLinkFacade;
   private final ProjectLinkAdapter projectLinkAdapter;
 
-  public void search(@Nonnull final UUID componentId, final boolean manual) {
-    final LinkSearchDraft draft = this.componentLinkFacade.collect(componentId, manual);
+  public void search(@Nonnull final UUID componentId) {
+    final LinkSearchDraft draft = this.componentLinkFacade.collect(componentId);
     this.componentLinkFacade.remember(draft, this.ask(draft));
   }
 
   @Nonnull
   public LinkSearchDto searchNow(@Nonnull final UUID componentId) {
-    this.search(componentId, true);
+    this.search(componentId);
     return this.componentLinkFacade.findByComponent(componentId);
   }
 

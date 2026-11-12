@@ -118,18 +118,6 @@ public class AppValidationException extends AppException {
                                       "error.versionUnchanged");
   }
 
-  /**
-   * The minimum interval holds for a check somebody asked for by hand as well.
-   * An exception for the manual case is the path by which the interval stops
-   * existing — and the upstream sources are the ones that pay for it.
-   */
-  @Nonnull
-  public static AppValidationException checkTooSoon(@Nonnull final UUID componentId, final long hours) {
-    return new AppValidationException("Component '%s' was checked less than %d hours ago"
-                                          .formatted(componentId, hours),
-                                      "error.checkTooSoon");
-  }
-
   /** A lookup somebody asked for, on an installation without a Dependency-Check database. */
   @Nonnull
   public static AppValidationException vulnerabilitiesNotConfigured() {

@@ -34,7 +34,7 @@ public class LinkSearchJob {
     final UUID componentId = this.nextComponent();
     if (nonNull(componentId)) {
       try {
-        this.linkSearchFacade.search(componentId, false);
+        this.linkSearchFacade.search(componentId);
       } catch (final RuntimeException exception) {
         // Without moving the row on, this component would head the queue on every tick and hold up the rest.
         log.error("Link search for component {} ended unexpectedly", componentId, exception);

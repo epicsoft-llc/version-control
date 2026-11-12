@@ -41,8 +41,7 @@ vc:
     tick-interval: 15m
   check:
     default-interval: 48h
-    #### Hard lower bound, applies to manually triggered checks and to the rule
-    #### preview as well — an exception here is the path by which it gets bypassed.
+    #### Lower bound for the scheduler and the rule preview; Check now asks right away.
     min-interval: 48h
     jitter: 2h
     backoff: 1h,4h,12h

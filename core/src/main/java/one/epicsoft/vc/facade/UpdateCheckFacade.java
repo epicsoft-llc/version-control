@@ -12,7 +12,6 @@ import one.epicsoft.vc.enums.SourceType;
 import one.epicsoft.vc.dto.UpdateCheckDto;
 import one.epicsoft.vc.dto.VersionPreviewDto;
 import one.epicsoft.vc.dto.VersionPreviewRequest;
-import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
@@ -78,22 +77,13 @@ public class UpdateCheckFacade {
   private final UpdateDecisionFacade updateDecisionFacade;
   private final List<SourceAdapter> adapters;
 
-  /**
-   * Checks one component now.
-   *
-   * @param manual true when a person asked for it — which changes nothing about
-   *               the minimum interval, since an exception there is the path by
-   *               which the interval stops existing
-   */
+  /** Checks one component now. */
   @Nonnull
   @Transactional(rollbackFor = Throwable.class)
-  public UpdateCheckEntity check(@Nonnull final UUID componentId, final boolean manual) {
+  public UpdateCheckEntity check(@Nonnull final UUID componentId) {
     final ComponentEntity component = this.componentService.getById(componentId);
     final UpdateCheckEntity check = this.updateCheckService.findByComponent(componentId)
                                                            .orElseGet(() -> newCheck(component));
-    if (manual && this.tooSoon(check)) {
-      throw AppValidationException.checkTooSoon(componentId, this.checkProperties.getMinInterval().toHours());
-    }
 
     final Instant now = Instant.now();
     check.setCheckedAt(now);
@@ -116,10 +106,10 @@ public class UpdateCheckFacade {
   /**
    * Which tags the rule accepts and which of them would win.
    *
-   * <p>Bounded exactly like a check: the candidates of the last one are reused
-   * while they are younger than the minimum interval, and only outside it does a
-   * preview cost the source a request — by running a real check, which stores
-   * what it found. Fifty clicks on the preview button are one request, not fifty.
+   * <p>The candidates of the last check are reused while they are younger than
+   * the minimum interval, and only outside it does a preview cost the source a
+   * request — by running a real check, which stores what it found. Fifty clicks
+   * on the preview button are one request, not fifty.
    */
   @Nonnull
   @Transactional(rollbackFor = Throwable.class)
@@ -138,7 +128,7 @@ public class UpdateCheckFacade {
               .map(UpdateCheckFacade::storedCandidates)
               // Outside the bound the preview pays for itself by running a real
               // check, which stores what it found for every preview after it.
-              .orElseGet(() -> storedCandidates(this.check(componentId, false)));
+              .orElseGet(() -> storedCandidates(this.check(componentId)));
     if (candidates.isEmpty()) {
       throw new VersionRuleException("The last check of this component found no versions");
     }
@@ -182,7 +172,7 @@ public class UpdateCheckFacade {
   @Nonnull
   @Transactional(rollbackFor = Throwable.class)
   public UpdateCheckDto checkNow(@Nonnull final UUID componentId) {
-    return this.toDtos(List.of(this.check(componentId, true))).getFirst();
+    return this.toDtos(List.of(this.check(componentId))).getFirst();
   }
 
   /**
@@ -460,15 +450,6 @@ public class UpdateCheckFacade {
 
   // #### Scheduling
   /**
-   * The minimum interval counts from the last check that actually answered.
-   *
-   * <p>A failed check is not an answer. Counting it would mean a broken rule
-   * cannot be retried for two days, and the person who just fixed it has no way
-   * to find out — while the source has been spared nothing, since the failed
-   * request went out all the same. The back-off is what protects the source in
-   * that case, and it starts at an hour.
-   */
-  /**
    * True while the last request to the source is young enough that the preview
    * has to make do with what it brought back.
    *
@@ -478,12 +459,6 @@ public class UpdateCheckFacade {
    */
   private boolean withinBudget(@Nonnull final UpdateCheckEntity check) {
     return nonNull(check.getCheckedAt())
-           && check.getCheckedAt().isAfter(Instant.now().minus(this.checkProperties.getMinInterval()));
-  }
-
-  private boolean tooSoon(@Nonnull final UpdateCheckEntity check) {
-    return nonNull(check.getCheckedAt())
-           && !CheckState.ERROR.equals(check.getCheckState())
            && check.getCheckedAt().isAfter(Instant.now().minus(this.checkProperties.getMinInterval()));
   }
 

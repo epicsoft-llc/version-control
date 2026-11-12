@@ -21,7 +21,7 @@ by itself: you enter them, in the same work step in which you upgrade the compon
   requests on GitLab, the mirror cannot take pull requests
 - Changes: [CHANGELOG.md](https://gitlab.com/epicsoft-networks/version-control/-/blob/main/CHANGELOG.md)
 
-> **Status: version 0.10.2.** Everything described here is built, tested and translated. Releases go to
+> **Status: version 0.10.3.** Everything described here is built, tested and translated. Releases go to
 > Docker Hub and the GitLab registry, branch builds to the GitLab registry only. The schema of 0.1.0 is
 > fixed, so an upgrade from here on migrates rather than resets.
 
@@ -219,7 +219,7 @@ calling an upstream API with the word `USE_ENV` as its token.
 | `vc.scheduler.enabled` | true | switches every background job off in one place |
 | `vc.scheduler.tick-interval` | 15m | how often the scheduler picks up **one** due component |
 | `vc.check.default-interval` | 48h | how often a component is checked |
-| `vc.check.min-interval` | 48h | hard lower bound, manual checks included |
+| `vc.check.min-interval` | 48h | lower bound for scheduled checks and the rule preview; *Check now* asks right away |
 | `vc.check.jitter` | 2h | spreads the checks instead of running them in a nightly batch |
 | `vc.check.backoff` | 1h, 4h, 12h | how long a failing source is left alone, per consecutive failure |
 | `vc.check.error-grace-days` | 3 | how long a failing check is tolerated before it becomes a task |
