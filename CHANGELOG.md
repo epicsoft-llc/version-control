@@ -10,6 +10,8 @@ All notable changes to this project are documented here, grouped as in
 - *Check now* and *Search links* on the component page ask right away — update check, end-of-life lookup and link
   search alike — instead of refusing inside `vc.check.min-interval` or the weekly end-of-life cycle; the next
   scheduled run counts from them. `vc.check.min-interval` still spaces the scheduled checks and the rule preview
+- Angular, Angular CLI and Angular build 22.2.6, Bootstrap 5.3.9, Gradle wrapper 9.9.1; the dashboard tests run on
+  jsdom `31.0.0`
 
 ## [0.10.2] - 2026-11-03
 
