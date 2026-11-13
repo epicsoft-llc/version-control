@@ -138,7 +138,7 @@ public class UpgradePathCalculator {
                                   Comparator.nullsFirst(Comparator.<DebianVersion>naturalOrder()))
                        .thenComparing(Comparator.naturalOrder());
     }
-    return Comparator.comparing((String version) -> Semver.coerce(version),
+    return Comparator.comparing((String version) -> VersionComparison.semverOf(version),
                                 Comparator.nullsFirst(Comparator.<Semver>naturalOrder()))
                      .thenComparing(Comparator.naturalOrder());
   }

@@ -99,6 +99,17 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void listsANewBuildOfTheReleaseThatRuns() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "7.2.2-0045");
+    this.recordCheckWithCandidates(component, "7.2.2-0047", List.of("7.2.2-0045", "7.2.2-0047"));
+
+    final TaskSectionDto section = this.section(this.taskListFacade.getByProject(projectId), TaskSection.UPDATE_OPEN);
+
+    assertEquals("7.2.2-0047", section.getEntries().getFirst().getLatestVersion());
+  }
+
+  @Test
   void takesAPlannedUpdateOffTheList() {
     final UUID projectId = this.project();
     final ComponentDto component = this.componentWithVersion(projectId, "17.2");

@@ -40,6 +40,15 @@ class VersionSelectorTest {
   }
 
   @Test
+  void takesTheHighestBuildOfARelease() {
+    // In the order of the registry, the last push first: the build number decides, not the order.
+    final List<VersionCandidate> candidates =
+      List.of(VersionCandidate.of("7.2.2-0045"), VersionCandidate.of("7.2.2-0047"), VersionCandidate.of("7.2.2-0046"));
+
+    assertEquals("7.2.2-0047", this.selector.latest(candidates, null, null, false, VersionStrategy.SEMVER).tag());
+  }
+
+  @Test
   void takesTheHighestDebianVersion() {
     final List<VersionCandidate> candidates = List.of(
       VersionCandidate.ofPackage("docker-ce", "5:29.7.2-1~ubuntu.24.04~noble"),

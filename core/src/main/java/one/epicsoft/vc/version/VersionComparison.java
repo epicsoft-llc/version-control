@@ -5,6 +5,8 @@ import jakarta.annotation.Nullable;
 import one.epicsoft.vc.enums.VersionStrategy;
 import org.semver4j.Semver;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Whether one version is actually behind another.
@@ -20,6 +22,9 @@ import java.util.Objects;
  * notices for months.
  */
 public final class VersionComparison {
+
+  /** A suffix of digits alone is the build of a release, such as the 0045 of Zammad's 7.2.2-0045. */
+  private static final Pattern BUILD = Pattern.compile("^([vV]?\\d+(?:\\.\\d+)*)-0*(\\d+)$");
 
   private VersionComparison() {
     // utility class
@@ -64,9 +69,24 @@ public final class VersionComparison {
     return left.compareTo(right) < 0;
   }
 
+  /**
+   * The tag as a semantic version, with a suffix of digits alone kept as the build of its release. Coercing drops such
+   * a suffix where it is not valid as written — leading zeros in 7.2.2-0045, two segments in 17.2-45 — and two builds of
+   * one release then compare as equal, so the newer one is never proposed.
+   */
+  @Nullable
+  static Semver semverOf(@Nonnull final String tag) {
+    final Matcher build = BUILD.matcher(tag.trim());
+    if (build.matches()) {
+      final Semver release = Semver.coerce(build.group(1));
+      return Objects.isNull(release) ? null : release.withPreRelease(build.group(2));
+    }
+    return Semver.coerce(tag);
+  }
+
   private static boolean behindBySemver(final String current, final String latest) {
-    final Semver left = Semver.coerce(current);
-    final Semver right = Semver.coerce(latest);
+    final Semver left = semverOf(current);
+    final Semver right = semverOf(latest);
     if (Objects.isNull(left) || Objects.isNull(right)) {
       return true;
     }

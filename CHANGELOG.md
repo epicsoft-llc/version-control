@@ -13,6 +13,10 @@ All notable changes to this project are documented here, grouped as in
 - A request that fails validation no longer logs an error about a missing message key such as
   `jakarta.validation.constraints.NotNull.message`. The validator asks for these keys with a text of its own to fall
   back on, the translation that comes with Hibernate Validator, and the answer carries that text as before
+- A new build of the release that runs — Zammad's `7.2.2-0047` after `7.2.2-0045` — is proposed and listed as an
+  update: a suffix of digits alone counts as the build of its release and is compared as a number. Before, the check
+  named it as the newest version but nothing proposed it, and a version of two segments such as `17.2-45` lost its
+  build the same way
 
 ## [0.10.3] - 2026-11-12
 
