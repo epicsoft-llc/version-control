@@ -6,6 +6,9 @@ All notable changes to this project are documented here, grouped as in
 
 ## [0.10.4] - 2026-11-13
 
+### Changed
+- Angular CLI and Angular build 22.2.7
+
 ### Fixed
 - A component whose check is switched off no longer stays under *Update check failed* on the start page and in the
   daily notification: no scheduled check ran again, so its last failure stood there for good. A check asked for by hand
