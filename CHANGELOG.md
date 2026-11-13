@@ -10,6 +10,9 @@ All notable changes to this project are documented here, grouped as in
 - A component whose check is switched off no longer stays under *Update check failed* on the start page and in the
   daily notification: no scheduled check ran again, so its last failure stood there for good. A check asked for by hand
   still runs and shows its result on the component page
+- A request that fails validation no longer logs an error about a missing message key such as
+  `jakarta.validation.constraints.NotNull.message`. The validator asks for these keys with a text of its own to fall
+  back on, the translation that comes with Hibernate Validator, and the answer carries that text as before
 
 ## [0.10.3] - 2026-11-12
 
