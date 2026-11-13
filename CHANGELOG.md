@@ -4,6 +4,13 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.4] - 2026-11-13
+
+### Fixed
+- A component whose check is switched off no longer stays under *Update check failed* on the start page and in the
+  daily notification: no scheduled check ran again, so its last failure stood there for good. A check asked for by hand
+  still runs and shows its result on the component page
+
 ## [0.10.3] - 2026-11-12
 
 ### Changed

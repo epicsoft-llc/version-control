@@ -371,7 +371,8 @@ public class TaskListFacade {
   private void addCheckError(@Nonnull final Map<TaskSection, List<TaskEntryDto>> entries,
                              @Nonnull final ComponentEntity component,
                              @Nullable final UpdateCheckEntity check) {
-    if (isNull(check) || !CheckState.ERROR.equals(check.getCheckState())) {
+    // The scheduler skips a switched-off check, so its last failure would stay on the list for good.
+    if (!component.isCheckEnabled() || isNull(check) || !CheckState.ERROR.equals(check.getCheckState())) {
       return;
     }
     final Instant blindSince = Objects.requireNonNullElse(check.getLastSuccessfulCheckAt(), check.getCreated());

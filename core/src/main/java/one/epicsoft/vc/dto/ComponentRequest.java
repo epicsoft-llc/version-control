@@ -149,9 +149,10 @@ public class ComponentRequest {
 
   @Nullable
   @Schema(description = """
-      Whether the scheduler checks this component; left out means true. Off stops the regular check only: a check \
-      asked for by hand still runs, and an update that is already known stays on the task list until a decision \
-      takes it off — `SKIPPED` then for good, as no newer version is found to reopen it.""")
+      Whether the scheduler checks this component; left out means true. Off stops the regular check and keeps a \
+      failing check off the task list. A check asked for by hand still runs, and an update that is already known \
+      stays on the task list until a decision takes it off — `SKIPPED` then for good, as no newer version is found \
+      to reopen it.""")
   @JsonProperty("checkEnabled")
   private Boolean checkEnabled;
 

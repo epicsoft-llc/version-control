@@ -176,6 +176,18 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void leavesAFailingCheckOffTheListOnceItIsSwitchedOff() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "17.2");
+    this.recordCheck(component, null, CheckState.ERROR, Instant.now().minus(10, ChronoUnit.DAYS));
+    this.switchCheckOff(component);
+
+    // Nothing checks it again, so the entry could never be cleared.
+    assertTrue(this.sections(this.taskListFacade.getByProject(projectId)).stream()
+                   .noneMatch(section -> TaskSection.CHECK_ERROR.equals(section.getSection())));
+  }
+
+  @Test
   void reportsAMovingTagOnlyInProduction() {
     final UUID projectId = this.project();
     final ComponentDto component = this.componentFacade.create(this.componentRequest(projectId, "PostgreSQL"));
@@ -630,6 +642,12 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
     final ComponentRequest request = this.componentRequest(component.getProjectId(), component.getName());
     request.setMaxStep(component.getMaxStep());
     request.setDependencies(List.of(dependency));
+    this.componentFacade.update(component.getId(), request);
+  }
+
+  private void switchCheckOff(final ComponentDto component) {
+    final ComponentRequest request = this.componentRequest(component.getProjectId(), component.getName());
+    request.setCheckEnabled(Boolean.FALSE);
     this.componentFacade.update(component.getId(), request);
   }
 
