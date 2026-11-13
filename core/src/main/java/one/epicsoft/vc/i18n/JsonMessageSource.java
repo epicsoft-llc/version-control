@@ -42,13 +42,18 @@ public class JsonMessageSource extends AbstractMessageSource {
   @Override
   protected MessageFormat resolveCode(@Nonnull final String code, @Nonnull final Locale locale) {
     final String pattern = this.resolve(code, locale.getLanguage());
-    if (nonBlank(pattern)) {
-      return new MessageFormat(pattern, locale);
-    }
-    // Loud on the server, quiet in the response: a key leaking into the user
-    // interface reads like a defect to whoever sees it.
-    log.error("No message for key '{}' in language '{}' or fallback '{}'", code, locale.getLanguage(), this.fallbackLanguage);
-    return null;
+    return nonBlank(pattern) ? new MessageFormat(pattern, locale) : null;
+  }
+
+  /**
+   * Reached only when the caller has no text of its own, so the key would reach the reader — loud for that reason. A
+   * caller with one expects the miss: the validator offers every Jakarta key here first, then uses its own translation.
+   */
+  @Nullable
+  @Override
+  protected String getDefaultMessage(@Nonnull final String code) {
+    log.error("No message for key '{}', not even in the fallback language '{}'", code, this.fallbackLanguage);
+    return super.getDefaultMessage(code);
   }
 
   @Nullable

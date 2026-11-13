@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
     - `UPDATE_OPEN`: a newer version is available and nothing is decided.
     - `SNOOZE_EXPIRED`: postponed, and the date it was postponed to has passed.
     - `BLOCKED`: blocked by another component; the entry names it.
-    - `CHECK_ERROR`: the check has been failing longer than the grace period.
+    - `CHECK_ERROR`: the check is switched on and has been failing longer than the grace period.
     - `MOVING_TAG_IN_PRODUCTION`: a tag that moves, running in a production environment.
     - `EOL_WARNING`: support ends within the warning threshold.
     - `ROLLOUT_PLANNED`: a rollout planned for one environment, still ahead; for information.
@@ -49,7 +49,7 @@ public enum TaskSection {
   /** Blocked by another component; the entry names it. */
   BLOCKED,
 
-  /** The check has been failing longer than the grace period. */
+  /** The check is switched on and has been failing longer than the grace period. */
   CHECK_ERROR,
 
   /** A tag that moves, running in a production environment. */

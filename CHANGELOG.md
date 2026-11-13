@@ -4,6 +4,23 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.4] - 2026-11-13
+
+### Changed
+- Angular CLI and Angular build 22.2.7
+
+### Fixed
+- A component whose check is switched off no longer stays under *Update check failed* on the start page and in the
+  daily notification: no scheduled check ran again, so its last failure stood there for good. A check asked for by hand
+  still runs and shows its result on the component page
+- A request that fails validation no longer logs an error about a missing message key such as
+  `jakarta.validation.constraints.NotNull.message`. The validator asks for these keys with a text of its own to fall
+  back on, the translation that comes with Hibernate Validator, and the answer carries that text as before
+- A new build of the release that runs — Zammad's `7.2.2-0047` after `7.2.2-0045` — is proposed and listed as an
+  update: a suffix of digits alone counts as the build of its release and is compared as a number. Before, the check
+  named it as the newest version but nothing proposed it, and a version of two segments such as `17.2-45` lost its
+  build the same way
+
 ## [0.10.3] - 2026-11-12
 
 ### Changed

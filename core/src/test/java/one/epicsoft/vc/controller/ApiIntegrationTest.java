@@ -2,13 +2,17 @@ package one.epicsoft.vc.controller;
 
 import one.epicsoft.vc.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.hamcrest.Matchers;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * the exception handler untested — and those are the ones that were wrong twice.
  */
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 class ApiIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired
@@ -90,6 +95,19 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
                              .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fields[0].field").value("name"));
+  }
+
+  @Test
+  void translatesAFieldErrorWithoutLoggingAMissingKey(final CapturedOutput output) throws Exception {
+    this.mockMvc.perform(post("/api/v1/projects")
+                             .header("Accept-Language", "de")
+                             .contentType(MediaType.APPLICATION_JSON)
+                             .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields[0].message").value(Matchers.not(Matchers.startsWith("{"))));
+
+    // The validator asks for its Jakarta key here first; finding none is expected, not a defect.
+    assertFalse(output.getAll().contains("No message for key"), "a validation key was logged as missing");
   }
 
   @Test

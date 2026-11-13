@@ -111,7 +111,7 @@ public class VersionSelector {
 
   @Nonnull
   private static Semver semver(@Nonnull final VersionCandidate candidate) {
-    return Optional.ofNullable(Semver.coerce(candidate.tag()))
+    return Optional.ofNullable(VersionComparison.semverOf(candidate.tag()))
                    .orElseThrow(() -> new VersionRuleException("Tag " + candidate.tag() + " is not a version"));
   }
 

@@ -97,6 +97,18 @@ class UpgradePathCalculatorTest {
   }
 
   @Test
+  void readsASuffixOfDigitsAloneAsTheBuildOfTheRelease() {
+    // Zammad publishes every release many times over, and a new build is an update of its own.
+    assertEquals("7.2.2-0047", this.calculator.calculate("7.2.2-0045", List.of("7.2.2-0045", "7.2.2-0047"), MaxStep.PATCH,
+                                                         VersionStrategy.SEMVER).target());
+    // The release decides before the build does, and two segments are read the same way.
+    assertEquals("7.2.3-0000", this.calculator.calculate("7.2.2-0047", List.of("7.2.2-0045", "7.2.3-0000"), MaxStep.MINOR,
+                                                         VersionStrategy.SEMVER).target());
+    assertEquals("17.2-46", this.calculator.calculate("17.2-45", List.of("17.2-46"), MaxStep.PATCH,
+                                                      VersionStrategy.SEMVER).target());
+  }
+
+  @Test
   void treatsAVersionItCannotReadAsInsideTheLimit() {
     // Hiding an update because its numbering is unusual is worse than proposing
     // one that turns out to be too large: the second is visible, the first is not.

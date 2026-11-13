@@ -99,6 +99,17 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
+  void listsANewBuildOfTheReleaseThatRuns() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "7.2.2-0045");
+    this.recordCheckWithCandidates(component, "7.2.2-0047", List.of("7.2.2-0045", "7.2.2-0047"));
+
+    final TaskSectionDto section = this.section(this.taskListFacade.getByProject(projectId), TaskSection.UPDATE_OPEN);
+
+    assertEquals("7.2.2-0047", section.getEntries().getFirst().getLatestVersion());
+  }
+
+  @Test
   void takesAPlannedUpdateOffTheList() {
     final UUID projectId = this.project();
     final ComponentDto component = this.componentWithVersion(projectId, "17.2");
@@ -173,6 +184,18 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
 
     assertEquals(1, this.section(this.taskListFacade.getByProject(projectId), TaskSection.CHECK_ERROR)
                         .getEntries().size());
+  }
+
+  @Test
+  void leavesAFailingCheckOffTheListOnceItIsSwitchedOff() {
+    final UUID projectId = this.project();
+    final ComponentDto component = this.componentWithVersion(projectId, "17.2");
+    this.recordCheck(component, null, CheckState.ERROR, Instant.now().minus(10, ChronoUnit.DAYS));
+    this.switchCheckOff(component);
+
+    // Nothing checks it again, so the entry could never be cleared.
+    assertTrue(this.sections(this.taskListFacade.getByProject(projectId)).stream()
+                   .noneMatch(section -> TaskSection.CHECK_ERROR.equals(section.getSection())));
   }
 
   @Test
@@ -630,6 +653,12 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
     final ComponentRequest request = this.componentRequest(component.getProjectId(), component.getName());
     request.setMaxStep(component.getMaxStep());
     request.setDependencies(List.of(dependency));
+    this.componentFacade.update(component.getId(), request);
+  }
+
+  private void switchCheckOff(final ComponentDto component) {
+    final ComponentRequest request = this.componentRequest(component.getProjectId(), component.getName());
+    request.setCheckEnabled(Boolean.FALSE);
     this.componentFacade.update(component.getId(), request);
   }
 
