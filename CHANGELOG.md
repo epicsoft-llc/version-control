@@ -4,6 +4,16 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.5] - 2026-11-17
+
+### Fixed
+- A component made of packages, such as Docker from its APT repository, is listed under *Update open* again and gets
+  its next target: the check kept at most 200 versions of the whole index, which lists other packages first, so the
+  leading package could be cut off entirely, and the proposal then measured the running version against the versions
+  of other packages. A check now keeps the newest versions of each configured package, the leading one first, and the
+  proposal, the start page and the rule preview look at the leading package under the configured rule, as the check
+  itself does. Until the next check, an environment that is behind is offered the version the check reported
+
 ## [0.10.4] - 2026-11-13
 
 ### Changed

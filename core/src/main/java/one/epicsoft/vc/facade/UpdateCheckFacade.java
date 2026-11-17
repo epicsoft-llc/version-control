@@ -22,6 +22,8 @@ import one.epicsoft.vc.mapper.UpdateCheckMapper;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.ProjectService;
 import one.epicsoft.vc.service.UpdateCheckService;
+import one.epicsoft.vc.version.AllowedCandidates;
+import one.epicsoft.vc.version.CandidateTags;
 import one.epicsoft.vc.version.TagRule;
 import one.epicsoft.vc.version.VersionCandidate;
 import one.epicsoft.vc.version.VersionRuleException;
@@ -59,13 +61,6 @@ import static one.epicsoft.vc.util.VcUtil.nonBlank;
 @Service
 @RequiredArgsConstructor
 public class UpdateCheckFacade {
-
-  private static final String CANDIDATE_SEPARATOR = "\n";
-
-  private static final String FIELD_SEPARATOR = "\t";
-
-  /** Enough to show a rule preview; the full list of an old repository is noise. */
-  private static final int STORED_CANDIDATES = 200;
 
   private final ComponentService componentService;
   private final ComponentEnvironmentService componentEnvironmentService;
@@ -121,23 +116,28 @@ public class UpdateCheckFacade {
       throw new VersionRuleException("This component has no source to query; its version is only ever recorded by hand");
     }
     final UUID componentId = component.getId();
+    // A component made of packages is previewed on its leading package, under the configured rule as in the check.
+    final String leadingPackage = AllowedCandidates.leadingPackage(this.componentService.findPackages(componentId));
 
     final Optional<UpdateCheckEntity> stored = this.updateCheckService.findByComponent(componentId);
     final List<VersionCandidate> candidates =
         stored.filter(this::withinBudget)
-              .map(UpdateCheckFacade::storedCandidates)
+              .map(check -> CandidateTags.parse(check.getCandidateTags()))
               // Outside the bound the preview pays for itself by running a real
               // check, which stores what it found for every preview after it.
-              .orElseGet(() -> storedCandidates(this.check(componentId)));
+              .orElseGet(() -> CandidateTags.parse(this.check(componentId).getCandidateTags()))
+              .stream()
+              .filter(candidate -> isNull(leadingPackage) || leadingPackage.equals(candidate.packageName()))
+              .toList();
     if (candidates.isEmpty()) {
       throw new VersionRuleException("The last check of this component found no versions");
     }
     // Every part of the rule comes from the form where the form has one, and from
     // the stored component where it does not.
     return this.versionSelector.matching(candidates,
-                                         nonBlank(request.getTagPattern())
-                                             ? request.getTagPattern()
-                                             : this.rulePattern(component, candidates),
+                                         nonBlank(request.getTagPattern()) ? request.getTagPattern()
+                                         : nonNull(leadingPackage) ? component.getTagPattern()
+                                         : this.rulePattern(component, candidates),
                                          nonBlank(request.getMajorConstraint())
                                              ? request.getMajorConstraint()
                                              : component.getMajorConstraint(),
@@ -186,7 +186,7 @@ public class UpdateCheckFacade {
     final ComponentEntity component = this.componentService.getById(componentId);
     this.updateCheckService.findByComponent(componentId)
                            .filter(check -> CheckState.OK.equals(check.getCheckState()))
-                           .ifPresent(check -> this.reapply(component, check, storedCandidates(check)));
+                           .ifPresent(check -> this.reapply(component, check, CandidateTags.parse(check.getCandidateTags())));
   }
 
   /**
@@ -235,10 +235,7 @@ public class UpdateCheckFacade {
     check.setCheckState(CheckState.OK);
     check.setErrorMessage(null);
     check.setLastSuccessfulCheckAt(now);
-    check.setCandidateTags(candidates.stream()
-                                     .limit(STORED_CANDIDATES)
-                                     .map(UpdateCheckFacade::serialize)
-                                     .collect(Collectors.joining(CANDIDATE_SEPARATOR)));
+    check.setCandidateTags(CandidateTags.serialize(candidates, this.componentService.findPackages(component.getId())));
 
     component.setCheckFailureCount(0);
     component.setNextCheckDue(this.nextDue(this.checkProperties.getDefaultInterval(), now, true));
@@ -511,36 +508,4 @@ public class UpdateCheckFacade {
     return check;
   }
 
-  /**
-   * The cached candidates carry the date and the digest as well, not only the
-   * tag: a preview that dropped them could not order by date, and the strategy
-   * would fail on cached data while working on fresh data.
-   */
-  @Nonnull
-  private static String serialize(@Nonnull final VersionCandidate candidate) {
-    return String.join(FIELD_SEPARATOR,
-                       candidate.tag(),
-                       isNull(candidate.releasedAt()) ? "" : candidate.releasedAt().toString(),
-                       isNull(candidate.digest()) ? "" : candidate.digest(),
-                       isNull(candidate.packageName()) ? "" : candidate.packageName());
-  }
-
-  @Nonnull
-  private static List<VersionCandidate> storedCandidates(@Nonnull final UpdateCheckEntity check) {
-    if (!nonBlank(check.getCandidateTags())) {
-      return List.of();
-    }
-    final List<VersionCandidate> candidates = new ArrayList<>();
-    for (final String line : check.getCandidateTags().split(CANDIDATE_SEPARATOR)) {
-      if (line.isBlank()) {
-        continue;
-      }
-      final String[] fields = line.split(FIELD_SEPARATOR, -1);
-      candidates.add(new VersionCandidate(fields[0],
-                                          fields.length > 1 && nonBlank(fields[1]) ? Instant.parse(fields[1]) : null,
-                                          fields.length > 2 && nonBlank(fields[2]) ? fields[2] : null,
-                                          fields.length > 3 && nonBlank(fields[3]) ? fields[3] : null));
-    }
-    return candidates;
-  }
 }

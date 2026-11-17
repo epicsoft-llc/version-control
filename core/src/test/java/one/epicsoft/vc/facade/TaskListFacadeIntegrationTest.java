@@ -5,6 +5,7 @@ import one.epicsoft.vc.dto.ComponentDependencyRequest;
 import one.epicsoft.vc.dto.ComponentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentRequest;
+import one.epicsoft.vc.dto.ComponentPackageRequest;
 import one.epicsoft.vc.dto.ComponentRequest;
 import one.epicsoft.vc.dto.EnvironmentDto;
 import one.epicsoft.vc.dto.EnvironmentRequest;
@@ -19,6 +20,7 @@ import one.epicsoft.vc.enums.DecisionState;
 import one.epicsoft.vc.enums.MaxStep;
 import one.epicsoft.vc.enums.SourceType;
 import one.epicsoft.vc.enums.TaskSection;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.exception.AppValidationException;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.EolStatusEntity;
@@ -96,6 +98,28 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
     assertEquals(1, section.getEntries().size());
     assertEquals("17.2", section.getEntries().getFirst().getCurrentVersion());
     assertEquals("17.4", section.getEntries().getFirst().getLatestVersion());
+  }
+
+  @Test
+  void listsTheUpdateOfAComponentMadeOfPackagesByItsLeadingPackage() {
+    final UUID projectId = this.project();
+    final ComponentRequest request = this.componentRequest(projectId, "Docker " + UUID.randomUUID());
+    request.setSourceType(SourceType.APT_REPOSITORY);
+    request.setSourceRef("http://localhost:1/repository");
+    request.setAptSuite("noble");
+    request.setAptComponent("stable");
+    request.setAptArchitecture("amd64");
+    request.setVersionStrategy(VersionStrategy.DEB_VERSION);
+    request.setPackages(List.of(this.aptPackage("docker-ce", 1, true), this.aptPackage("containerd.io", 2, false)));
+    final ComponentDto component = this.componentFacade.create(request);
+    this.cell(component.getId(), this.environment(projectId, "Production", true).getId(), "5:29.9.3-1~ubuntu.24.04~noble");
+    // Stored by a check that cut the index off before the leading package: only another package, older by its epoch.
+    this.recordCheckWithCandidates(component, "5:29.10.0-1~ubuntu.24.04~noble",
+                                   List.of("2.4.2-4~ubuntu.24.04~noble\t\t\tcontainerd.io"));
+
+    final TaskSectionDto section = this.section(this.taskListFacade.getByProject(projectId), TaskSection.UPDATE_OPEN);
+
+    assertEquals("5:29.10.0-1~ubuntu.24.04~noble", section.getEntries().getFirst().getLatestVersion());
   }
 
   @Test
@@ -746,6 +770,14 @@ class TaskListFacadeIntegrationTest extends AbstractIntegrationTest {
     request.setName(name);
     request.setProduction(production);
     return this.environmentFacade.create(request);
+  }
+
+  private ComponentPackageRequest aptPackage(final String name, final int sortOrder, final boolean leading) {
+    final ComponentPackageRequest request = new ComponentPackageRequest();
+    request.setName(name);
+    request.setSortOrder(sortOrder);
+    request.setLeadingPackage(leading);
+    return request;
   }
 
   private ComponentRequest componentRequest(final UUID projectId, final String name) {

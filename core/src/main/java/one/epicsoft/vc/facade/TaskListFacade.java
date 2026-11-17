@@ -17,6 +17,7 @@ import one.epicsoft.vc.enums.DecisionState;
 import one.epicsoft.vc.enums.TaskSection;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
 import one.epicsoft.vc.jpa.entity.ComponentEnvironmentEntity;
+import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
 import one.epicsoft.vc.jpa.entity.EolStatusEntity;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import one.epicsoft.vc.jpa.entity.UpdateDecisionEntity;
@@ -126,6 +127,11 @@ public class TaskListFacade {
     final Map<UUID, List<ComponentEnvironmentEntity>> cells =
         this.componentEnvironmentService.findAllByProject(projectId).stream()
             .collect(Collectors.groupingBy(ComponentEnvironmentEntity::getComponentId));
+    final Map<UUID, String> leadingPackages =
+        this.componentService.findPackages(components.stream().map(ComponentEntity::getId).toList()).stream()
+            .filter(ComponentPackageEntity::isLeadingPackage)
+            .collect(Collectors.toMap(ComponentPackageEntity::getComponentId, ComponentPackageEntity::getName,
+                                      (first, _) -> first));
     // Findings outlive a database that was configured and then removed; without one, they are not reported.
     final Map<UUID, List<VulnerabilityFindingEntity>> findings =
         this.vulnerabilityProperties.isEnabled()
@@ -147,7 +153,7 @@ public class TaskListFacade {
       this.addVulnerabilities(entries, component, decision, componentCells, findings, ignored.getOrDefault(component.getId(), Set.of()));
       this.addViolatedDependencies(entries, component, violations);
       addRolloutPlans(entries, component, componentCells);
-      this.addUpdateTask(entries, component, check, decision, componentCells, index);
+      this.addUpdateTask(entries, component, check, decision, componentCells, index, leadingPackages.get(component.getId()));
       this.addCheckError(entries, component, check);
       addMovingTags(entries, component, componentCells);
     }
@@ -282,7 +288,8 @@ public class TaskListFacade {
                              @Nullable final UpdateCheckEntity check,
                              @Nullable final UpdateDecisionEntity decision,
                              @Nonnull final List<ComponentEnvironmentEntity> cells,
-                             @Nonnull final DependencyFacade.DependencyIndex index) {
+                             @Nonnull final DependencyFacade.DependencyIndex index,
+                             @Nullable final String leadingPackage) {
     // Not tied to a successful check: a failing one keeps the version the last
     // good one found, and a component that is two versions behind must not drop
     // off the list because the source happened to answer with a 503.
@@ -317,7 +324,7 @@ public class TaskListFacade {
            // would never have reported.
            final UpgradeTarget target = this.upgradePathCalculator.calculate(
                cell.getCurrentVersion(),
-               this.allowedCandidates.of(component, check, cell.getCurrentVersion()),
+               this.allowedCandidates.of(component, check, cell.getCurrentVersion(), leadingPackage),
                component.getMaxStep(),
                component.getVersionStrategy());
            if (!target.hasTarget()) {

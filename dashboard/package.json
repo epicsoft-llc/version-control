@@ -1,6 +1,6 @@
 {
   "name": "vc-dashboard",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "description": "Version Control dashboard",
   "private": true,
   "engines": {

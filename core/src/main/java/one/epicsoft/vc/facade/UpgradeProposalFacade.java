@@ -63,6 +63,7 @@ public class UpgradeProposalFacade {
     // Read once for the whole project rather than per environment: the forward
     // check asks the same handful of rows for every one of them.
     final DependencyFacade.DependencyIndex index = this.dependencyFacade.index(component.getProjectId());
+    final String leadingPackage = AllowedCandidates.leadingPackage(this.componentService.findPackages(componentId));
 
     return this.componentEnvironmentService.findAllByComponent(componentId).stream()
                .filter(ComponentEnvironmentEntity::isActive)
@@ -72,7 +73,7 @@ public class UpgradeProposalFacade {
                // would name variants and prereleases the check itself rejected.
                .map(cell -> this.toProposal(index, component, cell,
                                             check.map(entity -> this.allowedCandidates
-                                                          .of(component, entity, cell.getCurrentVersion()))
+                                                          .of(component, entity, cell.getCurrentVersion(), leadingPackage))
                                                  .orElse(List.of()),
                                             stops))
                .toList();

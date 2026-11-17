@@ -1,13 +1,17 @@
 package one.epicsoft.vc.version;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.epicsoft.vc.jpa.entity.ComponentEntity;
+import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static one.epicsoft.vc.util.VcUtil.nonBlank;
 
 /**
@@ -42,17 +46,26 @@ public class AllowedCandidates {
    * not raised here: it belongs to the check, which records it as an error, and
    * repeating it in a read-only view would turn a screen into a failure.
    *
+   * <p>A component made of packages is measured by its leading package under the
+   * configured rule, as in the check: the stored list holds the other packages too,
+   * and a pattern derived from a Debian version describes the platform.
+   *
    * @param deployedVersion what the environment in question runs
+   * @param leadingPackage  the leading package of a component made of packages, otherwise null
    */
   @Nonnull
   public List<String> of(@Nonnull final ComponentEntity component, @Nonnull final UpdateCheckEntity check,
-                         final String deployedVersion) {
-    final List<VersionCandidate> stored = CandidateTags.parse(check.getCandidateTags());
+                         final String deployedVersion, @Nullable final String leadingPackage) {
+    final List<VersionCandidate> stored = CandidateTags.parse(check.getCandidateTags()).stream()
+                                                       .filter(candidate -> isNull(leadingPackage)
+                                                                            || leadingPackage.equals(candidate.packageName()))
+                                                       .toList();
     if (stored.isEmpty()) {
       return this.reported(check);
     }
-    final String pattern = nonBlank(component.getTagPattern()) ? component.getTagPattern()
-                                                               : TagRule.derivePattern(deployedVersion);
+    final String pattern = nonBlank(component.getTagPattern()) || nonNull(leadingPackage)
+                           ? component.getTagPattern()
+                           : TagRule.derivePattern(deployedVersion);
     try {
       return this.versionSelector.matching(stored,
                                            pattern,
@@ -67,6 +80,16 @@ public class AllowedCandidates {
                 exception.getMessage());
       return this.reported(check);
     }
+  }
+
+  /** The package a component made of packages is measured by; null for any other component. */
+  @Nullable
+  public static String leadingPackage(@Nonnull final List<ComponentPackageEntity> packages) {
+    return packages.stream()
+                   .filter(ComponentPackageEntity::isLeadingPackage)
+                   .map(ComponentPackageEntity::getName)
+                   .findFirst()
+                   .orElse(null);
   }
 
   @Nonnull
