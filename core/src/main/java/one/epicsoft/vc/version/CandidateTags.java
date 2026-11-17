@@ -1,9 +1,12 @@
 package one.epicsoft.vc.version;
 
 import jakarta.annotation.Nonnull;
+import one.epicsoft.vc.jpa.entity.ComponentPackageEntity;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -28,6 +31,11 @@ public final class CandidateTags {
   /** Enough for a rule preview; the full list of an old repository is noise. */
   private static final int STORED_CANDIDATES = 200;
 
+  /** Debian order, newest first; a version it cannot read goes last instead of being guessed into place. */
+  private static final Comparator<VersionCandidate> NEWEST_FIRST =
+      Comparator.comparing((VersionCandidate candidate) -> DebianVersion.parse(candidate.tag()),
+                           Comparator.nullsLast(Comparator.<DebianVersion>reverseOrder()));
+
   private CandidateTags() {
     // utility class
   }
@@ -38,6 +46,17 @@ public final class CandidateTags {
                      .limit(STORED_CANDIDATES)
                      .map(CandidateTags::line)
                      .collect(Collectors.joining(CANDIDATE_SEPARATOR));
+  }
+
+  /**
+   * A package index lists every package of the repository in its own order, so one cap over all of them can cut off
+   * the leading package entirely. A component made of packages keeps the newest versions of each configured package,
+   * the leading one first.
+   */
+  @Nonnull
+  public static String serialize(@Nonnull final List<VersionCandidate> candidates,
+                                 @Nonnull final List<ComponentPackageEntity> packages) {
+    return serialize(packages.isEmpty() ? candidates : newestPerPackage(candidates, packages));
   }
 
   @Nonnull
@@ -57,6 +76,22 @@ public final class CandidateTags {
                                           fields.length > 3 && nonBlank(fields[3]) ? fields[3] : null));
     }
     return candidates;
+  }
+
+  @Nonnull
+  private static List<VersionCandidate> newestPerPackage(@Nonnull final List<VersionCandidate> candidates,
+                                                         @Nonnull final List<ComponentPackageEntity> packages) {
+    final int perPackage = Math.max(1, STORED_CANDIDATES / packages.size());
+    final Map<String, List<VersionCandidate>> byPackage =
+        candidates.stream()
+                  .filter(candidate -> nonBlank(candidate.packageName()))
+                  .collect(Collectors.groupingBy(VersionCandidate::packageName));
+    return packages.stream()
+                   .sorted(Comparator.comparing(ComponentPackageEntity::isLeadingPackage).reversed())
+                   .flatMap(entry -> byPackage.getOrDefault(entry.getName(), List.of()).stream()
+                                              .sorted(NEWEST_FIRST)
+                                              .limit(perPackage))
+                   .toList();
   }
 
   @Nonnull

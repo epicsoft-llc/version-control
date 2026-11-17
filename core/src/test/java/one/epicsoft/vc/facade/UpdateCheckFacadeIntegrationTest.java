@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -197,6 +198,38 @@ class UpdateCheckFacadeIntegrationTest extends AbstractIntegrationTest {
     // Nothing to ask for a manual component, and a disabled check is a decision.
     assertTrue(!ids.contains(manual.getId()));
     assertTrue(!ids.contains(disabled.getId()));
+  }
+
+  @Test
+  void keepsAndPreviewsTheLeadingPackageWhenTheIndexListsOtherPackagesFirst() throws IOException {
+    final StringBuilder packages = new StringBuilder();
+    IntStream.range(0, 250).forEach(i -> packages.append("Package: cagent\nVersion: 0.%d.0-1~ubuntu.24.04~noble\n\n".formatted(i)));
+    packages.append("""
+        Package: containerd.io
+        Version: 2.4.2-4~ubuntu.24.04~noble
+
+        Package: docker-ce
+        Version: 5:29.9.3-1~ubuntu.24.04~noble
+
+        Package: docker-ce
+        Version: 5:29.10.0-1~ubuntu.24.04~noble
+        """);
+    final HttpServer index = this.aptIndex(packages.toString());
+    try {
+      final ComponentRequest request =
+        this.request(this.project(), "Docker", SourceType.APT_REPOSITORY,
+                     "http://127.0.0.1:%d/repository".formatted(index.getAddress().getPort()));
+      request.setPackages(List.of(this.aptPackage("docker-ce", 1, true), this.aptPackage("containerd.io", 2, false)));
+      final ComponentDto component = this.componentFacade.create(request);
+      this.updateCheckFacade.check(component.getId());
+      final VersionPreviewRequest preview = new VersionPreviewRequest();
+      preview.setComponentId(component.getId());
+
+      // Answered from the stored list: it still holds the leading package, and the preview speaks about that one.
+      assertEquals("5:29.10.0-1~ubuntu.24.04~noble", this.updateCheckFacade.previewRule(preview).getWinner());
+    } finally {
+      index.stop(0);
+    }
   }
 
   @Test

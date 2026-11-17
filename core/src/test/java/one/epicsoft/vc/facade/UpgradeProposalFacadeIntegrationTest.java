@@ -3,6 +3,7 @@ package one.epicsoft.vc.facade;
 import one.epicsoft.vc.AbstractIntegrationTest;
 import one.epicsoft.vc.dto.ComponentDto;
 import one.epicsoft.vc.dto.ComponentEnvironmentRequest;
+import one.epicsoft.vc.dto.ComponentPackageRequest;
 import one.epicsoft.vc.dto.ComponentRequest;
 import one.epicsoft.vc.dto.EnvironmentDto;
 import one.epicsoft.vc.dto.EnvironmentRequest;
@@ -12,6 +13,7 @@ import one.epicsoft.vc.dto.UpgradeProposalDto;
 import one.epicsoft.vc.enums.CheckState;
 import one.epicsoft.vc.enums.MaxStep;
 import one.epicsoft.vc.enums.SourceType;
+import one.epicsoft.vc.enums.VersionStrategy;
 import one.epicsoft.vc.jpa.entity.UpdateCheckEntity;
 import one.epicsoft.vc.service.ComponentService;
 import one.epicsoft.vc.service.UpdateCheckService;
@@ -88,16 +90,46 @@ class UpgradeProposalFacadeIntegrationTest extends AbstractIntegrationTest {
     assertNull(releases.getFirst().getUrl());
   }
 
+  @Test
+  void measuresAComponentMadeOfPackagesByItsLeadingPackage() {
+    final ComponentDto component = this.componentFacade.create(this.docker());
+    this.cell(component, "5:29.9.3-1~ubuntu.24.04~noble");
+    this.check(component, "5:29.10.0-1~ubuntu.24.04~noble",
+               List.of("5:29.10.0-1~ubuntu.24.04~noble\t\t\tdocker-ce", "5:29.9.3-1~ubuntu.24.04~noble\t\t\tdocker-ce",
+                       "2.4.2-4~ubuntu.24.04~noble\t\t\tcontainerd.io"));
+
+    final UpgradeProposalDto proposal = this.proposal(component);
+
+    // The other package of the index is no candidate, and neither is a pattern derived from the Debian version.
+    assertEquals("5:29.10.0-1~ubuntu.24.04~noble", proposal.getTarget());
+    assertEquals(List.of("5:29.10.0-1~ubuntu.24.04~noble"),
+                 proposal.getReleases().stream().map(ReleaseLinkDto::getVersion).toList());
+  }
+
+  @Test
+  void fallsBackToTheReportedVersionWhenTheLeadingPackageWasNotStored() {
+    final ComponentDto component = this.componentFacade.create(this.docker());
+    this.cell(component, "5:29.9.3-1~ubuntu.24.04~noble");
+    this.check(component, "5:29.10.0-1~ubuntu.24.04~noble",
+               List.of("2.4.2-4~ubuntu.24.04~noble\t\t\tcontainerd.io", "0.39.0-1~ubuntu.24.04~noble\t\t\tdocker-buildx-plugin"));
+
+    assertEquals("5:29.10.0-1~ubuntu.24.04~noble", this.proposal(component).getTarget());
+  }
+
   private UpgradeProposalDto proposal(final ComponentDto component) {
     return this.upgradeProposalFacade.getByComponent(component.getId()).getFirst();
   }
 
-  /** Writes the result of a check directly; the adapters are tested without a network elsewhere. */
   private void check(final ComponentDto component, final List<String> candidates) {
+    this.check(component, candidates.getFirst(), candidates);
+  }
+
+  /** Writes the result of a check directly; the adapters are tested without a network elsewhere. */
+  private void check(final ComponentDto component, final String latestVersion, final List<String> candidates) {
     final UpdateCheckEntity check = new UpdateCheckEntity();
     check.setComponent(this.componentService.getById(component.getId()));
     check.setCheckState(CheckState.OK);
-    check.setLatestVersion(candidates.getFirst());
+    check.setLatestVersion(latestVersion);
     check.setCheckedAt(Instant.now());
     check.setLastSuccessfulCheckAt(Instant.now());
     check.setCandidateTags(String.join("\n", candidates));
@@ -114,6 +146,25 @@ class UpgradeProposalFacadeIntegrationTest extends AbstractIntegrationTest {
     request.setEnvironmentId(environment.getId());
     request.setCurrentVersion(version);
     this.componentEnvironmentFacade.createOrUpdate(request);
+  }
+
+  private ComponentRequest docker() {
+    final ComponentRequest request = this.request(SourceType.APT_REPOSITORY, "http://localhost:1/repository");
+    request.setAptSuite("noble");
+    request.setAptComponent("stable");
+    request.setAptArchitecture("amd64");
+    request.setVersionStrategy(VersionStrategy.DEB_VERSION);
+    request.setMaxStep(MaxStep.MINOR);
+    request.setPackages(List.of(this.aptPackage("docker-ce", 1, true), this.aptPackage("containerd.io", 2, false)));
+    return request;
+  }
+
+  private ComponentPackageRequest aptPackage(final String name, final int sortOrder, final boolean leading) {
+    final ComponentPackageRequest request = new ComponentPackageRequest();
+    request.setName(name);
+    request.setSortOrder(sortOrder);
+    request.setLeadingPackage(leading);
+    return request;
   }
 
   private ComponentRequest request(final SourceType sourceType, final String sourceRef) {
