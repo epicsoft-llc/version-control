@@ -6,6 +6,9 @@ All notable changes to this project are documented here, grouped as in
 
 ## [0.10.5] - 2026-11-17
 
+### Changed
+- jsdom 31.0.1
+
 ### Fixed
 - A component made of packages, such as Docker from its APT repository, is listed under *Update open* again and gets
   its next target: the check kept at most 200 versions of the whole index, which lists other packages first, so the
