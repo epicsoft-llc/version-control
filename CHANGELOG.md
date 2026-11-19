@@ -4,6 +4,17 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.6] - 2026-11-19
+
+### Changed
+- Angular 22.3.0, vitest 5.1.1
+
+### Security
+- The dashboard image carries nginx 1.31.9, which fixes three issues rated major by nginx: CVE-2026-123007 (memory
+  corruption in HTTP/2 flow control), CVE-2026-118899 (infinite loop while reading a request body over TLS 1.3) and
+  CVE-2026-113425 (use-after-free in the mail proxy module), and further ones rated medium or minor
+- Both images carry OpenSSL 3.5.9-r1 with the security patches Alpine added on 2026-11-18
+
 ## [0.10.5] - 2026-11-17
 
 ### Changed
