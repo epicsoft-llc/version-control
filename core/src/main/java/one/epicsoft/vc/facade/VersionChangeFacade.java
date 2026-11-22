@@ -2,8 +2,12 @@ package one.epicsoft.vc.facade;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import one.epicsoft.vc.dto.VersionChangeCorrectionRequest;
 import one.epicsoft.vc.dto.VersionChangeDto;
 import one.epicsoft.vc.dto.VersionChangePackageRequest;
 import one.epicsoft.vc.dto.VersionChangeRequest;
@@ -21,6 +25,11 @@ import one.epicsoft.vc.service.VulnerabilityCheckService;
 import one.epicsoft.vc.util.VcUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,6 +64,8 @@ public class VersionChangeFacade {
   /** How the packages of one action are folded into a single version string. */
   private static final String PACKAGE_SEPARATOR = ", ";
 
+  private static final String ENTITY_NAME = "VersionChange";
+
   private final VersionChangeService versionChangeService;
   private final ComponentEnvironmentService componentEnvironmentService;
   private final ComponentService componentService;
@@ -62,6 +73,8 @@ public class VersionChangeFacade {
   private final VersionChangeMapper versionChangeMapper;
   private final ComponentEnvironmentFacade componentEnvironmentFacade;
   private final VulnerabilityCheckService vulnerabilityCheckService;
+  private final JsonMapper jsonMapper;
+  private final Validator validator;
 
   /**
    * The three list methods read what they filter by first. An unknown or deleted
@@ -155,6 +168,50 @@ public class VersionChangeFacade {
     final VersionChangeEntity saved = this.versionChangeService.save(entity);
     this.vulnerabilityCheckService.markDue(cell.getComponentId());
     log.info("Recorded version change of component environment {}", cell.getId());
+    return this.versionChangeMapper.toDto(saved);
+  }
+
+  /**
+   * Corrects what an entry says about its change — JSON merge patch, RFC 7386. Versions, cell and time stay as
+   * recorded; a field outside the description is refused, so a patch cannot quietly rewrite the history itself.
+   */
+  @Nonnull
+  @Transactional(rollbackFor = Throwable.class)
+  public VersionChangeDto correct(@Nonnull final UUID id, @Nonnull final JsonNode patch) {
+    final VersionChangeEntity entity = this.versionChangeService.getById(id);
+    if (!patch.isObject()) {
+      throw AppValidationException.patchNotApplicable(ENTITY_NAME, id, "the root");
+    }
+    final ObjectNode merged = this.jsonMapper.valueToTree(this.versionChangeMapper.toCorrectionRequest(entity));
+    patch.properties().forEach(field -> {
+      if (field.getValue().isNull()) {
+        merged.remove(field.getKey());
+      } else {
+        merged.set(field.getKey(), field.getValue());
+      }
+    });
+    final VersionChangeCorrectionRequest request;
+    try {
+      // Unknown fields fail here: a toVersion in a correction would otherwise answer 200 for a change never made.
+      request = this.jsonMapper.readerFor(VersionChangeCorrectionRequest.class)
+                               .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                               .readValue(merged);
+    } catch (final JacksonException exception) {
+      throw AppValidationException.patchNotApplicable(ENTITY_NAME, id, exception.getPathReference());
+    }
+    final Set<ConstraintViolation<VersionChangeCorrectionRequest>> violations = this.validator.validate(request);
+    if (!violations.isEmpty()) {
+      throw new ConstraintViolationException(violations);
+    }
+
+    entity.setNote(request.getNote());
+    entity.setBackupTaken(isTrue(request.getBackupTaken()));
+    entity.setBackupRef(request.getBackupRef());
+    entity.setRollbackPath(request.getRollbackPath());
+    entity.setDowntimeMinutes(request.getDowntimeMinutes());
+    entity.setIssues(request.getIssues());
+    final VersionChangeEntity saved = this.versionChangeService.saveAndFlush(entity);
+    log.info("Corrected version change {}", id);
     return this.versionChangeMapper.toDto(saved);
   }
 

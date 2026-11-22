@@ -3,7 +3,7 @@
 #### Library and plugin versions
 ###############################################################################
 #### https://plugins.gradle.org/plugin/org.springframework.boot
-springBoot = "4.1.2"
+springBoot = "4.2.0"
 #### https://plugins.gradle.org/plugin/io.spring.dependency-management
 springDependencyManagement = "1.1.7"
 #### https://gitlab.com/epicsoft-networks/gradle-plugin-depcheck
@@ -20,7 +20,7 @@ lombokMapstructBinding = "0.2.0"
 semver4j = "6.0.0"
 #### https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
 #### The API description under /api/v1/openapi.json; the variant without Swagger UI.
-springdoc = "3.2.0"
+springdoc = "3.2.1"
 #### https://plugins.gradle.org/plugin/org.owasp.dependencycheck
 dependencyCheck = "13.0.0"
 #### https://mvnrepository.com/artifact/org.testcontainers/postgresql

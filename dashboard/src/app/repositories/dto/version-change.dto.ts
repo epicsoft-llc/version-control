@@ -14,6 +14,8 @@ export class VersionChangeDto {
   public rollbackPath?: string;
   public downtimeMinutes?: number;
   public issues?: string;
+  /** When the description was last corrected; absent while the entry reads as recorded. */
+  public correctedAt?: string;
 
   constructor(init?: Partial<VersionChangeDto>) {
     Object.assign(this, init);

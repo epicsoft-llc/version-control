@@ -4,6 +4,17 @@ All notable changes to this project are documented here, grouped as in
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A release is headed by its tag and date,
 `## [1.2.3] - YYYY-MM-DD`; changes from before the first tag are headed by their date alone.
 
+## [0.10.7] - 2026-11-22
+
+### Added
+- A history entry can be corrected: `PATCH /api/v1/version-changes/{id}` (JSON merge patch) changes its note, backup,
+  rollback path, downtime and issues. Versions, environment and time stay as recorded and are refused in a patch —
+  a wrong version is still undone by a new change. `correctedAt` tells when an entry was last corrected, and the
+  history on the component page marks it
+
+### Changed
+- Spring Boot 4.2.0, springdoc-openapi 3.2.1, Gradle wrapper 9.9.2
+
 ## [0.10.6] - 2026-11-19
 
 ### Changed

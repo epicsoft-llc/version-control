@@ -42,4 +42,10 @@ public class VersionChangeService {
   public VersionChangeEntity save(@Nonnull final VersionChangeEntity entity) {
     return this.versionChangeRepository.save(entity);
   }
+
+  /** Flushed so the update time a correction sets is already in the answer. */
+  @Nonnull
+  public VersionChangeEntity saveAndFlush(@Nonnull final VersionChangeEntity entity) {
+    return this.versionChangeRepository.saveAndFlush(entity);
+  }
 }

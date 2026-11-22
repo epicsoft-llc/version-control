@@ -1,6 +1,7 @@
 package one.epicsoft.vc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -66,4 +67,9 @@ public class VersionChangeDto {
   @Nullable
   @JsonProperty("issues")
   private String issues;
+
+  @Nullable
+  @Schema(description = "When note, backup, rollback path, downtime or issues were last corrected; null while the entry reads as recorded.")
+  @JsonProperty("correctedAt")
+  private Instant correctedAt;
 }
