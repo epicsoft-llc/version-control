@@ -90,6 +90,7 @@
   "history.column.changedAt": "Changed at",
   "history.column.downtime": "Downtime (min.)",
   "history.column.note": "Note",
+  "history.corrected": "Corrected",
   "history.empty": "No changes recorded yet.",
   "history.noBackup": "No backup",
   "linkKind.DOCUMENTATION": "Upgrade guide",

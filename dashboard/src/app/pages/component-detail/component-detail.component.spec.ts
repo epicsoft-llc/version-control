@@ -24,6 +24,7 @@ import {UpdateCheckDto} from '../../repositories/dto/update-check.dto';
 import {UpdateDecisionDto} from '../../repositories/dto/update-decision.dto';
 import {ReleaseLinkDto, UpgradeProposalDto} from '../../repositories/dto/upgrade.dto';
 import {SettingsDto} from '../../repositories/dto/settings.dto';
+import {VersionChangeDto} from '../../repositories/dto/version-change.dto';
 import {VulnerabilityFindingDto, VulnerabilityIgnoreDto, VulnerabilityReportDto} from '../../repositories/dto/vulnerability.dto';
 import {SettingsService} from '../../services/settings/settings.service';
 import {ComponentDetailComponent} from './component-detail.component';
@@ -391,6 +392,28 @@ describe('ComponentDetailComponent', () => {
     const list = fixture.nativeElement.querySelector('details.vc-releases') as HTMLDetailsElement;
     expect(list.open).toBe(false);
     expect(list.querySelector('summary')?.textContent).toContain('(7)');
+  });
+
+  it('marks a corrected history entry and leaves the others unmarked', async () => {
+    TestBed.inject(TranslateService).setTranslation('en', {'history.corrected': 'Corrected'}, true);
+    repos['findHistory'].mockReturnValue(of([
+      new VersionChangeDto({id: 'entry-1', componentEnvironmentId: 'cell-1', environmentId: 'environment-1',
+                            componentId: 'component-1', fromVersion: '17.2', toVersion: '18.0',
+                            changedAt: '2026-11-22T09:30:00Z', backupTaken: false,
+                            rollbackPath: 'Pin back to 17.2', correctedAt: '2026-11-22T10:00:00Z'}),
+      new VersionChangeDto({id: 'entry-2', componentEnvironmentId: 'cell-1', environmentId: 'environment-1',
+                            componentId: 'component-1', toVersion: '17.2', changedAt: '2026-11-01T09:30:00Z',
+                            backupTaken: false})
+    ]));
+
+    await render();
+
+    const rows = [...fixture.nativeElement.querySelectorAll('tbody tr')] as HTMLElement[];
+    const corrected = rows.find((row) => row.textContent?.includes('Pin back to 17.2'));
+    const untouched = rows.filter((row) => row !== corrected && row.textContent?.includes('17.2'));
+    expect(corrected?.textContent).toContain('Corrected');
+    expect(untouched.length).toBeGreaterThan(0);
+    untouched.forEach((row) => expect(row.textContent).not.toContain('Corrected'));
   });
 
   it('lists what was changed on the component', async () => {

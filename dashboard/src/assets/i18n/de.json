@@ -90,6 +90,7 @@
   "history.column.changedAt": "Zeitpunkt",
   "history.column.downtime": "Ausfall (Min.)",
   "history.column.note": "Notiz",
+  "history.corrected": "Korrigiert",
   "history.empty": "Noch keine Änderungen erfasst.",
   "history.noBackup": "Kein Backup",
   "linkKind.DOCUMENTATION": "Upgrade-Anleitung",

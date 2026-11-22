@@ -29,6 +29,8 @@ import static one.epicsoft.vc.util.VcUtil.isTrue;
  * <p>An entry is written only by the version change facade, in the same
  * transaction as the version it describes. There is no second way in — a
  * separate "maintain the history" step would be the first one to be skipped.
+ * Afterwards only its description can be corrected, through the same facade;
+ * versions and time stay as recorded, and {@code updated} tells when.
  */
 @Getter
 @Setter
