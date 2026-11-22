@@ -12,6 +12,9 @@ All notable changes to this project are documented here, grouped as in
   a wrong version is still undone by a new change. `correctedAt` tells when an entry was last corrected, and the
   history on the component page marks it
 
+### Changed
+- Spring Boot 4.2.0, springdoc-openapi 3.2.1, Gradle wrapper 9.9.2
+
 ## [0.10.6] - 2026-11-19
 
 ### Changed
